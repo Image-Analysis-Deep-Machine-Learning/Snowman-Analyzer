@@ -5,5 +5,7 @@
         mc:Ignorable="d" Width="800" Height="450"
         x:Class="Snowman.MainWindow"
         Title="Snowman">
-    Welcome to Avalonia!
+    <Grid>
+        <Button Width="50" Height="150" Click="Button_Click_2"></Button>
+    </Grid>
 </Window>
