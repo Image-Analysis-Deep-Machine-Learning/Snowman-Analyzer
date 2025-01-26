@@ -2,10 +2,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" Width="800" Height="450"
+        xmlns:snowman="using:Snowman"
+        xmlns:control="using:Snowman.Controls"
+        mc:Ignorable="d" Width="1920" Height="1080"
         x:Class="Snowman.MainWindow"
+        x:DataType="snowman:MainWindow"
         Title="Snowman">
-    <Grid>
-        <Button Width="50" Height="150" Click="Button_Click_2"></Button>
-    </Grid>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open"/>
+                <MenuItem Header="_Save"/>
+                <MenuItem Header="_New Project"/>
+                <MenuItem Header="_Settings"/>
+                <Separator/>
+                <MenuItem Header="_Exit" Command="{Binding Close}"/>
+            </MenuItem>
+        </Menu>
+        <Grid RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" DockPanel.Dock="Bottom">
+            <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="Gray" BorderThickness="4" CornerRadius="3">
+                <control:WorkingAreaRenderer RenderingContext="{Binding CoreApp.WorkingAreaDataContext}"/>
+            </Border>
+        </Grid>
+    </DockPanel>
 </Window>
