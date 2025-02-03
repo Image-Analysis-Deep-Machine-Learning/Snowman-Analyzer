@@ -11,7 +11,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_Open"/>
+                <MenuItem Header="_Open" Command="{Binding OpenXml}"/>
                 <MenuItem Header="_Save"/>
                 <MenuItem Header="_New Project"/>
                 <MenuItem Header="_Settings"/>
@@ -21,8 +21,10 @@
         </Menu>
         <Grid RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" DockPanel.Dock="Bottom">
             <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="Gray" BorderThickness="4" CornerRadius="3">
-                <control:WorkingAreaRenderer RenderingContext="{Binding CoreApp.WorkingAreaDataContext}"/>
+                <control:WorkingAreaRenderer RenderingContext="{Binding CoreApp.WorkingAreaDataContext}" Name="WorkingAreaRenderer"/>
             </Border>
+            <Button Grid.Row="1" Content="Prev" Command="{Binding PrevFrame}"></Button>
+            <Button Grid.Row="1" Grid.Column="1" Content="Next" Command="{Binding NextFrame}"></Button>
         </Grid>
     </DockPanel>
 </Window>
