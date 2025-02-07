@@ -18,8 +18,8 @@ namespace Snowman.VideoLoading
 
     public class VideoFileMetadata
     {
-        public double VideoDurationSeconds { get; set; }
-        public double FrameRate { get; set; }
+        public double VideoDurationSeconds { get; init; }
+        public double FrameRate { get; init; }
         public int FrameCount => (int)(FrameRate * VideoDurationSeconds);
         public int Width { get; set; }
         public int Height { get; set; }
