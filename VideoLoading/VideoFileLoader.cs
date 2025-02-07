@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -11,11 +12,18 @@ namespace Snowman.VideoLoading
     public class VideoFileLoader
     {
         // path to FFmpeg binary
-        private static readonly string ffmpegPath = @"../../../VideoLoading/ffmpeg.exe";
-        // path to FFprobe binary
-        private static readonly string ffprobePath = @"../../../VideoLoading/ffprobe.exe";
+        private const string FfmpegPath = @"../../../VideoLoading/ffmpeg.exe";
 
-        public static async Task<VideoFileSequence> ExtractFramesAsync(string inputVideoFilePath, string outputFrameFolderPath, string frameFormat)
+        // path to FFprobe binary
+        private const string FfprobePath = @"../../../VideoLoading/ffprobe.exe";
+
+        public static async Task<VideoFileSequence> ExtractFramesAsync(
+            string inputVideoFilePath,
+            string outputFrameFolderPath,
+            string frameFormat,
+            TimeSpan? startTime = null,
+            TimeSpan? endTime = null,
+            double? targetFrameRate = null)
         {
             if (!File.Exists(inputVideoFilePath))
                 throw new FileNotFoundException("The input video file does not exist.");
@@ -24,15 +32,42 @@ namespace Snowman.VideoLoading
                 Directory.CreateDirectory(outputFrameFolderPath);
 
             // get video metadata
-            VideoFileMetadata metadata = GetVideoMetadata(inputVideoFilePath);
+            var metadata = GetVideoMetadata(inputVideoFilePath);
 
-            int padding = metadata.FrameCount.ToString().Length;
-
-            string framePattern = Path.Combine(outputFrameFolderPath, $"frame_%0{padding}d.{frameFormat}");
+            // duration of the specified time range
+            var startTimeSeconds = startTime?.TotalSeconds ?? 0;
+            var endTimeSeconds = endTime?.TotalSeconds ?? metadata.VideoDurationSeconds;
+            var rangeDuration = Math.Max(0, endTimeSeconds - startTimeSeconds);
+            
+            var frameRate = targetFrameRate ?? metadata.FrameRate;
+            
+            // frame count based on the desired FPS and specified time range
+            var rangeFrameCount = (int)(frameRate * rangeDuration);
+            
+            var arguments = new StringBuilder();
+    
+            if (startTime.HasValue)
+                arguments.Append($"-ss {startTime.Value} ");
+    
+            // input video file
+            arguments.Append($"-i \"{inputVideoFilePath}\" ");
+            
+            if (targetFrameRate.HasValue)
+                arguments.Append($"-vf fps={targetFrameRate.Value} ");
+    
+            if (endTime.HasValue)
+                arguments.Append($"-to {endTime.Value} ");
+            
+            var padding = rangeFrameCount.ToString().Length;
+            var framePattern = Path.Combine(outputFrameFolderPath, $"frame_%0{padding}d.{frameFormat}");
+    
+            // output frame
+            arguments.Append($"\"{framePattern}\"");
+            
             var processStartInfo = new ProcessStartInfo()
             {
-                FileName = ffmpegPath,
-                Arguments = $"-i \"{inputVideoFilePath}\" \"{framePattern}\"",
+                FileName = FfmpegPath,
+                Arguments = arguments.ToString(),
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -66,7 +101,7 @@ namespace Snowman.VideoLoading
         {
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = ffprobePath,
+                FileName = FfprobePath,
                 Arguments = $"-v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,duration -of json \"{inputVideoFilePath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -75,10 +110,11 @@ namespace Snowman.VideoLoading
             };
 
             // execute ffprobe process
-            using var process = new Process { StartInfo = processStartInfo };
+            using var process = new Process();
+            process.StartInfo = processStartInfo;
             process.Start();
 
-            string output = process.StandardOutput.ReadToEnd();
+            var output = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
 
             if (process.ExitCode != 0)
@@ -88,15 +124,15 @@ namespace Snowman.VideoLoading
             var json = JsonDocument.Parse(output);
             var stream = json.RootElement.GetProperty("streams")[0];
 
-            string? rFrameRate = stream.GetProperty("r_frame_rate").GetString() ?? throw new Exception("Failed to retrieve frame rate.");
-            string[] frameRateParts = rFrameRate.Split('/');
-            double frameRate = double.Parse(frameRateParts[0]) / double.Parse(frameRateParts[1]);
+            var rFrameRate = stream.GetProperty("r_frame_rate").GetString() ?? throw new Exception("Failed to retrieve frame rate.");
+            var frameRateParts = rFrameRate.Split('/');
+            var frameRate = double.Parse(frameRateParts[0]) / double.Parse(frameRateParts[1]);
 
-            string? durationStr = stream.GetProperty("duration").GetString() ?? throw new Exception("Failed to retrieve duration.");
-            double duration = double.Parse(durationStr, CultureInfo.InvariantCulture);
+            var durationStr = stream.GetProperty("duration").GetString() ?? throw new Exception("Failed to retrieve duration.");
+            var duration = double.Parse(durationStr, CultureInfo.InvariantCulture);
 
-            int width = stream.GetProperty("width").GetInt32();
-            int height = stream.GetProperty("height").GetInt32();
+            var width = stream.GetProperty("width").GetInt32();
+            var height = stream.GetProperty("height").GetInt32();
 
             return new VideoFileMetadata
             {
