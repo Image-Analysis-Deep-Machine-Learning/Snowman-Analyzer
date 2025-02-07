@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -22,6 +23,20 @@ namespace Snowman
             DataContext = this;
             CoreApp = new SnowmanApp();
             InitializeComponent();
+        }
+
+        public async Task OpenVideoFile()
+        {
+            var result = StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                AllowMultiple = false,
+                FileTypeFilter = [AdditionalFilePickerFileTypes.Video],
+                Title = "Open Video File"
+            }).Result;
+
+            if (!result.Any()) return;
+            
+            await CoreApp.Project.OpenVideoFile(result[0]);
         }
 
         public void OpenXml()

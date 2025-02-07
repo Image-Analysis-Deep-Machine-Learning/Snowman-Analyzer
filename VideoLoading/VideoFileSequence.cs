@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Snowman.Data;
 
 namespace Snowman.VideoLoading
 {
     public class VideoFileSequence
     {
-        public List<string>? FramePaths { get; set; }
+        public ImageList? ImageList { get; set; }
         public VideoFileMetadata? Metadata { get; set; }
         public string? VideoFilePath { get; set; }
         public string? FrameFolderPath { get; set; }

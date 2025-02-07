@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
 using Snowman.Data;
+using Snowman.VideoLoading;
 
 namespace Snowman.Core;
 
@@ -75,6 +77,18 @@ public class Project {
         ObjectData = new ObjectData();
         LoadCurrentFrame();
         _frameCount = 1;
+    }
+
+    public async Task OpenVideoFile(IStorageFile file)
+    {
+        const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
+        // TODO: add frame format selection
+        var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, outputFolderPath, "jpeg");
+        XmlData.ImageList = videoFileSequence.ImageList ?? new ImageList();
+        _currentFrameIndex = 0;
+        _baseFolder = videoFileSequence.FrameFolderPath ?? string.Empty;
+        _frameCount = XmlData.ImageList.Images.Count;
+        LoadCurrentFrame();
     }
 
     public void OpenXml(IStorageFile file)

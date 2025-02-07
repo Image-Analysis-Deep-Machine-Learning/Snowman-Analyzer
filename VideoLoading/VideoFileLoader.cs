@@ -1,37 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
+using Snowman.Data;
 
 namespace Snowman.VideoLoading
 {
-    public class VideoFileLoader
+    public static class VideoFileLoader
     {
         // path to FFmpeg binary
-        private static readonly string ffmpegPath = @"../../../VideoLoading/ffmpeg.exe";
+        private static readonly string FfmpegPath = @"..\..\..\VideoLoading\ffmpeg.exe";
         // path to FFprobe binary
-        private static readonly string ffprobePath = @"../../../VideoLoading/ffprobe.exe";
+        private static readonly string FfprobePath = @"..\..\..\VideoLoading\ffprobe.exe";
 
-        public static async Task<VideoFileSequence> ExtractFramesAsync(string inputVideoFilePath, string outputFrameFolderPath, string frameFormat)
+        public static async Task<VideoFileSequence> ExtractFramesAsync(IStorageFile inputVideoFile, string outputFrameFolderPath, string frameFormat)
         {
-            if (!File.Exists(inputVideoFilePath))
+            if (inputVideoFile == null)
                 throw new FileNotFoundException("The input video file does not exist.");
 
             if (!Directory.Exists(outputFrameFolderPath))
                 Directory.CreateDirectory(outputFrameFolderPath);
+            
+            var inputVideoFilePath = inputVideoFile.Path.LocalPath;
 
             // get video metadata
-            VideoFileMetadata metadata = GetVideoMetadata(inputVideoFilePath);
+            var metadata = await GetVideoMetadata(inputVideoFilePath);
 
-            int padding = metadata.FrameCount.ToString().Length;
+            var padding = metadata.FrameCount.ToString().Length;
 
-            string framePattern = Path.Combine(outputFrameFolderPath, $"frame_%0{padding}d.{frameFormat}");
-            var processStartInfo = new ProcessStartInfo()
+            var framePattern = Path.Combine(outputFrameFolderPath, $"frame_%0{padding}d.{frameFormat}");
+            
+            // TODO: frame extraction works for file formats .mp4, .avi, .mov but not for .mkv
+            var processStartInfo = new ProcessStartInfo
             {
-                FileName = ffmpegPath,
+                FileName = FfmpegPath,
                 Arguments = $"-i \"{inputVideoFilePath}\" \"{framePattern}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -41,18 +47,26 @@ namespace Snowman.VideoLoading
             var process = new Process { StartInfo = processStartInfo };
 
             // execute ffmpeg process asynchronously
-            await Task.Run(() => process.Start());
+            process.Start();
             await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
                 throw new Exception("FFmpeg failed to extract frames from the video.");
 
-            // make a list of all frame paths
-            List<string> framePaths = [.. Directory.GetFiles(outputFrameFolderPath, $"frame_*.{frameFormat}")];
+            ImageList imageList = new();
+            
+            var fileNames = Directory.GetFiles(outputFrameFolderPath, $"frame_*.{frameFormat}")
+                .Select(Path.GetFileName)
+                .ToArray();
+            
+            foreach (var fileName in fileNames)
+            {
+                if (fileName != null) imageList.Images.Add(new ImageFrame { Src = fileName });
+            }
 
             var videoFileSequence = new VideoFileSequence
             {
-                FramePaths = framePaths,
+                ImageList = imageList,
                 Metadata = metadata,
                 VideoFilePath = inputVideoFilePath,
                 FrameFolderPath = outputFrameFolderPath,
@@ -62,11 +76,11 @@ namespace Snowman.VideoLoading
             return videoFileSequence;
         }
 
-        private static VideoFileMetadata GetVideoMetadata(string inputVideoFilePath)
+        private static async Task<VideoFileMetadata> GetVideoMetadata(string inputVideoFilePath)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = ffprobePath,
+                FileName = FfprobePath,
                 Arguments = $"-v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,duration -of json \"{inputVideoFilePath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -75,28 +89,30 @@ namespace Snowman.VideoLoading
             };
 
             // execute ffprobe process
-            using var process = new Process { StartInfo = processStartInfo };
+            using var process = new Process();
+            process.StartInfo = processStartInfo;
+            
             process.Start();
 
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
                 throw new Exception("FFprobe failed to retrieve metadata.");
 
-            // parse metadate from json
+            // parse metadata from json
             var json = JsonDocument.Parse(output);
             var stream = json.RootElement.GetProperty("streams")[0];
 
-            string? rFrameRate = stream.GetProperty("r_frame_rate").GetString() ?? throw new Exception("Failed to retrieve frame rate.");
-            string[] frameRateParts = rFrameRate.Split('/');
-            double frameRate = double.Parse(frameRateParts[0]) / double.Parse(frameRateParts[1]);
+            var rFrameRate = stream.GetProperty("r_frame_rate").GetString() ?? throw new Exception("Failed to retrieve frame rate.");
+            var frameRateParts = rFrameRate.Split('/');
+            var frameRate = double.Parse(frameRateParts[0]) / double.Parse(frameRateParts[1]);
 
-            string? durationStr = stream.GetProperty("duration").GetString() ?? throw new Exception("Failed to retrieve duration.");
-            double duration = double.Parse(durationStr, CultureInfo.InvariantCulture);
+            var durationStr = stream.GetProperty("duration").GetString() ?? throw new Exception("Failed to retrieve duration.");
+            var duration = double.Parse(durationStr, CultureInfo.InvariantCulture);
 
-            int width = stream.GetProperty("width").GetInt32();
-            int height = stream.GetProperty("height").GetInt32();
+            var width = stream.GetProperty("width").GetInt32();
+            var height = stream.GetProperty("height").GetInt32();
 
             return new VideoFileMetadata
             {
