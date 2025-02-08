@@ -1,7 +1,9 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Snowman.Controls;
 using Snowman.Core;
 using Snowman.DataContexts;
@@ -20,6 +22,32 @@ namespace Snowman
             DataContext = this;
             CoreApp = new SnowmanApp();
             InitializeComponent();
+        }
+
+        public void OpenXml()
+        {
+            var result = StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                AllowMultiple = false,
+                FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
+                Title = "Open XML File"
+            }).Result;
+
+            if (!result.Any()) return;
+            
+            CoreApp.Project.OpenXml(result.First());
+        }
+
+        public void PrevFrame()
+        {
+            CoreApp.Project.PreviousFrame();
+            WorkingAreaRenderer.InvalidateVisual();
+        }
+        
+        public void NextFrame()
+        {
+            CoreApp.Project.NextFrame();
+            WorkingAreaRenderer.InvalidateVisual();
         }
     }
 }

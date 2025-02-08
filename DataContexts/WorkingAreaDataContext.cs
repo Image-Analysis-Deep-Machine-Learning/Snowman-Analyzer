@@ -10,8 +10,6 @@ namespace Snowman.DataContexts
     {
         private const double ZoomStep = 0.1;
         
-        private readonly Bitmap _bitmap;
-        
         private SnowmanApp _snowmanApp;
         private double _currentZoom;
         private bool _mousePressed;
@@ -31,17 +29,16 @@ namespace Snowman.DataContexts
             _snowmanApp = snowmanApp;
             _delta = new Point(0, 0);
             CurrentZoom = 1;
-            _bitmap = new Bitmap(@"C:\Stuff\Nothing\Pictures\Photo\1.0.png");
         }
 
         private IImage GetCurrentFrame()
         {
-            return _bitmap;
+            return _snowmanApp.Project.CurrentFrame ?? Project.PlaceHolderBitmap;
         }
 
         private Rect GetCurrentDrawingArea(Rect viewport)
         {
-            viewport = viewport * _currentZoom;
+            viewport *= _currentZoom;
             var offsetX = GetOffsetX(viewport);
             var offsetY = GetOffsetY(viewport);
             return new Rect(viewport.X + offsetX / 2 + _delta.X, viewport.Y + offsetY / 2 + _delta.Y, viewport.Width - offsetX, viewport.Height - offsetY);
@@ -68,7 +65,8 @@ namespace Snowman.DataContexts
         public void Render(DrawingContext context, Rect viewport)
         {
             using var state = context.PushClip(viewport); // clips the rendering to the viewport
-            ClampDelta(viewport);
+            using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
+            //ClampDelta(viewport);
             context.DrawImage(GetCurrentFrame(), GetCurrentDrawingPortion(), GetCurrentDrawingArea(viewport));
             // TODO: add drawing of objects
         }

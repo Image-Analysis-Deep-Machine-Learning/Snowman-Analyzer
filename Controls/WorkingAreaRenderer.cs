@@ -1,18 +1,14 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Snowman.DataContexts;
-using static Avalonia.Media.DrawingContext;
 
 namespace Snowman.Controls
 {
     public class WorkingAreaRenderer : Control
     {
         public static readonly StyledProperty<WorkingAreaDataContext> RenderingContextProperty = AvaloniaProperty.Register<WorkingAreaRenderer, WorkingAreaDataContext>(nameof(RenderingContext));
-
-        private bool _mousePressed;
 
         public WorkingAreaDataContext RenderingContext
         {
