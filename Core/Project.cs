@@ -1,12 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
 using Snowman.Data;
+using Snowman.VideoLoading;
 
 namespace Snowman.Core;
 
@@ -46,6 +49,7 @@ public class Project {
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
         {
             case ".tiff":
+                // TODO: fix: .tiff images are flipped vertically
                 var tiff = Tiff.Open(fileName, "r");
                 var tiffRgbaImage = TiffRgbaImage.Create(tiff, false, out _);
                 var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
@@ -75,6 +79,33 @@ public class Project {
         ObjectData = new ObjectData();
         LoadCurrentFrame();
         _frameCount = 1;
+    }
+
+    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow)
+    {
+        // TODO: when loading another video file, save current contents of output folder and then clear it
+        const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
+        var videoMetadata = await VideoFileLoader.GetVideoMetadataAsync(file, outputFolderPath);
+        var loadVideoWindow = new LoadVideoWindow(videoMetadata);
+        
+        var dialogSubmitted = await loadVideoWindow.ShowDialog<bool>(ownerWindow);
+
+        if (dialogSubmitted)
+        {
+            videoMetadata.StartTime = loadVideoWindow.StartSelectedTime;
+            videoMetadata.EndTime = loadVideoWindow.EndSelectedTime;
+            videoMetadata.FrameRate = loadVideoWindow.SelectedFps;
+            videoMetadata.FrameFormat = loadVideoWindow.SelectedFrameFormat;
+            videoMetadata.FrameCount =
+                Convert.ToInt32(Math.Ceiling(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
+
+            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata);
+            XmlData.ImageList = videoFileSequence.ImageList;
+            _currentFrameIndex = 0;
+            _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
+            _frameCount = XmlData.ImageList.Images.Count;
+            LoadCurrentFrame();
+        }
     }
 
     public void OpenXml(IStorageFile file)

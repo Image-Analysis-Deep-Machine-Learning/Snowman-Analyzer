@@ -7,7 +7,8 @@
         mc:Ignorable="d" Width="1920" Height="1080"
         x:Class="Snowman.MainWindow"
         x:DataType="snowman:MainWindow"
-        Title="Snowman">
+        Title="Snowman"
+        WindowState="Maximized">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
@@ -15,6 +16,8 @@
                 <MenuItem Header="_Save"/>
                 <MenuItem Header="_New Project"/>
                 <MenuItem Header="_Settings"/>
+                <Separator/>
+                <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>
