@@ -13,32 +13,34 @@ namespace Snowman.VideoLoading
     public static class VideoFileLoader
     {
         // path to FFmpeg binary
-        private static readonly string FfmpegPath = @"..\..\..\VideoLoading\ffmpeg.exe";
-        // path to FFprobe binary
-        private static readonly string FfprobePath = @"..\..\..\VideoLoading\ffprobe.exe";
+        private const string FfmpegPath = @"..\..\..\VideoLoading\ffmpeg.exe";
 
-        public static async Task<VideoFileSequence> ExtractFramesAsync(IStorageFile inputVideoFile, string outputFrameFolderPath, string frameFormat)
+        // path to FFprobe binary
+        private const string FfprobePath = @"..\..\..\VideoLoading\ffprobe.exe";
+
+        public static async Task<VideoSequence> ExtractFramesAsync(IStorageFile inputVideoFile, VideoSequenceMetadata metadata)
         {
             if (inputVideoFile == null)
                 throw new FileNotFoundException("The input video file does not exist.");
 
-            if (!Directory.Exists(outputFrameFolderPath))
-                Directory.CreateDirectory(outputFrameFolderPath);
+            if (!Directory.Exists(metadata.FrameFolderPath))
+                Directory.CreateDirectory(metadata.FrameFolderPath);
             
             var inputVideoFilePath = inputVideoFile.Path.LocalPath;
 
-            // get video metadata
-            var metadata = await GetVideoMetadata(inputVideoFilePath);
-
             var padding = metadata.FrameCount.ToString().Length;
 
-            var framePattern = Path.Combine(outputFrameFolderPath, $"frame_%0{padding}d.{frameFormat}");
+            var framePattern = Path.Combine(metadata.FrameFolderPath, $"frame_%0{padding}d.{metadata.FrameFormat}");
+            var startTime = TimeSpan.FromSeconds(metadata.StartTime).ToString(@"hh\:mm\:ss\.fff");
+            var endTime = TimeSpan.FromSeconds(metadata.EndTime).ToString(@"hh\:mm\:ss\.fff");
+            var targetFps = metadata.FrameRate.ToString(CultureInfo.InvariantCulture);
             
-            // TODO: frame extraction works for file formats .mp4, .avi, .mov but not for .mkv
+            // TODO: fix: frame extraction doesn't work for input video file format .mkv (works fine for .mp4, .mov, .avi)
+            // TODO: fix: frame extraction doesn't work for output frame file format .gif (works fine for .jpeg, .png, .tiff, .bmp)
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = FfmpegPath,
-                Arguments = $"-i \"{inputVideoFilePath}\" \"{framePattern}\"",
+                Arguments = $"-ss {startTime} -to {endTime} -i \"{inputVideoFilePath}\" -r {targetFps} \"{framePattern}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -55,7 +57,7 @@ namespace Snowman.VideoLoading
 
             ImageList imageList = new();
             
-            var fileNames = Directory.GetFiles(outputFrameFolderPath, $"frame_*.{frameFormat}")
+            var fileNames = Directory.GetFiles(metadata.FrameFolderPath, $"frame_*.{metadata.FrameFormat}")
                 .Select(Path.GetFileName)
                 .ToArray();
             
@@ -63,21 +65,25 @@ namespace Snowman.VideoLoading
             {
                 if (fileName != null) imageList.Images.Add(new ImageFrame { Src = fileName });
             }
+            
+            metadata.FrameCount = imageList.Images.Count;
 
-            var videoFileSequence = new VideoFileSequence
+            var videoFileSequence = new VideoSequence
             {
                 ImageList = imageList,
-                Metadata = metadata,
-                VideoFilePath = inputVideoFilePath,
-                FrameFolderPath = outputFrameFolderPath,
-                FrameFormat = frameFormat
+                Metadata = metadata
             };
 
             return videoFileSequence;
         }
 
-        private static async Task<VideoFileMetadata> GetVideoMetadata(string inputVideoFilePath)
+        public static async Task<VideoSequenceMetadata> GetVideoMetadataAsync(IStorageFile inputVideoFile, string outputFrameFolderPath)
         {
+            if (inputVideoFile == null)
+                throw new FileNotFoundException("The input video file does not exist.");
+            
+            var inputVideoFilePath = inputVideoFile.Path.LocalPath;
+            
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = FfprobePath,
@@ -107,19 +113,23 @@ namespace Snowman.VideoLoading
             var rFrameRate = stream.GetProperty("r_frame_rate").GetString() ?? throw new Exception("Failed to retrieve frame rate.");
             var frameRateParts = rFrameRate.Split('/');
             var frameRate = double.Parse(frameRateParts[0]) / double.Parse(frameRateParts[1]);
-
+            
             var durationStr = stream.GetProperty("duration").GetString() ?? throw new Exception("Failed to retrieve duration.");
             var duration = double.Parse(durationStr, CultureInfo.InvariantCulture);
 
             var width = stream.GetProperty("width").GetInt32();
             var height = stream.GetProperty("height").GetInt32();
 
-            return new VideoFileMetadata
+            return new VideoSequenceMetadata
             {
-                VideoDurationSeconds = duration,
+                StartTime = 0,
+                EndTime = duration,
+                FrameRate = frameRate,
+                FrameCount = Convert.ToInt32(Math.Ceiling(frameRate * duration)),
+                FrameFolderPath = outputFrameFolderPath,
+                FrameFormat = "jpeg",
                 Width = width,
-                Height = height,
-                FrameRate = frameRate
+                Height = height
             };
         }
     }

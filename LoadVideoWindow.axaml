@@ -1,0 +1,64 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:snowman="using:Snowman"
+        xmlns:controls="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
+        mc:Ignorable="d"
+        Width="480"
+        x:Class="Snowman.LoadVideoWindow"
+        x:DataType="snowman:LoadVideoWindow"
+        Title="Load Video File"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        SizeToContent="Height">
+    <StackPanel Margin="30">
+        <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8">Select time range</TextBlock>
+		<controls:RangeSlider
+            Minimum="0"
+            Maximum="{Binding DurationSeconds}"
+            LowerSelectedValue="{Binding StartSelectedTime}"
+            UpperSelectedValue="{Binding EndSelectedTime}"
+            IsThumbOverlap="True"
+            ThumbFlyoutPlacement="TopLeft"
+            TickFrequency="0.1"
+            IsSnapToTickEnabled="True"
+            TickPlacement="None"
+            Margin="0"/>
+        <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
+            <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Run Text="From "/>
+                <Run Text="{Binding LowerSelectedTimeStr}"/>
+            </TextBlock>
+            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Run Text="To "/>
+                <Run Text="{Binding UpperSelectedTimeStr}"/>
+            </TextBlock>
+        </Grid>
+        
+        <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8" Margin="0, 30,0, 0">Select frame rate</TextBlock>
+        
+        <Slider
+            Minimum="1"
+            Maximum="{Binding FrameRate}"
+            Value="{Binding SelectedFps}"
+            TickFrequency="1"
+            TickPlacement="BottomRight"
+            IsSnapToTickEnabled="True">
+        </Slider>
+        <TextBlock Text="{Binding SelectedFpsStr}" HorizontalAlignment="Center"/>
+        
+        <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8" Margin="0, 30,0, 10">Select frame format</TextBlock>
+        <ComboBox
+            ItemsSource="{Binding FrameFormats}"
+            SelectedItem="{Binding SelectedFrameFormat}"
+            MaxDropDownHeight="100"
+            MinWidth="100">
+        </ComboBox>
+        
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0, 10,0, 0">
+            <Button Content="Cancel" Margin="5,0" Click="CancelButton_OnClick"/>
+            <Button Content="Load video file" Margin="5,0" Background="#0078D4" Click="SubmitButton_OnClick"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -17,7 +17,7 @@
                 <MenuItem Header="_New Project"/>
                 <MenuItem Header="_Settings"/>
                 <Separator/>
-                <MenuItem Header="_Open Video File" Command="{Binding OpenVideoFile}"/>
+                <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>

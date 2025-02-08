@@ -1,13 +1,10 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
-using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Snowman.Controls;
 using Snowman.Core;
-using Snowman.DataContexts;
 
 namespace Snowman
 {
@@ -25,7 +22,7 @@ namespace Snowman
             InitializeComponent();
         }
 
-        public async Task OpenVideoFile()
+        public async Task LoadVideoFile()
         {
             var result = StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
@@ -35,8 +32,9 @@ namespace Snowman
             }).Result;
 
             if (!result.Any()) return;
-            
-            await CoreApp.Project.OpenVideoFile(result[0]);
+
+            var ownerWindow = this;
+            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow);
         }
 
         public void OpenXml()
