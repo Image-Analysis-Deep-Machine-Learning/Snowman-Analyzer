@@ -104,7 +104,7 @@ public class Project {
                 Convert.ToInt32(Math.Ceiling(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
 
             var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata);
-            XmlData.Images = videoFileSequence.Images;
+            XmlData.Images = videoFileSequence.ImageList;
             _currentFrameIndex = 0;
             _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
             _frameCount = XmlData.Images.ImageList.Count;
@@ -128,15 +128,39 @@ public class Project {
 
     public void RunScript(string path)
     {
+        var entity = new Rect(5, 5, 100, 100);
+        
         using (Py.GIL())
         {
             using (var scope = Py.CreateScope())
             {
                 scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
-                scope.Set("objects_input", new Rect(5, 5, 50, 50).ToPython());
+                scope.Set("entity", entity.ToPython());
                 scope.Exec("" +
-                           "returnVal = 51");
-                var ret = scope.Get<int>("returnVal");
+                           @"
+intersections = 0
+intersected_track_ids = {}
+
+
+for image_frame in images_metadata:
+    for bounding_box in image_frame.BoundingBoxes.BoundingBoxList:
+        entity_intersect = True
+
+        if bounding_box.XLeftTop > entity.X + entity.Width or entity.X > bounding_box.XLeftTop + bounding_box.Width:
+            entity_intersect = False
+        if bounding_box.YLeftTop > entity.Y + entity.Height or entity.Y > bounding_box.YLeftTop + bounding_box.Height:
+            entity_intersect = False
+
+        if entity_intersect:
+            if bounding_box.ClassName.TrackId in intersected_track_ids:
+                continue
+            else:
+                intersected_track_ids[bounding_box.ClassName.TrackId] = True
+                intersections += 1
+
+ret = intersections
+");
+                var ret = scope.Get<int>("ret");
                 var r = ret;
             }
 

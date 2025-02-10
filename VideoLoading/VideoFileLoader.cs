@@ -55,7 +55,7 @@ namespace Snowman.VideoLoading
             if (process.ExitCode != 0)
                 throw new Exception("FFmpeg failed to extract frames from the video.");
 
-            ImageList imageList = new();
+            Images imageList = new();
             
             var fileNames = Directory.GetFiles(metadata.FrameFolderPath, $"frame_*.{metadata.FrameFormat}")
                 .Select(Path.GetFileName)
@@ -63,10 +63,10 @@ namespace Snowman.VideoLoading
             
             foreach (var fileName in fileNames)
             {
-                if (fileName != null) imageList.Images.Add(new ImageFrame { Src = fileName });
+                if (fileName != null) imageList.ImageList.Add(new ImageFrame { Src = fileName });
             }
             
-            metadata.FrameCount = imageList.Images.Count;
+            metadata.FrameCount = imageList.ImageList.Count;
 
             var videoFileSequence = new VideoSequence
             {

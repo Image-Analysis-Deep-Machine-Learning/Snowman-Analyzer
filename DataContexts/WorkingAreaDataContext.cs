@@ -93,6 +93,7 @@ namespace Snowman.DataContexts
             {
                 context.DrawRectangle(_pen, GetBoundingBox(boundingBox, viewport));
             }
+            context.DrawRectangle(_pen, TransformToViewPort(new Rect(5, 5, 100, 100), viewport));
         }
 
         private Rect GetBoundingBox(BoundingBox boundingBox, Rect viewport)

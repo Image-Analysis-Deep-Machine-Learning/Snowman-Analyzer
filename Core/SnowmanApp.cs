@@ -1,4 +1,6 @@
-﻿using Snowman.DataContexts;
+﻿using System;
+using Python.Runtime;
+using Snowman.DataContexts;
 
 namespace Snowman.Core
 {
@@ -15,6 +17,14 @@ namespace Snowman.Core
         {
             WorkingAreaDataContext = new WorkingAreaDataContext(this);
             Project = new(this);
+            InitializePthonExecutionEnvironment();
+        }
+
+        private void InitializePthonExecutionEnvironment()
+        {
+            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll");
+            PythonEngine.Initialize();
+            PythonEngine.BeginAllowThreads();
         }
     }
 }
