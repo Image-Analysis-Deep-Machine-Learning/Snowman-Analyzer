@@ -35,6 +35,9 @@ namespace Snowman
 
             var ownerWindow = this;
             await CoreApp.Project.LoadVideoFile(result[0], ownerWindow);
+            
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
 
         public void OpenXml()
@@ -49,18 +52,23 @@ namespace Snowman
             if (!result.Any()) return;
             
             CoreApp.Project.OpenXml(result.First());
+            
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
 
         public void PrevFrame()
         {
             CoreApp.Project.PreviousFrame();
             WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
         
         public void NextFrame()
         {
             CoreApp.Project.NextFrame();
             WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
     }
 }

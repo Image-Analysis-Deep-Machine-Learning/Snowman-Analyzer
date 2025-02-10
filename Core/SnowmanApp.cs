@@ -9,12 +9,15 @@ namespace Snowman.Core
         /// </summary>
         public WorkingAreaDataContext WorkingAreaDataContext { get; set; }
         
+        public TimelineDataContext TimelineDataContext { get; set; }
+        
         public Project Project { get; set; }
 
         public SnowmanApp()
         {
             WorkingAreaDataContext = new WorkingAreaDataContext(this);
-            Project = new(this);
+            TimelineDataContext = new TimelineDataContext(this);
+            Project = new Project(this);
         }
     }
 }
