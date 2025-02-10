@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
+using Python.Runtime;
 using Snowman.Data;
 using Snowman.VideoLoading;
 
@@ -38,12 +40,12 @@ public class Project {
 
     private void LoadCurrentFrame()
     {
-        if (XmlData.ImageList.Images.Count == 0)
+        if (XmlData.Images.ImageList.Count == 0)
         {
             CurrentFrame = PlaceHolderBitmap;
             return;
         }
-        var imageFrame = XmlData.ImageList.Images[_currentFrameIndex];
+        var imageFrame = XmlData.Images.ImageList[_currentFrameIndex];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
         
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
@@ -64,7 +66,7 @@ public class Project {
                 CurrentFrame = bitmap;
                 break;
             default:
-                CurrentFrame = new Bitmap($"{_baseFolder}/{XmlData.ImageList.Images[_currentFrameIndex].Src}");
+                CurrentFrame = new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[_currentFrameIndex].Src}");
                 break;
         }
     }
@@ -81,6 +83,8 @@ public class Project {
         _frameCount = 1;
     }
 
+    public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
+    
     public async Task LoadVideoFile(IStorageFile file, Window ownerWindow)
     {
         // TODO: when loading another video file, save current contents of output folder and then clear it
@@ -100,10 +104,10 @@ public class Project {
                 Convert.ToInt32(Math.Ceiling(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
 
             var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata);
-            XmlData.ImageList = videoFileSequence.ImageList;
+            XmlData.Images = videoFileSequence.Images;
             _currentFrameIndex = 0;
             _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
-            _frameCount = XmlData.ImageList.Images.Count;
+            _frameCount = XmlData.Images.ImageList.Count;
             LoadCurrentFrame();
         }
     }
@@ -114,11 +118,33 @@ public class Project {
         XmlData = XmlData.Deserialize(reader.ReadToEnd()) ?? XmlData;
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
-        _frameCount = XmlData.ImageList.Images.Count;
+        _frameCount = XmlData.Images.ImageList.Count;
         LoadCurrentFrame();
     }
 
     public void NextFrame() => CurrentFrameIndex++;
     
     public void PreviousFrame() => CurrentFrameIndex--;
+
+    public void RunScript(string path)
+    {
+        using (Py.GIL())
+        {
+            using (var scope = Py.CreateScope())
+            {
+                scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
+                scope.Set("objects_input", new Rect(5, 5, 50, 50).ToPython());
+                scope.Exec("" +
+                           "returnVal = 51");
+                var ret = scope.Get<int>("returnVal");
+                var r = ret;
+            }
+
+        }
+    }
+
+    public void Demo()
+    {
+        RunScript("");
+    }
 }

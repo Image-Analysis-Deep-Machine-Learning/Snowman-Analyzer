@@ -62,5 +62,10 @@ namespace Snowman
             CoreApp.Project.NextFrame();
             WorkingAreaRenderer.InvalidateVisual();
         }
+
+        public void Demo()
+        {
+            CoreApp.Project.Demo();
+        }
     }
 }

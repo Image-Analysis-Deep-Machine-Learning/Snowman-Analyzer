@@ -9,7 +9,7 @@ public class XmlData
 {
 	[XmlElement(ElementName="metadata")] public Metadata Metadata { get; set; } = new();
 
-	[XmlElement(ElementName="images")] public ImageList ImageList { get; set; } = new();
+	[XmlElement(ElementName="images")] public Images Images { get; set; } = new();
 
 	public static XmlData? Deserialize(string data)
 	{
@@ -38,9 +38,9 @@ public class Metadata
 
 
 [XmlRoot(ElementName="images")]
-public class ImageList
+public class Images
 {
-	[XmlElement(ElementName = "image")] public List<ImageFrame> Images { get; set; } = [];
+	[XmlElement(ElementName = "image")] public List<ImageFrame> ImageList { get; set; } = [];
 }
 
 [XmlRoot(ElementName="image")]
@@ -54,7 +54,7 @@ public class ImageFrame
 [XmlRoot(ElementName="boundingboxes")]
 public class BoundingBoxes
 {
-	[XmlElement(ElementName="boundingbox")] public List<BoundingBox> BoundingBox { get; set; } = [];
+	[XmlElement(ElementName="boundingbox")] public List<BoundingBox> BoundingBoxList { get; set; } = [];
 }
 
 [XmlRoot(ElementName="boundingbox")]

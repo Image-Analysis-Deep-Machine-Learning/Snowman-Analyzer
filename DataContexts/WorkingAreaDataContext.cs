@@ -3,6 +3,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core;
 using System;
+using Snowman.Data;
 
 namespace Snowman.DataContexts
 {
@@ -16,12 +17,17 @@ namespace Snowman.DataContexts
         private Point _mouseClickOriginPoint;
         private Point _originalDelta;
         private Point _delta;
+        private readonly Pen _pen = new(Brushes.Aqua, 1);
         
         private double CurrentZoom
         {
             get => _currentZoom;
-            
-            set => _currentZoom = Math.Clamp(value, 1, 10);
+
+            set
+            {
+                _currentZoom = Math.Clamp(value, 1, 10);
+                _pen.Thickness = _currentZoom;
+            }
         } // 1 = 100%, 2 = 200% (2x width and 2x height), ...
 
         public WorkingAreaDataContext(SnowmanApp snowmanApp)
@@ -34,6 +40,17 @@ namespace Snowman.DataContexts
         private IImage GetCurrentFrame()
         {
             return _snowmanApp.Project.CurrentFrame ?? Project.PlaceHolderBitmap;
+        }
+
+        private Rect TransformToViewPort(Rect originalRect, Rect viewport)
+        {
+            var drawingArea = GetCurrentDrawingArea(viewport);
+            var originalImageSize = GetCurrentDrawingPortion();
+            var originalPercLocX = originalRect.X / originalImageSize.Width;
+            var originalPercLocY = originalRect.Y / originalImageSize.Height;
+            var originalPercWidth = originalRect.Width / originalImageSize.Width;
+            var originalPercHeight = originalRect.Height / originalImageSize.Height;
+            return new Rect(drawingArea.X + drawingArea.Width * originalPercLocX, drawingArea.Y + drawingArea.Height * originalPercLocY, originalPercWidth * drawingArea.Width, originalPercHeight * drawingArea.Height);
         }
 
         private Rect GetCurrentDrawingArea(Rect viewport)
@@ -67,8 +84,21 @@ namespace Snowman.DataContexts
             using var state = context.PushClip(viewport); // clips the rendering to the viewport
             using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
             //ClampDelta(viewport);
+            // image
             context.DrawImage(GetCurrentFrame(), GetCurrentDrawingPortion(), GetCurrentDrawingArea(viewport));
             // TODO: add drawing of objects
+            
+            // bounding boxes
+            foreach (var boundingBox in _snowmanApp.Project.GetCurrentBoundingBoxes())
+            {
+                context.DrawRectangle(_pen, GetBoundingBox(boundingBox, viewport));
+            }
+        }
+
+        private Rect GetBoundingBox(BoundingBox boundingBox, Rect viewport)
+        {
+            var boundingRect = new Rect(boundingBox.XLeftTop, boundingBox.YLeftTop, boundingBox.Width, boundingBox.Height);
+            return TransformToViewPort(boundingRect, viewport);
         }
 
         /**
