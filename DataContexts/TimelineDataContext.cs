@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -60,11 +61,25 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
             
             context.DrawImage(frame, new Rect(0, 0, frame.Size.Width, frame.Size.Height), rect);
 
+            IBrush coloredBrush = i == currentIndex
+                ? new SolidColorBrush(Color.Parse("#0078D4"))
+                : Brushes.Gray;
+            
             context.DrawRectangle(
-                i == currentIndex ?
-                    new Pen(new SolidColorBrush(Color.Parse("#0078D4")), borderThicknessSelected) :
-                    new Pen(Brushes.Gray, borderThicknessUnselected),
+                i == currentIndex
+                    ? new Pen(coloredBrush, borderThicknessSelected)
+                    : new Pen(coloredBrush, borderThicknessUnselected),
                 rect);
+            
+            var frameNumText = new FormattedText(
+                (i + 1) + "/" + frameCount,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface("Arial"),
+                12,
+                coloredBrush);
+
+            context.DrawText(frameNumText, new Point(rect.X + (_frameWidth - frameNumText.Width) / 2, rect.Y - 20));
         }
     }
 
