@@ -101,6 +101,7 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
                                       clickPosition.X <= timelineFrame.Rect.X + _timelineFrames[0].Rect.Width))
         {
             snowmanApp.Project.CurrentFrameIndex = timelineFrame.Index;
+            break;
         }
     }
 }

@@ -96,7 +96,7 @@ public class TimelineRenderer : Control
 
     public override void Render(DrawingContext context)
     {
-        context.FillRectangle(Brushes.Black, new Rect(0, 0, Bounds.Width, Bounds.Height));
+        context.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, Bounds.Width, Bounds.Height));
         RenderingContext.Render(context, Bounds);
         base.Render(context);
     }

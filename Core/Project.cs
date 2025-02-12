@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -86,7 +85,7 @@ public class Project {
         FrameCount = 1;
     }
 
-    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow)
+    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar)
     {
         // TODO: when loading another video file, save current contents of output folder and then clear it
         const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
@@ -104,7 +103,7 @@ public class Project {
             videoMetadata.FrameCount =
                 Convert.ToInt32(Math.Ceiling(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
 
-            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata);
+            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar);
             XmlData.ImageList = videoFileSequence.ImageList;
             _currentFrameIndex = 0;
             _baseFolder = videoFileSequence.Metadata.FrameFolderPath;

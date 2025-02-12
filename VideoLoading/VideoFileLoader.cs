@@ -4,13 +4,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Snowman.Data;
 
 namespace Snowman.VideoLoading
 {
-    public static class VideoFileLoader
+    public static partial class VideoFileLoader
     {
         // path to FFmpeg binary
         private const string FfmpegPath = @"..\..\..\VideoLoading\ffmpeg.exe";
@@ -18,7 +21,7 @@ namespace Snowman.VideoLoading
         // path to FFprobe binary
         private const string FfprobePath = @"..\..\..\VideoLoading\ffprobe.exe";
 
-        public static async Task<VideoSequence> ExtractFramesAsync(IStorageFile inputVideoFile, VideoSequenceMetadata metadata)
+        public static async Task<VideoSequence> ExtractFramesAsync(IStorageFile inputVideoFile, VideoSequenceMetadata metadata, ProgressBar progressBar)
         {
             if (inputVideoFile == null)
                 throw new FileNotFoundException("The input video file does not exist.");
@@ -47,14 +50,34 @@ namespace Snowman.VideoLoading
             };
 
             var process = new Process { StartInfo = processStartInfo };
+            
+            Dispatcher.UIThread.Post(() => progressBar.Value = 0);
+            Dispatcher.UIThread.Post(() => progressBar.IsVisible = true);
+            
+            // send progress updates to the progress bar
+            process.ErrorDataReceived += (_, args) =>
+            {
+                if (args.Data == null) return;
+                
+                var match = MyRegex().Match(args.Data);
+                if (!match.Success) return;
+                
+                var currentFrame = int.Parse(match.Groups[1].Value);
+                var progress = Convert.ToInt32(Math.Round((double)currentFrame / metadata.FrameCount * 100));
+                
+                Dispatcher.UIThread.Post(() => progressBar.Value = progress);
+            };
 
             // execute ffmpeg process asynchronously
             process.Start();
+            process.BeginErrorReadLine();
             await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
                 throw new Exception("FFmpeg failed to extract frames from the video.");
 
+            Dispatcher.UIThread.Post(() => progressBar.IsVisible = false);
+            
             ImageList imageList = new();
             
             var fileNames = Directory.GetFiles(metadata.FrameFolderPath, $"frame_*.{metadata.FrameFormat}")
@@ -76,6 +99,9 @@ namespace Snowman.VideoLoading
 
             return videoFileSequence;
         }
+        
+        [GeneratedRegex(@"frame=\s*(\d+)")]
+        private static partial Regex MyRegex();
 
         public static async Task<VideoSequenceMetadata> GetVideoMetadataAsync(IStorageFile inputVideoFile, string outputFrameFolderPath)
         {
