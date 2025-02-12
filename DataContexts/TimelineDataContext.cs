@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -9,7 +11,7 @@ namespace Snowman.DataContexts;
 
 public class TimelineDataContext(SnowmanApp snowmanApp)
 {
-    private double _frameWidth;
+    private List<TimelineFrame>? _timelineFrames;
     
     private IImage GetFrameAtIndex(int index)
     {
@@ -18,6 +20,8 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
 
     public void Render(DrawingContext context, Rect viewport)
     {
+        _timelineFrames = [];
+        
         using var state = context.PushClip(viewport);
         using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
         
@@ -33,7 +37,7 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
         const int borderThicknessUnselected = 2;
         const int margin = borderThicknessSelected + borderThicknessUnselected + 1;
         
-        _frameWidth = (viewport.Width - (displayedFrameCount - 1) * margin) / displayedFrameCount;
+        var frameWidth = (viewport.Width - (displayedFrameCount - 1) * margin) / displayedFrameCount;
         var frameHeight = viewport.Height;
         
         var displayIndex = Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)) - (currentIndex - startFrameIndex);
@@ -42,24 +46,25 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
         {
             var frame = GetFrameAtIndex(i);
             
-            var rectX = displayIndex * (_frameWidth + margin);
-            var rect = new Rect(rectX, 0, _frameWidth, frameHeight);
+            var rectX = displayIndex * (frameWidth + margin);
+            var rect = new Rect(rectX, 0, frameWidth, frameHeight);
             
             var aspectRatio = frame.Size.Width / frame.Size.Height;
-            if (_frameWidth / frameHeight > aspectRatio)
+            if (frameWidth / frameHeight > aspectRatio)
             {
                 var adjustedWidth = frameHeight * aspectRatio;
-                var xOffset = (_frameWidth - adjustedWidth) / 2;
+                var xOffset = (frameWidth - adjustedWidth) / 2;
                 rect = new Rect(rect.X + xOffset, rect.Y, adjustedWidth, frameHeight);
             }
             else
             {
-                var adjustedHeight = _frameWidth / aspectRatio;
+                var adjustedHeight = frameWidth / aspectRatio;
                 var yOffset = (frameHeight - adjustedHeight) / 2;
-                rect = new Rect(rect.X, rect.Y + yOffset, _frameWidth, adjustedHeight);
+                rect = new Rect(rect.X, rect.Y + yOffset, frameWidth, adjustedHeight);
             }
             
             context.DrawImage(frame, new Rect(0, 0, frame.Size.Width, frame.Size.Height), rect);
+            _timelineFrames.Add(new TimelineFrame(rect, i));
 
             IBrush coloredBrush = i == currentIndex
                 ? new SolidColorBrush(Color.Parse("#0078D4"))
@@ -79,12 +84,29 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
                 12,
                 coloredBrush);
 
-            context.DrawText(frameNumText, new Point(rect.X + (_frameWidth - frameNumText.Width) / 2, rect.Y - 20));
+            context.DrawText(frameNumText, new Point(rect.X + (frameWidth - frameNumText.Width) / 2, rect.Y - 20));
         }
     }
 
-    public void SetMousePressed(Point clickPosition)
+    public void MousePressed(Point clickPosition)
     {
-        // TODO: enable changing the active frame by clicking on it
+        if (_timelineFrames == null)
+            return;
+        
+        if (!(clickPosition.Y >= _timelineFrames[0].Rect.Y) ||
+            !(clickPosition.Y <= _timelineFrames[0].Rect.Y + _timelineFrames[0].Rect.Height)) return;
+
+        foreach (var timelineFrame in _timelineFrames.Where(
+                     timelineFrame => clickPosition.X >= timelineFrame.Rect.X &&
+                                      clickPosition.X <= timelineFrame.Rect.X + _timelineFrames[0].Rect.Width))
+        {
+            snowmanApp.Project.CurrentFrameIndex = timelineFrame.Index;
+        }
     }
+}
+
+public class TimelineFrame(Rect rect, int index)
+{
+    public Rect Rect => rect;
+    public int Index => index;
 }

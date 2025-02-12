@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Snowman.Controls;
 using Snowman.Core;
 
 namespace Snowman
@@ -67,6 +68,12 @@ namespace Snowman
         public void NextFrame()
         {
             CoreApp.Project.NextFrame();
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
+        }
+
+        public void UpdateFrame()
+        {
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();
         }

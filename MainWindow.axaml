@@ -42,6 +42,7 @@
                         RenderingContext="{Binding CoreApp.TimelineDataContext}"
                         PrevFrameCommand="{Binding PrevFrame}"
                         NextFrameCommand="{Binding NextFrame}"
+                        UpdateFrameCommand="{Binding UpdateFrame}"
                         Name="TimelineRenderer"/>
                 </Border>
                 <Button Grid.Column="2" Command="{Binding NextFrame}">

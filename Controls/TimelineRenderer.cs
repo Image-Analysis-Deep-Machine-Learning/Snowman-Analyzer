@@ -37,6 +37,15 @@ public class TimelineRenderer : Control
         set => SetValue(NextFrameCommandProperty, value);
     }
     
+    public static readonly StyledProperty<ICommand> UpdateFrameCommandProperty =
+        AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(UpdateFrameCommand));
+
+    public ICommand UpdateFrameCommand
+    {
+        get => GetValue(UpdateFrameCommandProperty);
+        set => SetValue(UpdateFrameCommandProperty, value);
+    }
+    
     public TimelineRenderer()
     {
         PointerWheelChanged += OnPointerWheelChanged;
@@ -46,10 +55,12 @@ public class TimelineRenderer : Control
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        RenderingContext.SetMousePressed(e.GetPosition(this));
-        InvalidateVisual();
-    }
+        {
+            RenderingContext.MousePressed(e.GetPosition(this));
+            if (UpdateFrameCommand.CanExecute(e))
+                UpdateFrameCommand.Execute(e);
+            InvalidateVisual();
+        }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {

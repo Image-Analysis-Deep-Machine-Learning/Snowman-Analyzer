@@ -22,7 +22,7 @@ public class Project {
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
-    public int FrameCount { get; set; }
+    public int FrameCount { get; private set; }
 
     public int CurrentFrameIndex
     {
