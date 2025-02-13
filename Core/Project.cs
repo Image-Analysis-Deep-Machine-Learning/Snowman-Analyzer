@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -8,6 +10,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
+using Python.Runtime;
 using Snowman.Data;
 using Snowman.VideoLoading;
 
@@ -15,12 +18,16 @@ namespace Snowman.Core;
 
 public class Project {
     
-    public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../snowman.png");
+    public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../placeholder.png");
     
     private SnowmanApp _snowmanApp;
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
+    private IEntity? _selectedEntity;
+    public event EventHandler? SelectedEntityChanged;
+
+    private XmlData XmlData { get; set; }
     public int FrameCount { get; private set; }
 
     public int CurrentFrameIndex
@@ -35,6 +42,28 @@ public class Project {
             if (reload) LoadCurrentFrame();
         }
     }
+    
+    public List<IEntity> Entities { get; set; }
+
+    public IEntity? SelectedEntity
+    {
+        get => _selectedEntity;
+        
+        set
+        {
+            _selectedEntity = value;
+            SelectedEntityChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public Project(SnowmanApp snowmanApp)
+    {
+        _snowmanApp = snowmanApp;
+        XmlData = new XmlData();
+        Entities = [];
+        LoadCurrentFrame();
+        FrameCount = 1;
+    }
 
     private void LoadCurrentFrame()
     {
@@ -43,13 +72,13 @@ public class Project {
     
     public Bitmap? FrameAtIndex(int index)
     {
-        if (XmlData.ImageList.Images.Count == 0)
+        if (XmlData.Images.ImageList.Count == 0)
             return PlaceHolderBitmap;
 
-        if (index >= XmlData.ImageList.Images.Count)
+        if (index >= XmlData.Images.ImageList.Count)
             return null;
         
-        var imageFrame = XmlData.ImageList.Images[index];
+        var imageFrame = XmlData.Images.ImageList[index];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
         
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
@@ -69,22 +98,12 @@ public class Project {
                 
                 return bitmap;
             default:
-                return new Bitmap($"{_baseFolder}/{XmlData.ImageList.Images[index].Src}");
+                return new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
         }
     }
 
-    private XmlData XmlData { get; set; }
-    public ObjectData ObjectData { get; private set; }
-
-    public Project(SnowmanApp snowmanApp)
-    {
-        _snowmanApp = snowmanApp;
-        XmlData = new XmlData();
-        ObjectData = new ObjectData();
-        LoadCurrentFrame();
-        FrameCount = 1;
-    }
-
+    public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
+    
     public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)
     {
         // TODO: when loading another video file, save current contents of output folder and then clear it
@@ -104,10 +123,10 @@ public class Project {
                 Convert.ToInt32(Math.Round(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
 
             var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar, progressBarText);
-            XmlData.ImageList = videoFileSequence.ImageList;
+            XmlData.Images = videoFileSequence.ImageList;
             _currentFrameIndex = 0;
             _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
-            FrameCount = XmlData.ImageList.Images.Count;
+            FrameCount = XmlData.Images.ImageList.Count;
             LoadCurrentFrame();
         }
     }
@@ -118,11 +137,84 @@ public class Project {
         XmlData = XmlData.Deserialize(reader.ReadToEnd()) ?? XmlData;
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
-        FrameCount = XmlData.ImageList.Images.Count;
+        FrameCount = XmlData.Images.ImageList.Count;
         LoadCurrentFrame();
     }
 
     public void NextFrame() => CurrentFrameIndex++;
     
     public void PreviousFrame() => CurrentFrameIndex--;
+
+    public string RunScript(IEntity entity)
+    {
+        var output = "Running script...\n";
+        string script;
+        
+        try
+        {
+            script = File.ReadAllText(entity.ScriptPath);
+        }
+
+        catch (Exception e)
+        {
+            output += $"\nCould not read the script from path: {entity.ScriptPath}\n";
+            output += e.Message;
+            return output;
+        }
+
+        try
+        {
+            using (Py.GIL())
+            {
+                using (var scope = Py.CreateScope())
+                {
+                    scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
+                    scope.Set("entity", entity.ToPython());
+                    scope.Exec(script);
+                    output += scope.Get<string>("string_output");
+                }
+            }
+        }
+
+        catch (Exception e)
+        {
+            output += $"\nThere was a problem running script on path {entity.ScriptPath}:\n";
+            output += e.Message;
+        }
+        
+        return output;
+    }
+
+    public string Demo()
+    {
+        var output = new StringBuilder();
+        
+        foreach (var entity in Entities)
+        {
+            output.AppendLine(RunScript(entity));
+        }
+        
+        return output.ToString();
+    }
+
+    public void AddEntity(IEntity entity)
+    {
+        Entities.Add(entity);
+    }
+
+    public void DeselectAllEntities()
+    {
+        foreach (var entity in Entities)
+        {
+            entity.Selected = false;
+        }
+
+        SelectedEntity = null; // create dummy entity
+    }
+
+    public void SelectEntity(IEntity selectedEntity)
+    {
+        selectedEntity.Selected = true;
+        SelectedEntity = selectedEntity;
+    }
 }

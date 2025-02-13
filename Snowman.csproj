@@ -22,5 +22,8 @@
 
   <ItemGroup>
     <UpToDateCheckInput Remove="WorkingAreaRenderer.axaml" />
+    <Content Include="Python38\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

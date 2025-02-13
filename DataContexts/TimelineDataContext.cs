@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Snowman.Controls;
 using Snowman.Core;
 
 namespace Snowman.DataContexts;

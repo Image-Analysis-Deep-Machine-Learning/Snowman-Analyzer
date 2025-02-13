@@ -9,7 +9,7 @@ namespace Snowman.VideoLoading
 {
     public class VideoSequence
     {
-        public required ImageList ImageList { get; set; }
+        public required Images ImageList { get; set; }
         public required VideoSequenceMetadata Metadata { get; set; }
     }
 
