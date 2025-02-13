@@ -18,7 +18,7 @@ namespace Snowman.Core;
 
 public class Project {
     
-    public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../snowman.png");
+    public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../placeholder.png");
     
     private SnowmanApp _snowmanApp;
     private int _currentFrameIndex;

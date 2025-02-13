@@ -45,7 +45,6 @@
                 </Button>
                 <Border Grid.Column="1" Margin="5, 0, 5, 0">
                     <control:TimelineRenderer
-                        RenderingContext="{Binding CoreApp.TimelineDataContext}"
                         PrevFrameCommand="{Binding PrevFrame}"
                         NextFrameCommand="{Binding NextFrame}"
                         UpdateFrameCommand="{Binding UpdateFrame}"

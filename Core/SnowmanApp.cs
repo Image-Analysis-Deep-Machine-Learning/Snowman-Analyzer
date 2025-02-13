@@ -34,6 +34,7 @@ namespace Snowman.Core
         {
             WorkingAreaDataContext = new WorkingAreaDataContext(this, mainWindow.WorkingAreaRenderer);
             TimelineDataContext = new TimelineDataContext(this);
+            mainWindow.TimelineRenderer.RenderingContext = TimelineDataContext;
             Project = new Project(this);
             ActiveTool = Tool.MoveTool;
             InitializePythonExecutionEnvironment();

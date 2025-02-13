@@ -10,14 +10,7 @@ namespace Snowman.Controls;
 
 public class TimelineRenderer : Control
 {
-    public static readonly StyledProperty<TimelineDataContext> RenderingContextProperty =
-        AvaloniaProperty.Register<TimelineRenderer, TimelineDataContext>(nameof(RenderingContext));
-
-    public TimelineDataContext RenderingContext
-    {
-        get => GetValue(RenderingContextProperty);
-        set => SetValue(RenderingContextProperty, value);
-    }
+    public TimelineDataContext RenderingContext { get; set; }
     
     public static readonly StyledProperty<ICommand> PrevFrameCommandProperty =
         AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(PrevFrameCommand));
