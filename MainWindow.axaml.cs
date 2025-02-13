@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
+using Snowman.Controls;
 using Snowman.Core;
 
 namespace Snowman
@@ -60,7 +61,10 @@ namespace Snowman
             if (!result.Any()) return;
 
             var ownerWindow = this;
-            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow);
+            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
+            
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
 
         public void OpenXml()
@@ -75,18 +79,29 @@ namespace Snowman
             if (!result.Any()) return;
             
             CoreApp.Project.OpenXml(result.First());
+            
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
 
         public void PrevFrame()
         {
             CoreApp.Project.PreviousFrame();
             WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
         
         public void NextFrame()
         {
             CoreApp.Project.NextFrame();
             WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
+        }
+
+        public void UpdateFrame()
+        {
+            WorkingAreaRenderer.InvalidateVisual();
+            TimelineRenderer.InvalidateVisual();
         }
 
         public void SetTool(Tool tool) => CoreApp.ActiveTool = tool;

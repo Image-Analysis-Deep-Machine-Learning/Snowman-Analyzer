@@ -16,6 +16,8 @@ namespace Snowman.Core
         /// </summary>
         public WorkingAreaDataContext WorkingAreaDataContext { get; set; }
         
+        public TimelineDataContext TimelineDataContext { get; set; }
+        
         public Project Project { get; set; }
 
         public Tool ActiveTool
@@ -31,6 +33,7 @@ namespace Snowman.Core
         public SnowmanApp(MainWindow mainWindow)
         {
             WorkingAreaDataContext = new WorkingAreaDataContext(this, mainWindow.WorkingAreaRenderer);
+            TimelineDataContext = new TimelineDataContext(this);
             Project = new Project(this);
             ActiveTool = Tool.MoveTool;
             InitializePythonExecutionEnvironment();
