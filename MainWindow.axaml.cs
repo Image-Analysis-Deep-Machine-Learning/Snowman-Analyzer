@@ -35,7 +35,7 @@ namespace Snowman
             if (!result.Any()) return;
 
             var ownerWindow = this;
-            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar);
+            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
             
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();

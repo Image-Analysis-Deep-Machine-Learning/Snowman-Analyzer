@@ -11,7 +11,8 @@
         Title="Load Video File"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        SizeToContent="Height">
+        SizeToContent="Height"
+        Background="#1e1f22">
     <StackPanel Margin="30">
         <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8">Select time range</TextBlock>
 		<controls:RangeSlider
