@@ -21,16 +21,16 @@ public class Project {
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
-    private int _frameCount;
+    public int FrameCount { get; private set; }
 
-    private int CurrentFrameIndex
+    public int CurrentFrameIndex
     {
         get => _currentFrameIndex;
         set
         {
             var reload = _currentFrameIndex != value;
             
-            _currentFrameIndex = Math.Clamp(value, 0, _frameCount - 1);
+            _currentFrameIndex = Math.Clamp(value, 0, FrameCount - 1);
 
             if (reload) LoadCurrentFrame();
         }
@@ -38,12 +38,18 @@ public class Project {
 
     private void LoadCurrentFrame()
     {
+        CurrentFrame = FrameAtIndex(_currentFrameIndex);
+    }
+    
+    public Bitmap? FrameAtIndex(int index)
+    {
         if (XmlData.ImageList.Images.Count == 0)
-        {
-            CurrentFrame = PlaceHolderBitmap;
-            return;
-        }
-        var imageFrame = XmlData.ImageList.Images[_currentFrameIndex];
+            return PlaceHolderBitmap;
+
+        if (index >= XmlData.ImageList.Images.Count)
+            return null;
+        
+        var imageFrame = XmlData.ImageList.Images[index];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
         
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
@@ -61,11 +67,9 @@ public class Project {
                     Marshal.Copy(data, 0, frameBuffer.Address, data.Length);
                 }
                 
-                CurrentFrame = bitmap;
-                break;
+                return bitmap;
             default:
-                CurrentFrame = new Bitmap($"{_baseFolder}/{XmlData.ImageList.Images[_currentFrameIndex].Src}");
-                break;
+                return new Bitmap($"{_baseFolder}/{XmlData.ImageList.Images[index].Src}");
         }
     }
 
@@ -78,10 +82,10 @@ public class Project {
         XmlData = new XmlData();
         ObjectData = new ObjectData();
         LoadCurrentFrame();
-        _frameCount = 1;
+        FrameCount = 1;
     }
 
-    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow)
+    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)
     {
         // TODO: when loading another video file, save current contents of output folder and then clear it
         const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
@@ -97,13 +101,13 @@ public class Project {
             videoMetadata.FrameRate = loadVideoWindow.SelectedFps;
             videoMetadata.FrameFormat = loadVideoWindow.SelectedFrameFormat;
             videoMetadata.FrameCount =
-                Convert.ToInt32(Math.Ceiling(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
+                Convert.ToInt32(Math.Round(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
 
-            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata);
+            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar, progressBarText);
             XmlData.ImageList = videoFileSequence.ImageList;
             _currentFrameIndex = 0;
             _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
-            _frameCount = XmlData.ImageList.Images.Count;
+            FrameCount = XmlData.ImageList.Images.Count;
             LoadCurrentFrame();
         }
     }
@@ -114,7 +118,7 @@ public class Project {
         XmlData = XmlData.Deserialize(reader.ReadToEnd()) ?? XmlData;
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
-        _frameCount = XmlData.ImageList.Images.Count;
+        FrameCount = XmlData.ImageList.Images.Count;
         LoadCurrentFrame();
     }
 

@@ -4,13 +4,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Snowman.Data;
 
 namespace Snowman.VideoLoading
 {
-    public static class VideoFileLoader
+    public static partial class VideoFileLoader
     {
         // path to FFmpeg binary
         private const string FfmpegPath = @"..\..\..\VideoLoading\ffmpeg.exe";
@@ -18,17 +21,21 @@ namespace Snowman.VideoLoading
         // path to FFprobe binary
         private const string FfprobePath = @"..\..\..\VideoLoading\ffprobe.exe";
 
-        public static async Task<VideoSequence> ExtractFramesAsync(IStorageFile inputVideoFile, VideoSequenceMetadata metadata)
+        public static async Task<VideoSequence> ExtractFramesAsync(IStorageFile inputVideoFile, VideoSequenceMetadata metadata, ProgressBar progressBar, TextBlock progressBarText)
         {
             if (inputVideoFile == null)
                 throw new FileNotFoundException("The input video file does not exist.");
-
+            
+            // if the output directory is not empty, empty it and make space for new extracted frames
+            if (Directory.Exists(metadata.FrameFolderPath) && Directory.GetFiles(metadata.FrameFolderPath).Length > 0)
+                Directory.Delete(metadata.FrameFolderPath, true);
+            
             if (!Directory.Exists(metadata.FrameFolderPath))
                 Directory.CreateDirectory(metadata.FrameFolderPath);
             
             var inputVideoFilePath = inputVideoFile.Path.LocalPath;
 
-            var padding = metadata.FrameCount.ToString().Length;
+            var padding = metadata.FrameCount.ToString().Length + 1;
 
             var framePattern = Path.Combine(metadata.FrameFolderPath, $"frame_%0{padding}d.{metadata.FrameFormat}");
             var startTime = TimeSpan.FromSeconds(metadata.StartTime).ToString(@"hh\:mm\:ss\.fff");
@@ -48,13 +55,51 @@ namespace Snowman.VideoLoading
 
             var process = new Process { StartInfo = processStartInfo };
 
+            Dispatcher.UIThread.Post(() =>
+            {
+                progressBar.Value = 0;
+                progressBar.IsVisible = true;
+                progressBarText.Text = "In progress: Loading video file";
+                progressBarText.IsVisible = true;
+            });
+
+            // send progress updates to the progress bar
+            process.ErrorDataReceived += (_, args) =>
+            {
+                if (args.Data == null) return;
+                
+                var match = MyRegex().Match(args.Data);
+                if (!match.Success) return;
+                
+                var currentFrame = int.Parse(match.Groups[1].Value);
+                var progress = Convert.ToInt32(Math.Round((double)currentFrame / metadata.FrameCount * 100));
+                
+                Dispatcher.UIThread.Post(() => progressBar.Value = progress);
+            };
+
             // execute ffmpeg process asynchronously
             process.Start();
+            process.BeginErrorReadLine();
             await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
                 throw new Exception("FFmpeg failed to extract frames from the video.");
 
+            Dispatcher.UIThread.Post(() => 
+            {
+                progressBarText.Text = "Finished: Loading video file";
+                progressBar.IsVisible = true;
+    
+                Task.Delay(3000).ContinueWith(_ => 
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        progressBar.IsVisible = false;
+                        progressBarText.IsVisible = false;
+                    });
+                });
+            });
+            
             ImageList imageList = new();
             
             var fileNames = Directory.GetFiles(metadata.FrameFolderPath, $"frame_*.{metadata.FrameFormat}")
@@ -76,6 +121,9 @@ namespace Snowman.VideoLoading
 
             return videoFileSequence;
         }
+        
+        [GeneratedRegex(@"frame=\s*(\d+)")]
+        private static partial Regex MyRegex();
 
         public static async Task<VideoSequenceMetadata> GetVideoMetadataAsync(IStorageFile inputVideoFile, string outputFrameFolderPath)
         {
@@ -125,7 +173,7 @@ namespace Snowman.VideoLoading
                 StartTime = 0,
                 EndTime = duration,
                 FrameRate = frameRate,
-                FrameCount = Convert.ToInt32(Math.Ceiling(frameRate * duration)),
+                FrameCount = Convert.ToInt32(Math.Round(frameRate * duration)),
                 FrameFolderPath = outputFrameFolderPath,
                 FrameFormat = "jpeg",
                 Width = width,

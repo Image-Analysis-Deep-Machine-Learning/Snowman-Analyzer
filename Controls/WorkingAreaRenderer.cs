@@ -57,7 +57,7 @@ namespace Snowman.Controls
 
         public override void Render(DrawingContext context)
         {
-            context.FillRectangle(Brushes.Black, new Rect(0, 0, Bounds.Width, Bounds.Height));
+            context.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, Bounds.Width, Bounds.Height));
 
             RenderingContext.Render(context, Bounds.Translate(new Vector(-4, -4))); // -4 -4 because borders in this framework are miraculous
             base.Render(context);
