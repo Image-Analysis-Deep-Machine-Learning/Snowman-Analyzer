@@ -8,13 +8,8 @@ namespace Snowman.Controls
 {
     public class WorkingAreaRenderer : Control
     {
-        public static readonly StyledProperty<WorkingAreaDataContext> RenderingContextProperty = AvaloniaProperty.Register<WorkingAreaRenderer, WorkingAreaDataContext>(nameof(RenderingContext));
-
-        public WorkingAreaDataContext RenderingContext
-        {
-            get => GetValue(RenderingContextProperty);
-            set => SetValue(RenderingContextProperty, value);
-        }
+        public WorkingAreaDataContext RenderingContext { get; set; }
+        public Rect Viewport => Bounds.Translate(new Vector(-4, -4));
 
         public WorkingAreaRenderer()
         {
@@ -59,7 +54,7 @@ namespace Snowman.Controls
         {
             context.FillRectangle(Brushes.Black, new Rect(0, 0, Bounds.Width, Bounds.Height));
 
-            RenderingContext.Render(context, Bounds.Translate(new Vector(-4, -4))); // -4 -4 because borders in this framework are miraculous
+            RenderingContext.Render(context); // -4 -4 because borders in this framework are miraculous
             base.Render(context);
         }
     }

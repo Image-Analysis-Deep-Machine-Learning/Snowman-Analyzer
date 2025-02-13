@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -24,6 +25,10 @@ public class Project {
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
     private int _frameCount;
+    private IEntity? _selectedEntity;
+    public event EventHandler? SelectedEntityChanged;
+
+    private XmlData XmlData { get; set; }
 
     private int CurrentFrameIndex
     {
@@ -36,6 +41,28 @@ public class Project {
 
             if (reload) LoadCurrentFrame();
         }
+    }
+    
+    public List<IEntity> Entities { get; set; }
+
+    public IEntity? SelectedEntity
+    {
+        get => _selectedEntity;
+        
+        set
+        {
+            _selectedEntity = value;
+            SelectedEntityChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public Project(SnowmanApp snowmanApp)
+    {
+        _snowmanApp = snowmanApp;
+        XmlData = new XmlData();
+        Entities = [];
+        LoadCurrentFrame();
+        _frameCount = 1;
     }
 
     private void LoadCurrentFrame()
@@ -69,18 +96,6 @@ public class Project {
                 CurrentFrame = new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[_currentFrameIndex].Src}");
                 break;
         }
-    }
-
-    private XmlData XmlData { get; set; }
-    public ObjectData ObjectData { get; private set; }
-
-    public Project(SnowmanApp snowmanApp)
-    {
-        _snowmanApp = snowmanApp;
-        XmlData = new XmlData();
-        ObjectData = new ObjectData();
-        LoadCurrentFrame();
-        _frameCount = 1;
     }
 
     public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
@@ -126,49 +141,76 @@ public class Project {
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
-    public void RunScript(string path)
+    public string RunScript(IEntity entity)
     {
-        var entity = new Rect(5, 5, 100, 100);
+        var output = "Running script...\n";
+        string script;
         
-        using (Py.GIL())
+        try
         {
-            using (var scope = Py.CreateScope())
-            {
-                scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
-                scope.Set("entity", entity.ToPython());
-                scope.Exec("" +
-                           @"
-intersections = 0
-intersected_track_ids = {}
-
-
-for image_frame in images_metadata:
-    for bounding_box in image_frame.BoundingBoxes.BoundingBoxList:
-        entity_intersect = True
-
-        if bounding_box.XLeftTop > entity.X + entity.Width or entity.X > bounding_box.XLeftTop + bounding_box.Width:
-            entity_intersect = False
-        if bounding_box.YLeftTop > entity.Y + entity.Height or entity.Y > bounding_box.YLeftTop + bounding_box.Height:
-            entity_intersect = False
-
-        if entity_intersect:
-            if bounding_box.ClassName.TrackId in intersected_track_ids:
-                continue
-            else:
-                intersected_track_ids[bounding_box.ClassName.TrackId] = True
-                intersections += 1
-
-ret = intersections
-");
-                var ret = scope.Get<int>("ret");
-                var r = ret;
-            }
-
+            script = File.ReadAllText(entity.ScriptPath);
         }
+
+        catch (Exception e)
+        {
+            output += $"\nCould not read the script from path: {entity.ScriptPath}\n";
+            output += e.Message;
+            return output;
+        }
+
+        try
+        {
+            using (Py.GIL())
+            {
+                using (var scope = Py.CreateScope())
+                {
+                    scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
+                    scope.Set("entity", entity.ToPython());
+                    scope.Exec(script);
+                    output += scope.Get<string>("string_output");
+                }
+            }
+        }
+
+        catch (Exception e)
+        {
+            output += $"\nThere was a problem running script on path {entity.ScriptPath}:\n";
+            output += e.Message;
+        }
+        
+        return output;
     }
 
-    public void Demo()
+    public string Demo()
     {
-        RunScript("");
+        var output = new StringBuilder();
+        
+        foreach (var entity in Entities)
+        {
+            output.AppendLine(RunScript(entity));
+        }
+        
+        return output.ToString();
+    }
+
+    public void AddEntity(IEntity entity)
+    {
+        Entities.Add(entity);
+    }
+
+    public void DeselectAllEntities()
+    {
+        foreach (var entity in Entities)
+        {
+            entity.Selected = false;
+        }
+
+        SelectedEntity = null; // create dummy entity
+    }
+
+    public void SelectEntity(IEntity selectedEntity)
+    {
+        selectedEntity.Selected = true;
+        SelectedEntity = selectedEntity;
     }
 }

@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:snowman="using:Snowman"
         xmlns:control="using:Snowman.Controls"
+        xmlns:core="clr-namespace:Snowman.Core"
         mc:Ignorable="d" Width="1920" Height="1080"
         x:Class="Snowman.MainWindow"
         x:DataType="snowman:MainWindow"
@@ -21,14 +22,23 @@
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>
+            <MenuItem Header="_Tool">
+                <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/>
+                <MenuItem Header="_Point" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/>
+            </MenuItem>
         </Menu>
         <Grid RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" DockPanel.Dock="Bottom">
             <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="Gray" BorderThickness="4" CornerRadius="3">
-                <control:WorkingAreaRenderer RenderingContext="{Binding CoreApp.WorkingAreaDataContext}" Name="WorkingAreaRenderer"/>
+                <control:WorkingAreaRenderer Name="WorkingAreaRenderer"/>
             </Border>
             <Button Grid.Row="1" Content="Prev" Command="{Binding PrevFrame}"></Button>
             <Button Grid.Row="1" Grid.Column="1" Content="Next" Command="{Binding NextFrame}"></Button>
-            <Button Grid.Row="0" Grid.Column="1" Content="Run Demo Script" Command="{Binding Demo}"></Button>
+            <DockPanel Grid.Row="0" Grid.Column="1">
+                <Label DockPanel.Dock="Top" Content="Script Path:" Margin="10"></Label>
+                <TextBox DockPanel.Dock="Top" Margin="10" Height="30" Text="{Binding CurrentStringPath}" ></TextBox>
+                <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
+                <TextBox DockPanel.Dock="Top" Margin="10" AcceptsReturn="True" Name="DemoOutput"></TextBox>
+            </DockPanel>
         </Grid>
     </DockPanel>
 </Window>

@@ -3,6 +3,8 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core;
 using System;
+using System.Collections.Generic;
+using Snowman.Controls;
 using Snowman.Data;
 
 namespace Snowman.DataContexts
@@ -19,7 +21,7 @@ namespace Snowman.DataContexts
         private Point _delta;
         private readonly Pen _pen = new(Brushes.Aqua, 1);
         
-        private double CurrentZoom
+        public double CurrentZoom
         {
             get => _currentZoom;
 
@@ -30,10 +32,14 @@ namespace Snowman.DataContexts
             }
         } // 1 = 100%, 2 = 200% (2x width and 2x height), ...
 
-        public WorkingAreaDataContext(SnowmanApp snowmanApp)
+        public WorkingAreaRenderer RendererControl { get; }
+
+        public WorkingAreaDataContext(SnowmanApp snowmanApp, WorkingAreaRenderer workingAreaRenderer)
         {
             _snowmanApp = snowmanApp;
             _delta = new Point(0, 0);
+            RendererControl = workingAreaRenderer;
+            workingAreaRenderer.RenderingContext = this;
             CurrentZoom = 1;
         }
 
@@ -42,9 +48,9 @@ namespace Snowman.DataContexts
             return _snowmanApp.Project.CurrentFrame ?? Project.PlaceHolderBitmap;
         }
 
-        private Rect TransformToViewPort(Rect originalRect, Rect viewport)
+        public Rect TransformToViewPort(Rect originalRect)
         {
-            var drawingArea = GetCurrentDrawingArea(viewport);
+            var drawingArea = GetCurrentDrawingArea();
             var originalImageSize = GetCurrentDrawingPortion();
             var originalPercLocX = originalRect.X / originalImageSize.Width;
             var originalPercLocY = originalRect.Y / originalImageSize.Height;
@@ -53,12 +59,32 @@ namespace Snowman.DataContexts
             return new Rect(drawingArea.X + drawingArea.Width * originalPercLocX, drawingArea.Y + drawingArea.Height * originalPercLocY, originalPercWidth * drawingArea.Width, originalPercHeight * drawingArea.Height);
         }
 
-        private Rect GetCurrentDrawingArea(Rect viewport)
+        public Point TransformFromViewPort(Point point)
         {
-            viewport *= _currentZoom;
-            var offsetX = GetOffsetX(viewport);
-            var offsetY = GetOffsetY(viewport);
-            return new Rect(viewport.X + offsetX / 2 + _delta.X, viewport.Y + offsetY / 2 + _delta.Y, viewport.Width - offsetX, viewport.Height - offsetY);
+            var drawingArea = GetCurrentDrawingArea();
+            var originalImageSize = GetCurrentDrawingPortion();
+            var scaledPercLocX = (point.X - drawingArea.X) / drawingArea.Width;
+            var scaledPercLocY = (point.Y - drawingArea.Y) / drawingArea.Height;
+
+            return new Point(scaledPercLocX * originalImageSize.Width, scaledPercLocY * originalImageSize.Height);
+        }
+        
+        public Point TransformToViewPort(Point point)
+        {
+            var drawingArea = GetCurrentDrawingArea();
+            var originalImageSize = GetCurrentDrawingPortion();
+            var originalPercLocX = point.X / originalImageSize.Width;
+            var originalPercLocY = point.Y / originalImageSize.Height;
+
+            return new Point(drawingArea.X + originalPercLocX * drawingArea.Width, drawingArea.Y + originalPercLocY * drawingArea.Height);
+        }
+
+        private Rect GetCurrentDrawingArea()
+        {
+            var zoomedViewport = RendererControl.Viewport * _currentZoom;
+            var offsetX = GetOffsetX(zoomedViewport);
+            var offsetY = GetOffsetY(zoomedViewport);
+            return new Rect(zoomedViewport.X + offsetX / 2 + _delta.X, zoomedViewport.Y + offsetY / 2 + _delta.Y, zoomedViewport.Width - offsetX, zoomedViewport.Height - offsetY);
         }
 
         private double GetOffsetY(Rect viewport)
@@ -79,27 +105,32 @@ namespace Snowman.DataContexts
             return new Rect(0, 0, GetCurrentFrame().Size.Width, GetCurrentFrame().Size.Height);
         }
 
-        public void Render(DrawingContext context, Rect viewport)
+        public void Render(DrawingContext context)
         {
-            using var state = context.PushClip(viewport); // clips the rendering to the viewport
+            using var state = context.PushClip(RendererControl.Viewport); // clips the rendering to the viewport
             using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
             //ClampDelta(viewport);
             // image
-            context.DrawImage(GetCurrentFrame(), GetCurrentDrawingPortion(), GetCurrentDrawingArea(viewport));
+            context.DrawImage(GetCurrentFrame(), GetCurrentDrawingPortion(), GetCurrentDrawingArea());
             // TODO: add drawing of objects
             
             // bounding boxes
             foreach (var boundingBox in _snowmanApp.Project.GetCurrentBoundingBoxes())
             {
-                context.DrawRectangle(_pen, GetBoundingBox(boundingBox, viewport));
+                context.DrawRectangle(_pen, GetBoundingBox(boundingBox));
             }
-            context.DrawRectangle(_pen, TransformToViewPort(new Rect(5, 5, 100, 100), viewport));
+            
+            // entities
+            foreach (var entity in _snowmanApp.Project.Entities)
+            {
+                entity.Render(context, this);
+            }
         }
 
-        private Rect GetBoundingBox(BoundingBox boundingBox, Rect viewport)
+        private Rect GetBoundingBox(BoundingBox boundingBox)
         {
             var boundingRect = new Rect(boundingBox.XLeftTop, boundingBox.YLeftTop, boundingBox.Width, boundingBox.Height);
-            return TransformToViewPort(boundingRect, viewport);
+            return TransformToViewPort(boundingRect);
         }
 
         /**
@@ -136,10 +167,26 @@ namespace Snowman.DataContexts
 
         public void MouseMovedTo(Point getPosition)
         {
-            // TODO: add hit detection for overlay objects/polygons...
-            if (!_mousePressed) return;
+            var tool = _snowmanApp.ActiveTool;
+
+            switch (tool.ToolType)
+            {
+                case Tool.Type.Move:
+                    // TODO: add highlighting to move existing entities
+                    if (!_mousePressed) return;
             
-            _delta = _originalDelta + getPosition - _mouseClickOriginPoint;
+                    _delta = _originalDelta + getPosition - _mouseClickOriginPoint;
+                    break;
+                default:
+                    foreach (var entity in _snowmanApp.Project.Entities)
+                    {
+                        entity.EvaluateAndSetHit(TransformFromViewPort(getPosition), this);
+                    }
+                    
+                    break;
+            }
+            // TODO: add hit detection for overlay objects/polygons...
+            
         }
 
         public void SetMousePressed(bool isPressed, Point clickPosition)
@@ -147,6 +194,30 @@ namespace Snowman.DataContexts
             _mousePressed = isPressed;
             _mouseClickOriginPoint = clickPosition;
             _originalDelta = _delta;
+
+            if (_mousePressed && _snowmanApp.ActiveTool.ToolType == Tool.Type.Point)
+            {
+                IEntity selectedEntity = null;
+
+                _snowmanApp.Project.DeselectAllEntities();
+                
+                foreach (var entity in _snowmanApp.Project.Entities)
+                {
+                    entity.EvaluateAndSetHit(TransformFromViewPort(clickPosition), this);
+                    
+                    if (entity.IsHit) selectedEntity = entity;
+                }
+
+                if (selectedEntity == null)
+                {
+                    _snowmanApp.Project.AddEntity(new PointEntity(TransformFromViewPort(clickPosition)));
+                }
+
+                else
+                {
+                    _snowmanApp.Project.SelectEntity(selectedEntity);
+                }
+            }
         }
     }
     
