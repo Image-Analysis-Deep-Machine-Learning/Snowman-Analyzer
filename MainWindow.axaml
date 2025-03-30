@@ -28,8 +28,8 @@
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>
             <MenuItem Header="_Tool">
-                <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/>
-                <MenuItem Header="_Point" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/>
+                <!-- <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/> -->
+                <!-- <MenuItem Header="_Point" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/> -->
             </MenuItem>
         </Menu>
         <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">

@@ -4,14 +4,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Snowman.Core;
 using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 
 public class TimelineRenderer : Control
 {
-    public TimelineDataContext RenderingContext { get; set; }
-    
     public static readonly StyledProperty<ICommand> PrevFrameCommandProperty =
         AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(PrevFrameCommand));
 
@@ -49,7 +48,7 @@ public class TimelineRenderer : Control
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            RenderingContext.MousePressed(e.GetPosition(this));
+            SnowmanApp.Instance.TimelineDataContext.MousePressed(e.GetPosition(this));
             if (UpdateFrameCommand.CanExecute(e))
                 UpdateFrameCommand.Execute(e);
             InvalidateVisual();
@@ -90,7 +89,7 @@ public class TimelineRenderer : Control
     public override void Render(DrawingContext context)
     {
         context.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, Bounds.Width, Bounds.Height));
-        RenderingContext.Render(context, Bounds);
+        SnowmanApp.Instance.TimelineDataContext.Render(context, Bounds);
         base.Render(context);
     }
 }

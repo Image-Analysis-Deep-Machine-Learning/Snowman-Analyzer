@@ -10,6 +10,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Snowman.Controls;
 using Snowman.Core;
+using Snowman.Core.Tools;
 
 namespace Snowman
 {
@@ -21,22 +22,15 @@ namespace Snowman
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-        public static Tool MoveTool => Tool.MoveTool;
-        public static Tool PointTool => Tool.PointTool;
-
-        /// <summary>
-        /// Core of the app containing all data and providing methods for their manipulation from the main GUI
-        /// </summary>
-        public SnowmanApp CoreApp { get; }
 
         public string CurrentStringPath
         {
-            get => CoreApp.Project.SelectedEntity is null ? string.Empty : CoreApp.Project.SelectedEntity.ScriptPath;
+            get => SnowmanApp.Instance.Project.SelectedEntity is null ? string.Empty : SnowmanApp.Instance.Project.SelectedEntity.ScriptPath;
 
             set
             {
-                if (CoreApp.Project.SelectedEntity is null) return;
-                CoreApp.Project.SelectedEntity.ScriptPath = value;
+                if (SnowmanApp.Instance.Project.SelectedEntity is null) return;
+                SnowmanApp.Instance.Project.SelectedEntity.ScriptPath = value;
                 OnPropertyChanged();
             }
         }
@@ -45,8 +39,8 @@ namespace Snowman
         {
             DataContext = this;
             InitializeComponent();
-            CoreApp = new SnowmanApp(this);
-            CoreApp.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
+            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
+            SnowmanApp.Instance.ActiveTool = new PointTool(1, default);
         }
 
         public async Task LoadVideoFile()
@@ -61,7 +55,7 @@ namespace Snowman
             if (!result.Any()) return;
 
             var ownerWindow = this;
-            await CoreApp.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
+            await SnowmanApp.Instance.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
             
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();
@@ -78,7 +72,7 @@ namespace Snowman
 
             if (!result.Any()) return;
             
-            CoreApp.Project.OpenXml(result.First());
+            SnowmanApp.Instance.Project.OpenXml(result.First());
             
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();
@@ -86,14 +80,14 @@ namespace Snowman
 
         public void PrevFrame()
         {
-            CoreApp.Project.PreviousFrame();
+            SnowmanApp.Instance.Project.PreviousFrame();
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();
         }
         
         public void NextFrame()
         {
-            CoreApp.Project.NextFrame();
+            SnowmanApp.Instance.Project.NextFrame();
             WorkingAreaRenderer.InvalidateVisual();
             TimelineRenderer.InvalidateVisual();
         }
@@ -104,13 +98,13 @@ namespace Snowman
             TimelineRenderer.InvalidateVisual();
         }
 
-        public void SetTool(Tool tool) => CoreApp.ActiveTool = tool;
+        public void SetTool(Tool tool) => SnowmanApp.Instance.ActiveTool = tool;
 
         public void Demo()
         {
             if (Design.IsDesignMode) return;
             
-            var output = CoreApp.Project.Demo();
+            var output = SnowmanApp.Instance.Project.Demo();
             DemoOutput.Text = output;
         }
     }

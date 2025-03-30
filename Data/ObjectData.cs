@@ -11,7 +11,7 @@ public interface IEntity
     public bool IsHit { get; set; }
     public string ScriptPath { get; set; }
     
-    public void EvaluateAndSetHit(Point position, WorkingAreaDataContext context);
+    public void EvaluateAndSetHit(Point position);
 
     public void Render(DrawingContext context, WorkingAreaDataContext workingAreaDataContext);
 }
@@ -31,15 +31,14 @@ public class PointEntity : IEntity
         Position = position;
     }
 
-    public void EvaluateAndSetHit(Point position, WorkingAreaDataContext context)
+    public void EvaluateAndSetHit(Point position)
     {
-        IsHit = position.DistanceTo(Position) <= Radius * context.CurrentZoom;
+        IsHit = position.DistanceTo(Position) <= Radius;
     }
 
     public void Render(DrawingContext context, WorkingAreaDataContext workingAreaDataContext)
     {
-        var transformedPoint = workingAreaDataContext.TransformToViewPort(Position);
         var brush = IsHit ? Brushes.Lime : Selected ? Brushes.DeepSkyBlue : Brushes.Red;
-        context.DrawEllipse(brush, _pen, transformedPoint, Radius * workingAreaDataContext.CurrentZoom, Radius * workingAreaDataContext.CurrentZoom);
+        context.DrawEllipse(brush, _pen, Position, Radius, Radius);
     }
 }

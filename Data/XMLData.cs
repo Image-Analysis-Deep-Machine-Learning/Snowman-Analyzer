@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
+using Avalonia.Media;
+using Snowman.Core;
+using Snowman.DataContexts;
 
 namespace Snowman.Data;
 
@@ -58,7 +61,7 @@ public class BoundingBoxes
 }
 
 [XmlRoot(ElementName="boundingbox")]
-public class BoundingBox
+public class BoundingBox : IRenderedAnnotation
 {
 	[XmlElement(ElementName="x_left_top")] public int XLeftTop { get; set; }
 
@@ -69,6 +72,11 @@ public class BoundingBox
 	[XmlElement(ElementName="height")] public int Height { get; set; }
 
 	[XmlElement(ElementName = "class_name")] public ClassName ClassName { get; set; } = new();
+	
+	public void Render(DrawingContext context)
+	{
+		AnnotationRenderer.RenderBoundingBox(this, context);
+	}
 }
 
 [XmlRoot(ElementName="class_name")]

@@ -1,23 +1,19 @@
 ﻿using System;
-using Avalonia;
-using Avalonia.Input;
 using Python.Runtime;
-using Snowman.Controls;
+using Snowman.Core.Tools;
 using Snowman.DataContexts;
 
 namespace Snowman.Core
 {
     public class SnowmanApp
     {
+        private static SnowmanApp? _instance;
         
-        private Tool _activeTool;
-        /// <summary>
-        /// Data context for WorkingArea component containing data and methods that this component uses
-        /// </summary>
+        private Tool _activeTool = null!;
+        
+        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
         public WorkingAreaDataContext WorkingAreaDataContext { get; set; }
-        
         public TimelineDataContext TimelineDataContext { get; set; }
-        
         public Project Project { get; set; }
 
         public Tool ActiveTool
@@ -26,18 +22,26 @@ namespace Snowman.Core
             set
             {
                 _activeTool = value;
-                WorkingAreaDataContext.RendererControl.Cursor = value.Cursor;
+                WorkingAreaDataContext.Control.Cursor = value.Cursor;
             }
         }
 
-        public SnowmanApp(MainWindow mainWindow)
+        private SnowmanApp()
         {
-            WorkingAreaDataContext = new WorkingAreaDataContext(this, mainWindow.WorkingAreaRenderer);
-            TimelineDataContext = new TimelineDataContext(this);
-            mainWindow.TimelineRenderer.RenderingContext = TimelineDataContext;
-            Project = new Project(this);
-            ActiveTool = Tool.MoveTool;
+            WorkingAreaDataContext = new WorkingAreaDataContext();
+            TimelineDataContext = new TimelineDataContext();
+            Project = new Project();
             InitializePythonExecutionEnvironment();
+        }
+
+        public ViewportVisuals GetViewportVisuals()
+        {
+            return new ViewportVisuals
+            {
+                CurrentImage = Project.CurrentFrame,
+                CurrentEntities = Project.Entities,
+                CurrentAnnotations = Project.GetCurrentBoundingBoxes()
+            };
         }
 
         private static void InitializePythonExecutionEnvironment()

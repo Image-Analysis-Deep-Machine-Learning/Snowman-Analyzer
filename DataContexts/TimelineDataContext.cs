@@ -10,13 +10,13 @@ using Snowman.Core;
 
 namespace Snowman.DataContexts;
 
-public class TimelineDataContext(SnowmanApp snowmanApp)
+public class TimelineDataContext()
 {
     private List<TimelineFrame>? _timelineFrames;
     
     private IImage GetFrameAtIndex(int index)
     {
-        return snowmanApp.Project.FrameAtIndex(index) ?? Project.PlaceHolderBitmap;
+        return SnowmanApp.Instance.Project.FrameAtIndex(index) ?? Project.PlaceHolderBitmap;
     }
 
     public void Render(DrawingContext context, Rect viewport)
@@ -29,8 +29,8 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
         // TODO: add support for a variable number of displayed frames (currently displays a fixed number of frames)
         const int displayedFrameCount = 7;
         
-        var currentIndex = snowmanApp.Project.CurrentFrameIndex;
-        var frameCount = snowmanApp.Project.FrameCount;
+        var currentIndex = SnowmanApp.Instance.Project.CurrentFrameIndex;
+        var frameCount = SnowmanApp.Instance.Project.FrameCount;
         var startFrameIndex = Math.Max(0, currentIndex - Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
         var endFrameIndex = Math.Min(frameCount - 1, currentIndex + Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
 
@@ -101,7 +101,7 @@ public class TimelineDataContext(SnowmanApp snowmanApp)
                      timelineFrame => clickPosition.X >= timelineFrame.Rect.X &&
                                       clickPosition.X <= timelineFrame.Rect.X + _timelineFrames[0].Rect.Width))
         {
-            snowmanApp.Project.CurrentFrameIndex = timelineFrame.Index;
+            SnowmanApp.Instance.Project.CurrentFrameIndex = timelineFrame.Index;
             break;
         }
     }

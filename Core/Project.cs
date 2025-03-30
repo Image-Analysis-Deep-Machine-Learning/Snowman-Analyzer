@@ -19,8 +19,6 @@ namespace Snowman.Core;
 public class Project {
     
     public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../placeholder.png");
-    
-    private SnowmanApp _snowmanApp;
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
@@ -56,9 +54,8 @@ public class Project {
         }
     }
 
-    public Project(SnowmanApp snowmanApp)
+    public Project()
     {
-        _snowmanApp = snowmanApp;
         XmlData = new XmlData();
         Entities = [];
         LoadCurrentFrame();
