@@ -25,21 +25,23 @@ public class TimelineDataContext
         
         using var state = context.PushClip(viewport);
         using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
+
+        const int borderThickness = 2;
+        const int frameWidth = 100;
+        var frameHeight = viewport.Height;
+        const int minSpace = 1;
+        var displayedFrameCount = Convert.ToInt32(Math.Floor(viewport.Width / (frameWidth + borderThickness + minSpace)));
         
-        // TODO: add support for a variable number of displayed frames (currently displays a fixed number of frames)
-        const int displayedFrameCount = 7;
+        // to always have an odd number of displayed frames so that the active frame is always in the middle of the timeline
+        if (displayedFrameCount % 2 == 0)
+            displayedFrameCount -= 1;
         
+        var space = (viewport.Width - displayedFrameCount * (frameWidth + borderThickness)) / (displayedFrameCount - 1);
+
         var currentIndex = SnowmanApp.Instance.Project.CurrentFrameIndex;
         var frameCount = SnowmanApp.Instance.Project.FrameCount;
         var startFrameIndex = Math.Max(0, currentIndex - Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
         var endFrameIndex = Math.Min(frameCount - 1, currentIndex + Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
-
-        const int borderThicknessSelected = 2;
-        const int borderThicknessUnselected = 2;
-        const int margin = borderThicknessSelected + borderThicknessUnselected + 1;
-        
-        var frameWidth = (viewport.Width - (displayedFrameCount - 1) * margin) / displayedFrameCount;
-        var frameHeight = viewport.Height;
         
         var displayIndex = Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)) - (currentIndex - startFrameIndex);
 
@@ -47,8 +49,8 @@ public class TimelineDataContext
         {
             var frame = GetFrameAtIndex(i);
             
-            var rectX = displayIndex * (frameWidth + margin);
-            var rect = new Rect(rectX, 0, frameWidth, frameHeight);
+            var rectX = displayIndex * (frameWidth + borderThickness + space) + borderThickness / 2f;
+            var rect = new Rect(rectX, 10, frameWidth, frameHeight - 10);
             
             var aspectRatio = frame.Size.Width / frame.Size.Height;
             if (frameWidth / frameHeight > aspectRatio)
@@ -68,14 +70,16 @@ public class TimelineDataContext
             _timelineFrames.Add(new TimelineFrame(rect, i));
 
             IBrush coloredBrush = i == currentIndex
-                ? new SolidColorBrush(Color.Parse("#0078D4"))
-                : Brushes.Gray;
+                ? new SolidColorBrush(Color.Parse("#0078D4")) 
+                : new SolidColorBrush(Color.Parse("#4b4c4e"));
             
             context.DrawRectangle(
-                i == currentIndex
-                    ? new Pen(coloredBrush, borderThicknessSelected)
-                    : new Pen(coloredBrush, borderThicknessUnselected),
+                new Pen(coloredBrush, borderThickness),
                 rect);
+
+            var textRect = new Rect(rect.X, rect.Y - 20, rect.Width, 20);
+            context.FillRectangle(coloredBrush, textRect);
+            context.DrawRectangle(new Pen(coloredBrush, borderThickness), textRect);
             
             var frameNumText = new FormattedText(
                 (i + 1) + "/" + frameCount,
@@ -83,9 +87,9 @@ public class TimelineDataContext
                 FlowDirection.LeftToRight,
                 new Typeface("Arial"),
                 12,
-                coloredBrush);
+                Brushes.White);
 
-            context.DrawText(frameNumText, new Point(rect.X + (frameWidth - frameNumText.Width) / 2, rect.Y - 20));
+            context.DrawText(frameNumText, new Point(rect.X + (rect.Width - frameNumText.Width) / 2, rect.Y - 15));
         }
     }
 
