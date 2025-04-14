@@ -1,24 +1,20 @@
 ﻿using System;
-using Avalonia;
-using Avalonia.Input;
 using Python.Runtime;
-using Snowman.Controls;
+using Snowman.Core.Tools;
 using Snowman.DataContexts;
 
 namespace Snowman.Core
 {
     public class SnowmanApp
     {
+        private static SnowmanApp? _instance;
         
-        private Tool _activeTool;
-        /// <summary>
-        /// Data context for WorkingArea component containing data and methods that this component uses
-        /// </summary>
-        public WorkingAreaDataContext WorkingAreaDataContext { get; set; }
+        private Tool _activeTool = null!;
         
-        public TimelineDataContext TimelineDataContext { get; set; }
-        
-        public Project Project { get; set; }
+        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
+        public CanvasDataContext CanvasDataContext { get; }
+        public TimelineDataContext TimelineDataContext { get; }
+        public Project Project { get; }
 
         public Tool ActiveTool
         {
@@ -26,25 +22,33 @@ namespace Snowman.Core
             set
             {
                 _activeTool = value;
-                WorkingAreaDataContext.RendererControl.Cursor = value.Cursor;
+                CanvasDataContext.ParentRendererControl.Cursor = value.Cursor;
             }
         }
 
-        public SnowmanApp(MainWindow mainWindow)
+        private SnowmanApp()
         {
-            WorkingAreaDataContext = new WorkingAreaDataContext(this, mainWindow.WorkingAreaRenderer);
-            TimelineDataContext = new TimelineDataContext(this);
-            mainWindow.TimelineRenderer.RenderingContext = TimelineDataContext;
-            Project = new Project(this);
-            ActiveTool = Tool.MoveTool;
+            CanvasDataContext = new CanvasDataContext();
+            TimelineDataContext = new TimelineDataContext();
+            Project = new Project();
             InitializePythonExecutionEnvironment();
+        }
+
+        public ObjectsToRender GetViewportVisuals()
+        {
+            return new ObjectsToRender
+            {
+                CurrentImage = Project.CurrentFrame,
+                CurrentEntities = Project.Entities,
+                CurrentAnnotations = Project.GetCurrentBoundingBoxes()
+            };
         }
 
         private static void InitializePythonExecutionEnvironment()
         {
             if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
             
-            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll");
+            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll"); // TODO: check env for Mac/Linux so it actually works
             PythonEngine.Initialize();
             PythonEngine.BeginAllowThreads();
         }
