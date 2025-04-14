@@ -28,13 +28,15 @@
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>
             <MenuItem Header="_Tool">
-                <!-- <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/> -->
-                <!-- <MenuItem Header="_Point" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/> -->
+                <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/>
+                <MenuItem Header="_Entity Edit" Command="{Binding SetTool}" CommandParameter="{Binding EntityEditTool}"/>
+                <MenuItem Header="_Point Create" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/>
+                <MenuItem Header="_Rect Create" Command="{Binding SetTool}" CommandParameter="{Binding RectTool}"/>
             </MenuItem>
         </Menu>
         <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">
             <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
-                <control:WorkingAreaRenderer Name="WorkingAreaRenderer"/>
+                <control:CanvasControl Name="Canvas"/>
             </Border>
             <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto" Margin="0, 5, 0, 0">
                 <Button Grid.Column="0" Command="{Binding PrevFrame}">
@@ -44,11 +46,11 @@
                     </StackPanel>
                 </Button>
                 <Border Grid.Column="1" Margin="5, 0, 5, 0">
-                    <control:TimelineRenderer
+                    <control:TimelineControl
                         PrevFrameCommand="{Binding PrevFrame}"
                         NextFrameCommand="{Binding NextFrame}"
                         UpdateFrameCommand="{Binding UpdateFrame}"
-                        Name="TimelineRenderer"/>
+                        Name="Timeline"/>
                 </Border>
                 <Button Grid.Column="2" Command="{Binding NextFrame}">
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">

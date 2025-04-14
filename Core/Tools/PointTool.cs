@@ -1,21 +1,22 @@
-﻿using Avalonia;
+﻿using System.Linq;
+using Avalonia;
 using Avalonia.Input;
-using Snowman.Data;
-using Snowman.DataContexts;
+using Snowman.Core.Entities;
 
 namespace Snowman.Core.Tools;
 
 /// <summary>
-/// Tool for adding point entities to the project. It can 
+/// Tool for adding point entities to the project. Points are created with click and release without moving the cursor.
+/// It can also edit existing points by selecting or moving them.
 /// </summary>
-public class PointTool : MoveTool
+public class PointTool : EntityEditTool<PointEntity>
 {
-    public PointTool(double defaultZoom, Vector defaultMovementDelta) : base(defaultZoom, defaultMovementDelta)
+    public PointTool()
     {
         Cursor = new Cursor(StandardCursorType.Arrow);
     }
 
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e, WorkingAreaDataContext workingAreaDataContext)
+    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
     {
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
@@ -23,38 +24,21 @@ public class PointTool : MoveTool
             
             if (e.InitialPressMouseButton == MouseButton.Left)
             {
-                IEntity? selectedEntity = null;
-                var pointerPosition = e.GetPosition((Visual?)sender).Transform(workingAreaDataContext.GetTransformationMatrix().Invert());
+                Entity? selectedEntity = null;
+                var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
                     
-                foreach (var entity in SnowmanApp.Instance.Project.Entities)
+                foreach (var entity in SnowmanApp.Instance.Project.Entities.OfType<PointEntity>())
                 {
-                    entity.EvaluateAndSetHit(pointerPosition);
-                        
-                    if (entity.IsHit) selectedEntity = entity;
+                    if (entity.EvaluateHit(pointerPosition)) selectedEntity = entity;
                 }
 
                 if (selectedEntity == null)
                 {
-                    SnowmanApp.Instance.Project.AddEntity(new PointEntity(pointerPosition));
+                    SnowmanApp.Instance.Project.AddEntity(new PointEntity(pointerPosition) {Selected = true});
                 }
-
-                else
-                {
-                    selectedEntity.Selected = true;
-                }   
             }
         }
         
-        base.PointerReleasedAction(sender, e, workingAreaDataContext);
-    }
-
-    public override void PointerMovedAction(object? sender, PointerEventArgs e, WorkingAreaDataContext workingAreaDataContext)
-    {
-        base.PointerMovedAction(sender, e, workingAreaDataContext);
-        
-        foreach (var entity in SnowmanApp.Instance.Project.Entities)
-        {
-            entity.EvaluateAndSetHit(e.GetPosition((Visual?)sender).Transform(workingAreaDataContext.GetTransformationMatrix().Invert()));
-        }
+        base.PointerReleasedAction(sender, e);
     }
 }

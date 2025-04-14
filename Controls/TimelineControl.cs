@@ -9,10 +9,10 @@ using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 
-public class TimelineRenderer : Control
+public class TimelineControl : Control
 {
     public static readonly StyledProperty<ICommand> PrevFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(PrevFrameCommand));
+        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(PrevFrameCommand));
 
     public ICommand PrevFrameCommand
     {
@@ -21,7 +21,7 @@ public class TimelineRenderer : Control
     }
 
     public static readonly StyledProperty<ICommand> NextFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(NextFrameCommand));
+        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(NextFrameCommand));
 
     public ICommand NextFrameCommand
     {
@@ -30,7 +30,7 @@ public class TimelineRenderer : Control
     }
     
     public static readonly StyledProperty<ICommand> UpdateFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineRenderer, ICommand>(nameof(UpdateFrameCommand));
+        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(UpdateFrameCommand));
 
     public ICommand UpdateFrameCommand
     {
@@ -38,7 +38,7 @@ public class TimelineRenderer : Control
         set => SetValue(UpdateFrameCommandProperty, value);
     }
     
-    public TimelineRenderer()
+    public TimelineControl()
     {
         PointerWheelChanged += OnPointerWheelChanged;
         PointerPressed += OnPointerPressed;

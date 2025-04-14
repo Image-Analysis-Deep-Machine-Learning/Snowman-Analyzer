@@ -11,6 +11,7 @@ using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
 using Python.Runtime;
+using Snowman.Core.Entities;
 using Snowman.Data;
 using Snowman.VideoLoading;
 
@@ -18,11 +19,11 @@ namespace Snowman.Core;
 
 public class Project {
     
-    public static readonly Bitmap PlaceHolderBitmap = new Bitmap("../../../placeholder.png");
+    public static readonly Bitmap PlaceHolderBitmap = new("../../../placeholder.png");
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
-    private IEntity? _selectedEntity;
+    private Entity? _selectedEntity;
     public event EventHandler? SelectedEntityChanged;
 
     private XmlData XmlData { get; set; }
@@ -41,9 +42,9 @@ public class Project {
         }
     }
     
-    public List<IEntity> Entities { get; set; }
+    public List<Entity> Entities { get; set; }
 
-    public IEntity? SelectedEntity
+    public Entity? SelectedEntity
     {
         get => _selectedEntity;
         
@@ -142,7 +143,7 @@ public class Project {
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
-    public string RunScript(IEntity entity)
+    public string RunScript(Entity entity)
     {
         var output = "Running script...\n";
         string script;
@@ -186,7 +187,7 @@ public class Project {
     {
         var output = new StringBuilder();
         
-        foreach (var entity in Entities)
+        foreach (var entity in Entities) // TODO: only run on top level entities (entities that are not children)
         {
             output.AppendLine(RunScript(entity));
         }
@@ -194,9 +195,24 @@ public class Project {
         return output.ToString();
     }
 
-    public void AddEntity(IEntity entity)
+    public void AddEntity(Entity entity)
     {
         Entities.Add(entity);
+
+        foreach (var child in entity.Children)
+        {
+            AddEntity(child);
+        }
+    }
+
+    public void RemoveEntity(Entity entity)
+    {
+        Entities.Remove(entity);
+        
+        foreach (var child in entity.Children)
+        {
+            Entities.Remove(child);
+        }
     }
 
     public void DeselectAllEntities()
@@ -209,7 +225,15 @@ public class Project {
         SelectedEntity = null; // create dummy entity
     }
 
-    public void SelectEntity(IEntity selectedEntity)
+    public void ResetIsHitOnAllEntities()
+    {
+        foreach (var entity in Entities)
+        {
+            entity.IsHit = false;
+        }
+    }
+
+    public void SelectEntity(Entity selectedEntity)
     {
         selectedEntity.Selected = true;
         SelectedEntity = selectedEntity;

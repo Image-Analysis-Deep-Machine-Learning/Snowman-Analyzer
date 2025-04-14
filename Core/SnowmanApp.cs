@@ -12,9 +12,9 @@ namespace Snowman.Core
         private Tool _activeTool = null!;
         
         public static SnowmanApp Instance => _instance ??= new SnowmanApp();
-        public WorkingAreaDataContext WorkingAreaDataContext { get; set; }
-        public TimelineDataContext TimelineDataContext { get; set; }
-        public Project Project { get; set; }
+        public CanvasDataContext CanvasDataContext { get; }
+        public TimelineDataContext TimelineDataContext { get; }
+        public Project Project { get; }
 
         public Tool ActiveTool
         {
@@ -22,21 +22,21 @@ namespace Snowman.Core
             set
             {
                 _activeTool = value;
-                WorkingAreaDataContext.Control.Cursor = value.Cursor;
+                CanvasDataContext.ParentRendererControl.Cursor = value.Cursor;
             }
         }
 
         private SnowmanApp()
         {
-            WorkingAreaDataContext = new WorkingAreaDataContext();
+            CanvasDataContext = new CanvasDataContext();
             TimelineDataContext = new TimelineDataContext();
             Project = new Project();
             InitializePythonExecutionEnvironment();
         }
 
-        public ViewportVisuals GetViewportVisuals()
+        public ObjectsToRender GetViewportVisuals()
         {
-            return new ViewportVisuals
+            return new ObjectsToRender
             {
                 CurrentImage = Project.CurrentFrame,
                 CurrentEntities = Project.Entities,
@@ -48,7 +48,7 @@ namespace Snowman.Core
         {
             if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
             
-            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll");
+            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll"); // TODO: check env for Mac/Linux so it actually works
             PythonEngine.Initialize();
             PythonEngine.BeginAllowThreads();
         }

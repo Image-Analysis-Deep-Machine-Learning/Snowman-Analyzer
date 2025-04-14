@@ -1,15 +1,11 @@
-using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using Snowman.Controls;
 using Snowman.Core;
+using Snowman.Core.Entities;
 using Snowman.Core.Tools;
 
 namespace Snowman
@@ -18,10 +14,10 @@ namespace Snowman
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        public static ViewportMoveTool MoveTool { get; } = new();
+        public static EntityEditTool<Entity> EntityEditTool { get; } = new();
+        public static PointTool PointTool { get; } = new();
+        public static RectTool RectTool { get; } = new();
 
         public string CurrentStringPath
         {
@@ -40,8 +36,10 @@ namespace Snowman
             DataContext = this;
             InitializeComponent();
             SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
-            SnowmanApp.Instance.ActiveTool = new PointTool(1, default);
+            SnowmanApp.Instance.ActiveTool = MoveTool;
         }
+
+        public void SetTool(Tool tool) => SnowmanApp.Instance.ActiveTool = tool;
 
         public async Task LoadVideoFile()
         {
@@ -57,8 +55,8 @@ namespace Snowman
             var ownerWindow = this;
             await SnowmanApp.Instance.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
             
-            WorkingAreaRenderer.InvalidateVisual();
-            TimelineRenderer.InvalidateVisual();
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
         }
 
         public void OpenXml()
@@ -74,31 +72,29 @@ namespace Snowman
             
             SnowmanApp.Instance.Project.OpenXml(result.First());
             
-            WorkingAreaRenderer.InvalidateVisual();
-            TimelineRenderer.InvalidateVisual();
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
         }
 
         public void PrevFrame()
         {
             SnowmanApp.Instance.Project.PreviousFrame();
-            WorkingAreaRenderer.InvalidateVisual();
-            TimelineRenderer.InvalidateVisual();
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
         }
         
         public void NextFrame()
         {
             SnowmanApp.Instance.Project.NextFrame();
-            WorkingAreaRenderer.InvalidateVisual();
-            TimelineRenderer.InvalidateVisual();
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
         }
 
         public void UpdateFrame()
         {
-            WorkingAreaRenderer.InvalidateVisual();
-            TimelineRenderer.InvalidateVisual();
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
         }
-
-        public void SetTool(Tool tool) => SnowmanApp.Instance.ActiveTool = tool;
 
         public void Demo()
         {
@@ -106,6 +102,11 @@ namespace Snowman
             
             var output = SnowmanApp.Instance.Project.Demo();
             DemoOutput.Text = output;
+        }
+                
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

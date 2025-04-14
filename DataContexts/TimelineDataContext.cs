@@ -10,11 +10,11 @@ using Snowman.Core;
 
 namespace Snowman.DataContexts;
 
-public class TimelineDataContext()
+public class TimelineDataContext
 {
     private List<TimelineFrame>? _timelineFrames;
     
-    private IImage GetFrameAtIndex(int index)
+    private static IImage GetFrameAtIndex(int index)
     {
         return SnowmanApp.Instance.Project.FrameAtIndex(index) ?? Project.PlaceHolderBitmap;
     }

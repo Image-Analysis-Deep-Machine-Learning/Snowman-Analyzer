@@ -5,9 +5,10 @@ using Snowman.DataContexts;
 
 namespace Snowman.Core;
 
-public class AnnotationRenderer
+public static class AnnotationRenderer
 {
-    private static readonly Pen BoundingBoxPen = new Pen(Brushes.Cyan, 1);
+    private static readonly Pen BoundingBoxPen = new(Brushes.Cyan);
+    
     public static void RenderBoundingBox(BoundingBox boundingBox, DrawingContext drawingContext)
     {
         var boundingBoxRectangle = new Rect(boundingBox.XLeftTop, boundingBox.YLeftTop, boundingBox.Width, boundingBox.Height);
