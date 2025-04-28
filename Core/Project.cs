@@ -20,10 +20,16 @@ namespace Snowman.Core;
 public class Project {
     
     public static readonly Bitmap PlaceHolderBitmap = new("../../../placeholder.png");
+    // clear image cache every X seconds to free memory
+    private const int CachePurgeInterval = 2;
+    
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
     private Entity? _selectedEntity;
+    private Bitmap?[] _cachedFrames;
+    private Bitmap?[] _cachedThumbnails;
+    private DateTime _lastCachePurgeTime;
     public event EventHandler? SelectedEntityChanged;
 
     private XmlData XmlData { get; set; }
@@ -59,6 +65,9 @@ public class Project {
     {
         XmlData = new XmlData();
         Entities = [];
+        _cachedFrames = new  Bitmap[1];
+        _cachedThumbnails = new  Bitmap[1];
+        _lastCachePurgeTime = DateTime.Now;
         LoadCurrentFrame();
         FrameCount = 1;
     }
@@ -67,14 +76,34 @@ public class Project {
     {
         CurrentFrame = FrameAtIndex(_currentFrameIndex);
     }
+
+    public Bitmap? ThumbnailAtIndex(int index)
+    {
+        if (_cachedThumbnails[index] is not null)  return _cachedThumbnails[index];
+
+        var frame = FrameAtIndex(index);
+        var thumbnail = frame.CreateScaledBitmap(new PixelSize(100, (int)(100 / frame.Size.AspectRatio)), BitmapInterpolationMode.LowQuality);
+        _cachedThumbnails[index] = thumbnail;
+        return thumbnail;
+    }
     
+    /// <summary>
+    /// Returns current frame at given index. Either from cache if it's cached or loads the corresponding frame, caches it and returns.
+    /// The cache is regularly cleared to avoid large images taking up precious space in RAM
+    /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory after regular cache clearing. 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns>Current hrame at given index</returns>
     public Bitmap? FrameAtIndex(int index)
     {
+        ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization
         if (XmlData.Images.ImageList.Count == 0)
             return PlaceHolderBitmap;
 
         if (index >= XmlData.Images.ImageList.Count)
             return null;
+        
+        if (_cachedFrames[index] is not null) return  _cachedFrames[index];
         
         var imageFrame = XmlData.Images.ImageList[index];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
@@ -82,22 +111,50 @@ public class Project {
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
         {
             case ".tiff":
-                // TODO: fix: .tiff images are flipped vertically
-                var tiff = Tiff.Open(fileName, "r");
+            {
+                using var tiff = Tiff.Open(fileName, "r");
                 var tiffRgbaImage = TiffRgbaImage.Create(tiff, false, out _);
-                var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
-                tiffRgbaImage.GetRaster(data, 0, tiffRgbaImage.Width, tiffRgbaImage.Height);
-                var bitmap = new WriteableBitmap(new PixelSize(tiffRgbaImage.Width, tiffRgbaImage.Height), new Vector(96, 96), PixelFormats.Rgba8888);
+                //var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
+                var raster = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
+                tiff.ReadRGBAImageOriented(tiffRgbaImage.Width, tiffRgbaImage.Height, raster, Orientation.TOPLEFT);
                 
-                using (var frameBuffer = bitmap.Lock())
+                // Pin the array in memory
+                var handle = GCHandle.Alloc(raster, GCHandleType.Pinned);
+                try
                 {
-                    Marshal.Copy(data, 0, frameBuffer.Address, data.Length);
+                    var ptr = handle.AddrOfPinnedObject();
+                    var stride = tiffRgbaImage.Width * sizeof(int); // 4 bytes per pixel (RGBA8888)
+
+                    var immutableBitmap = new Bitmap(
+                        PixelFormats.Rgba8888,
+                        AlphaFormat.Unpremul,
+                        ptr,
+                        new PixelSize(tiffRgbaImage.Width, tiffRgbaImage.Height),
+                        new Vector(96, 96), // typical DPI
+                        stride
+                    );
+
+                    _cachedFrames[index] = immutableBitmap;
+                    return immutableBitmap;
                 }
-                
-                return bitmap;
+                finally
+                {
+                    handle.Free();
+                }
+            }
             default:
-                return new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
+                var bitmap = new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
+                _cachedFrames[index] = bitmap;
+                return bitmap;
         }
+    }
+
+    private void ClearCache()
+    {
+        if (_lastCachePurgeTime.AddSeconds(CachePurgeInterval) > DateTime.Now) return;
+        
+        _lastCachePurgeTime = DateTime.Now;
+        ResetFrameCache();
     }
 
     public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
@@ -136,7 +193,15 @@ public class Project {
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
         FrameCount = XmlData.Images.ImageList.Count;
+        _lastCachePurgeTime = DateTime.Now;
+        ResetFrameCache();
         LoadCurrentFrame();
+    }
+
+    private void ResetFrameCache()
+    {
+        _cachedFrames = new Bitmap[FrameCount];
+        _cachedThumbnails = new Bitmap[FrameCount];
     }
 
     public void NextFrame() => CurrentFrameIndex++;

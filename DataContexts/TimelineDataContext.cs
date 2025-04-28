@@ -5,7 +5,6 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Snowman.Controls;
 using Snowman.Core;
 
 namespace Snowman.DataContexts;
@@ -16,7 +15,7 @@ public class TimelineDataContext
     
     private static IImage GetFrameAtIndex(int index)
     {
-        return SnowmanApp.Instance.Project.FrameAtIndex(index) ?? Project.PlaceHolderBitmap;
+        return SnowmanApp.Instance.Project.ThumbnailAtIndex(index) ?? Project.PlaceHolderBitmap;
     }
 
     public void Render(DrawingContext context, Rect viewport)
