@@ -43,34 +43,34 @@ namespace Snowman
 
         public async Task LoadVideoFile()
         {
-            var result = StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var filePickerResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = [AdditionalFilePickerFileTypes.Video],
                 Title = "Open Video File"
-            }).Result;
+            });
 
-            if (!result.Any()) return;
+            if (!filePickerResult.Any()) return;
 
             var ownerWindow = this;
-            await SnowmanApp.Instance.Project.LoadVideoFile(result[0], ownerWindow, ProgressBar, ProgressBarText);
+            await SnowmanApp.Instance.Project.LoadVideoFile(filePickerResult[0], ownerWindow, ProgressBar, ProgressBarText);
             
             Canvas.InvalidateVisual();
             Timeline.InvalidateVisual();
         }
 
-        public void OpenXml()
+        public async Task OpenXml()
         {
-            var result = StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var filePickerResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
                 Title = "Open XML File"
-            }).Result;
+            });
 
-            if (!result.Any()) return;
+            if (!filePickerResult.Any()) return;
             
-            SnowmanApp.Instance.Project.OpenXml(result.First());
+            await SnowmanApp.Instance.Project.OpenXml(filePickerResult[0]);
             
             Canvas.InvalidateVisual();
             Timeline.InvalidateVisual();

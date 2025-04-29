@@ -54,7 +54,7 @@ public class Project {
     {
         get => _selectedEntity;
         
-        set
+        private set
         {
             _selectedEntity = value;
             SelectedEntityChanged?.Invoke(this, EventArgs.Empty);
@@ -77,9 +77,11 @@ public class Project {
         CurrentFrame = FrameAtIndex(_currentFrameIndex);
     }
 
-    public Bitmap? ThumbnailAtIndex(int index)
+    public Bitmap ThumbnailAtIndex(int index)
     {
-        if (_cachedThumbnails[index] is not null)  return _cachedThumbnails[index];
+        var cachedThumbnail = _cachedThumbnails[index];
+        
+        if (cachedThumbnail is not null) return cachedThumbnail;
 
         var frame = FrameAtIndex(index);
         var thumbnail = frame.CreateScaledBitmap(new PixelSize(100, (int)(100 / frame.Size.AspectRatio)), BitmapInterpolationMode.LowQuality);
@@ -93,21 +95,22 @@ public class Project {
     /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory after regular cache clearing. 
     /// </summary>
     /// <param name="index"></param>
-    /// <returns>Current hrame at given index</returns>
-    public Bitmap? FrameAtIndex(int index)
+    /// <returns>Current frame at given index</returns>
+    private Bitmap FrameAtIndex(int index)
     {
         ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization
         if (XmlData.Images.ImageList.Count == 0)
             return PlaceHolderBitmap;
 
-        if (index >= XmlData.Images.ImageList.Count)
-            return null;
+        // do no return null, rather throw an exception as this should be checked by other methods, and they should not rely on null values
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, XmlData.Images.ImageList.Count);
+        var cachedFrame = _cachedFrames[index];
         
-        if (_cachedFrames[index] is not null) return  _cachedFrames[index];
+        if (cachedFrame is not null) return cachedFrame;
         
         var imageFrame = XmlData.Images.ImageList[index];
-        var fileName = Path.Combine(_baseFolder, imageFrame.Src);
-        
+        var fileName = Path.Combine(_baseFolder, imageFrame.Src.Replace("\\", "/")); // ALL paths must have '/' as a directory separator, while Windows supports '\', macOS and probably Linux does not
+
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
         {
             case ".tiff":
@@ -186,10 +189,14 @@ public class Project {
         }
     }
 
-    public void OpenXml(IStorageFile file)
+    public async Task OpenXml(IStorageFile file)
     {
-        using var reader = new StreamReader(file.OpenReadAsync().Result);
-        XmlData = XmlData.Deserialize(reader.ReadToEnd()) ?? XmlData;
+        var fileStream = await file.OpenReadAsync();
+        using var reader = new StreamReader(fileStream);
+        
+        var fileContent = await reader.ReadToEndAsync();
+        
+        XmlData = XmlData.Deserialize(fileContent) ?? XmlData;
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
         FrameCount = XmlData.Images.ImageList.Count;
@@ -208,7 +215,7 @@ public class Project {
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
-    public string RunScript(Entity entity)
+    private string RunScript(Entity entity)
     {
         var output = "Running script...\n";
         string script;
