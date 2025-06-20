@@ -65,7 +65,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 
                 if (hitEntityCandidate is not null)
                 {
-                    hitEntityCandidate.Selected = true;
+                    SnowmanApp.Instance.Project.SelectEntity(hitEntityCandidate);
                 }
             }
         }

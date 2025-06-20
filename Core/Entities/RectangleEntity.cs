@@ -10,6 +10,17 @@ public class RectangleEntity : Entity
     private static readonly Brush FillBrush = new SolidColorBrush(Colors.Red, 0.2);
     private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
     public Rect Rectangle { get; set; }
+
+    public override bool Selected
+    {
+        get => base.Selected;
+
+        set
+        {
+            base.Selected = value;
+            Children.ForEach(c => c._selected = value);
+        }
+    }
     
     public RectangleEntity(Point position1, Point position2)
     {

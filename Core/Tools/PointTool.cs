@@ -34,7 +34,9 @@ public class PointTool : EntityEditTool<PointEntity>
 
                 if (selectedEntity == null)
                 {
-                    SnowmanApp.Instance.Project.AddEntity(new PointEntity(pointerPosition) {Selected = true});
+                    var newEntity = new PointEntity(pointerPosition);
+                    SnowmanApp.Instance.Project.AddEntity(newEntity);
+                    SnowmanApp.Instance.Project.SelectEntity(newEntity);
                 }
             }
         }

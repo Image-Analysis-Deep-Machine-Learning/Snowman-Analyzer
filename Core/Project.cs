@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -222,7 +223,7 @@ public class Project {
         
         try
         {
-            script = File.ReadAllText(entity.ScriptPath);
+            script = File.ReadAllText(entity.ScriptPath.Replace("\"", ""));
         }
 
         catch (Exception e)
@@ -259,7 +260,7 @@ public class Project {
     {
         var output = new StringBuilder();
         
-        foreach (var entity in Entities) // TODO: only run on top level entities (entities that are not children)
+        foreach (var entity in Entities.Where(e => e.Parent is null))
         {
             output.AppendLine(RunScript(entity));
         }
