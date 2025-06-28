@@ -68,17 +68,9 @@ public class FrameTimelineDataContext
             
             context.DrawImage(frame, new Rect(0, 0, frame.Size.Width, frame.Size.Height), rect);
             _timelineFrames.Add(new TimelineFrame(rect, i));
-
-            var theme = Application.Current?.ActualThemeVariant;
-            var brush = new SolidColorBrush(Color.Parse("#0078D4"));
             
-            if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
-            {
-                brush = new SolidColorBrush(accent);
-            }
-            
-            IBrush coloredBrush = i == currentIndex
-                ? brush
+            var coloredBrush = i == currentIndex
+                ? MainWindow.SystemColorBrush
                 : new SolidColorBrush(Color.Parse("#4b4c4e"));
             
             context.DrawRectangle(
@@ -90,7 +82,7 @@ public class FrameTimelineDataContext
             context.DrawRectangle(new Pen(coloredBrush, borderThickness), textRect);
             
             var frameNumText = new FormattedText(
-                (i + 1) + "/" + frameCount,
+                i + 1 + "/" + frameCount,
                 CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
                 new Typeface("Arial"),

@@ -24,7 +24,7 @@ namespace Snowman
         public static PointTool PointTool { get; } = new();
         public static RectTool RectTool { get; } = new();
 
-        private readonly IBrush _systemColorBrush;
+        public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
         private readonly IBrush _brush;
 
         public string CurrentStringPath
@@ -47,11 +47,10 @@ namespace Snowman
             SnowmanApp.Instance.ActiveTool = MoveTool;
             
             var theme = Application.Current?.ActualThemeVariant;
-            _systemColorBrush = new SolidColorBrush(Color.Parse("#0078D4"));
             
             if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
             {
-                _systemColorBrush = new SolidColorBrush(accent);
+                SystemColorBrush = new SolidColorBrush(accent);
             }
 
             _brush = new SolidColorBrush(Colors.White);
@@ -122,7 +121,7 @@ namespace Snowman
                 new([10, 11, 12, 13, 14, 15], 0, 0, null),
                 new([0, 1, 2], 0, 0, null),
                 new([20, 21, 22, 30, 31, 32, 33], 0, 0, null),
-                new([145, 146, 147, 148, 149], 0, 0, null)
+                new([145, 146, 147, 148, 149, 150], 0, 0, null)
             ];
             SnowmanApp.Instance.EventTimelineDataContext.Events = outputEvents;
             EventTimeline.InvalidateVisual();
@@ -139,7 +138,7 @@ namespace Snowman
         private void ToggleFrameTimelineButton_OnClick(object? sender, RoutedEventArgs e)
         {
             FrameTimelineGrid.IsVisible = true;
-            FrameTimelinePath.Fill = _systemColorBrush;
+            FrameTimelinePath.Fill = SystemColorBrush;
             EventTimelineBorder.IsVisible = false;
             EventTimelinePath.Fill = _brush;
         }
@@ -147,7 +146,7 @@ namespace Snowman
         private void ToggleEventTimelineButton_OnClick(object? sender, RoutedEventArgs e)
         {
             EventTimelineBorder.IsVisible = true;
-            EventTimelinePath.Fill = _systemColorBrush;
+            EventTimelinePath.Fill = SystemColorBrush;
             FrameTimelineGrid.IsVisible = false;
             FrameTimelinePath.Fill = _brush;
         }

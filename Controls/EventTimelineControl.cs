@@ -19,6 +19,7 @@ public class EventTimelineControl : Control
 
     public override void Render(DrawingContext context)
     {
+        context.FillRectangle(Brushes.Transparent, new Rect(0, 0, Bounds.Width, Bounds.Height));
         SnowmanApp.Instance.EventTimelineDataContext.Render(context);
         base.Render(context);
     }

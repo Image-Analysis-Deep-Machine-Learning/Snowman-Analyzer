@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Controls;
@@ -20,8 +21,8 @@ public class EventTimelineDataContext
     private double _lastPointerX;
     private bool _isDragging;
     
-    private const double EventPinHeight = 20;
-    private const double EventPinWidth = 2;
+    private const double EventPinHeight = 28;
+    private const double EventPinWidth = 28;
     private const double BaseHeight = 5;
 
     public void Render(DrawingContext context)
@@ -37,15 +38,41 @@ public class EventTimelineDataContext
         // event pins
         foreach (var eventData in Events)
         {
-            foreach (var frameIndex in eventData.FrameIndices)
+            for (var i = 0; i < eventData.FrameIndices.Count; i++)
             {
+                var frameIndex = eventData.FrameIndices[i];
                 var norm = (double)frameIndex / totalFrames;
                 var x = norm * bounds.Width * ZoomScale - Offset;
                 
+                var normPrev = (double)(frameIndex - 1) / totalFrames;
+                var xPrev = normPrev * bounds.Width * ZoomScale - Offset;
+                
                 if (x < 0 || x > bounds.Width) continue;
 
-                var rect = new Rect(x, lineY - EventPinHeight / 2, EventPinWidth, EventPinHeight);
-                context.DrawRectangle(new SolidColorBrush(Colors.Chartreuse), null, rect);
+                // only use the pin icon for the first event of the sequence (relating to an object with the same track ID)
+                // draw highlighted lines for the following events
+                // TODO: fix issues with highlighted lines when moving the timeline
+                if (i == 0)
+                {
+                    var resource = Application.Current?.FindResource("EventPinIcon");
+                    if (resource is not PathGeometry geometry) continue;
+
+                    var scaleFactor = Math.Min(EventPinWidth / geometry.Bounds.Width, EventPinHeight / geometry.Bounds.Height);
+                    var scale = Matrix.CreateScale(scaleFactor, scaleFactor);
+                    var scaledSize = geometry.Bounds.Size * scaleFactor;
+                
+                    var translate = Matrix.CreateTranslation(x - scaledSize.Width, lineY - scaledSize.Height * (4.0 / 5.0));
+                    var transform = scale * translate;
+                
+                    using (context.PushTransform(transform))
+                    {
+                        context.DrawGeometry(MainWindow.SystemColorBrush, null, geometry);
+                    }
+                }
+                else
+                {
+                    context.DrawLine(new Pen(MainWindow.SystemColorBrush, BaseHeight), new Point(xPrev, lineY), new Point(x, lineY));
+                }
             }
         }
     }
