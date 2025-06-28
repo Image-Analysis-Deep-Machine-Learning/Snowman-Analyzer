@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core;
 
 namespace Snowman.DataContexts;
 
-public class TimelineDataContext
+public class FrameTimelineDataContext
 {
     private List<TimelineFrame>? _timelineFrames;
     
@@ -68,8 +69,16 @@ public class TimelineDataContext
             context.DrawImage(frame, new Rect(0, 0, frame.Size.Width, frame.Size.Height), rect);
             _timelineFrames.Add(new TimelineFrame(rect, i));
 
+            var theme = Application.Current?.ActualThemeVariant;
+            var brush = new SolidColorBrush(Color.Parse("#0078D4"));
+            
+            if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
+            {
+                brush = new SolidColorBrush(accent);
+            }
+            
             IBrush coloredBrush = i == currentIndex
-                ? new SolidColorBrush(Color.Parse("#0078D4")) 
+                ? brush
                 : new SolidColorBrush(Color.Parse("#4b4c4e"));
             
             context.DrawRectangle(

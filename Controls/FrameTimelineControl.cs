@@ -9,10 +9,10 @@ using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 
-public class TimelineControl : Control
+public class FrameTimelineControl : Control
 {
     public static readonly StyledProperty<ICommand> PrevFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(PrevFrameCommand));
+        AvaloniaProperty.Register<FrameTimelineControl, ICommand>(nameof(PrevFrameCommand));
 
     public ICommand PrevFrameCommand
     {
@@ -21,7 +21,7 @@ public class TimelineControl : Control
     }
 
     public static readonly StyledProperty<ICommand> NextFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(NextFrameCommand));
+        AvaloniaProperty.Register<FrameTimelineControl, ICommand>(nameof(NextFrameCommand));
 
     public ICommand NextFrameCommand
     {
@@ -30,7 +30,7 @@ public class TimelineControl : Control
     }
     
     public static readonly StyledProperty<ICommand> UpdateFrameCommandProperty =
-        AvaloniaProperty.Register<TimelineControl, ICommand>(nameof(UpdateFrameCommand));
+        AvaloniaProperty.Register<FrameTimelineControl, ICommand>(nameof(UpdateFrameCommand));
 
     public ICommand UpdateFrameCommand
     {
@@ -38,7 +38,7 @@ public class TimelineControl : Control
         set => SetValue(UpdateFrameCommandProperty, value);
     }
     
-    public TimelineControl()
+    public FrameTimelineControl()
     {
         PointerWheelChanged += OnPointerWheelChanged;
         PointerPressed += OnPointerPressed;
@@ -48,7 +48,7 @@ public class TimelineControl : Control
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            SnowmanApp.Instance.TimelineDataContext.MousePressed(e.GetPosition(this));
+            SnowmanApp.Instance.FrameTimelineDataContext.MousePressed(e.GetPosition(this));
             if (UpdateFrameCommand.CanExecute(e))
                 UpdateFrameCommand.Execute(e);
             InvalidateVisual();
@@ -89,7 +89,7 @@ public class TimelineControl : Control
     public override void Render(DrawingContext context)
     {
         context.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, Bounds.Width, Bounds.Height));
-        SnowmanApp.Instance.TimelineDataContext.Render(context, Bounds);
+        SnowmanApp.Instance.FrameTimelineDataContext.Render(context, Bounds);
         base.Render(context);
     }
 }
