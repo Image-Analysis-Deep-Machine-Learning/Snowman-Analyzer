@@ -38,6 +38,7 @@
         
         <!-- main display window -->
         <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">
+            <!-- canvas -->
             <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
                 <control:CanvasControl Name="Canvas"/>
             </Border>
@@ -76,33 +77,55 @@
                     <control:EventTimelineControl Name="EventTimeline"/>
                 </Border>
                 
+                <!-- zoom -->
+                <ComboBox
+                    Name="ZoomComboBox"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom" ZIndex="100"
+                    ItemsSource="{Binding ZoomScaleOptions}"
+                    SelectedItem="{Binding  ZoomScaleString, Mode=TwoWay}"
+                    Width="75" MinHeight="15" FontSize="12"
+                    Background="Transparent" BorderBrush="Transparent"
+                    HorizontalContentAlignment="Right"
+                    IsVisible="False">
+                    <ComboBox.Styles>
+                        <Style Selector="ComboBox:pointerover /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="ComboBox:pressed /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="ComboBox:dropdownopen /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                    </ComboBox.Styles>
+                </ComboBox>
+                
                 <!-- timeline toggle buttons -->
                 <StackPanel
                     Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    ZIndex="100">
+                    HorizontalAlignment="Right" VerticalAlignment="Top" ZIndex="100">
                     
+                    <!-- frame timeline -->
                     <Button Name="ToggleFrameTimelineButton" Width="24" Height="24" Margin="0, 0, 5, 0" Click="ToggleFrameTimelineButton_OnClick" ToolTip.Tip="Frame Timeline">
                         <Path Name="FrameTimelinePath"
                             Data="{StaticResource FrameTimelineIcon}"
                             Fill="{DynamicResource SystemAccentColor}"
                             Stretch="Uniform"
-                            Width="16"
-                            Height="16"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"/>
+                            Width="16" Height="16"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                     
+                    <!-- event timeline -->
                     <Button Name="ToggleEventTimelineButton" Width="24" Height="24" Click="ToggleEventTimelineButton_OnClick" ToolTip.Tip="Event Timeline">
                         <Path Name="EventTimelinePath"
                               Data="{StaticResource EventTimelineIcon}"
                               Fill="White"
                               Stretch="Uniform"
-                              Width="16"
-                              Height="16"
-                              VerticalAlignment="Center"
-                              HorizontalAlignment="Center">
+                              Width="16" Height="16"
+                              VerticalAlignment="Center" HorizontalAlignment="Center">
                         </Path>
                     </Button>
                 </StackPanel>

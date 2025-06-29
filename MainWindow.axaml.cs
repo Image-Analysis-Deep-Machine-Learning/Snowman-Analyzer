@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,10 +9,12 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Python.Runtime;
 using Snowman.Core;
 using Snowman.Core.Entities;
 using Snowman.Core.Tools;
 using Snowman.Data;
+using Dispatcher = Avalonia.Threading.Dispatcher;
 
 namespace Snowman
 {
@@ -26,6 +29,8 @@ namespace Snowman
 
         public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
         private readonly IBrush _brush;
+        
+        private string? _lastCustomZoom = null;
 
         public string CurrentStringPath
         {
@@ -38,7 +43,7 @@ namespace Snowman
                 OnPropertyChanged();
             }
         }
-
+        
         public MainWindow()
         {
             DataContext = this;
@@ -54,8 +59,10 @@ namespace Snowman
             }
 
             _brush = new SolidColorBrush(Colors.White);
+            
+            SetupZoomScaleChangedHandler();
         }
-
+        
         public void SetTool(Tool tool) => SnowmanApp.Instance.ActiveTool = tool;
 
         public async Task LoadVideoFile()
@@ -74,6 +81,7 @@ namespace Snowman
             
             Canvas.InvalidateVisual();
             FrameTimeline.InvalidateVisual();
+            EventTimeline.InvalidateVisual();
         }
 
         public async Task OpenXml()
@@ -91,6 +99,7 @@ namespace Snowman
             
             Canvas.InvalidateVisual();
             FrameTimeline.InvalidateVisual();
+            EventTimeline.InvalidateVisual();
         }
 
         public void PrevFrame()
@@ -129,6 +138,22 @@ namespace Snowman
             //var output = SnowmanApp.Instance.Project.Demo();
             //DemoOutput.Text = output;
         }
+        
+        public ObservableCollection<string> ZoomScaleOptions { get; } = ["1x", "2x", "5x", "10x", "20x"];
+        private string FormatZoomScale(double value) => $"{value:0.#}x";
+        public string ZoomScaleString
+        {
+            get => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
+            set
+            {
+                if (value.EndsWith('x') && double.TryParse(value.TrimEnd('x'), out var parsed))
+                {
+                    SnowmanApp.Instance.EventTimelineDataContext.ZoomScale = parsed;
+                    OnPropertyChanged();
+                    EventTimeline.InvalidateVisual();
+                }
+            }
+        }
                 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
@@ -141,6 +166,7 @@ namespace Snowman
             FrameTimelinePath.Fill = SystemColorBrush;
             EventTimelineBorder.IsVisible = false;
             EventTimelinePath.Fill = _brush;
+            ZoomComboBox.IsVisible = false;
         }
 
         private void ToggleEventTimelineButton_OnClick(object? sender, RoutedEventArgs e)
@@ -149,6 +175,34 @@ namespace Snowman
             EventTimelinePath.Fill = SystemColorBrush;
             FrameTimelineGrid.IsVisible = false;
             FrameTimelinePath.Fill = _brush;
+            ZoomComboBox.IsVisible = true;
+        }
+        
+        private void SetupZoomScaleChangedHandler()
+        {
+            SnowmanApp.Instance.EventTimelineDataContext.ZoomScaleChanged += () =>
+            {
+                var zoomScale = FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
+
+                if (!ZoomScaleOptions.Contains(zoomScale))
+                {
+                    if (_lastCustomZoom is not null) ZoomScaleOptions.Remove(_lastCustomZoom);
+                    ZoomScaleOptions.Add(zoomScale);
+                    _lastCustomZoom = zoomScale;
+                }
+                else if (_lastCustomZoom != null && zoomScale != _lastCustomZoom)
+                {
+                    var toRemove = _lastCustomZoom;
+                    _lastCustomZoom = null;
+                    // remove the temporary zoom scale after UI update finishes
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ZoomScaleOptions.Remove(toRemove);
+                    }, Avalonia.Threading.DispatcherPriority.Background);
+                }
+                
+                OnPropertyChanged(nameof(ZoomScaleString));
+            };
         }
     }
 }

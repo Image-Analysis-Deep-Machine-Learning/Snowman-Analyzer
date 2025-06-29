@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -11,13 +13,29 @@ using Snowman.Data;
 
 namespace Snowman.DataContexts;
 
-public class EventTimelineDataContext
+public class EventTimelineDataContext : INotifyPropertyChanged
 {
     public EventTimelineControl ParentRendererControl { get; set; }
     
     public List<EventData> Events { get; set; } = [];
 
-    private double ZoomScale { get; set; } = 1.0;
+    public event Action? ZoomScaleChanged;
+    private double _zoomScale = 1.0;
+    public double ZoomScale
+    {
+        get => _zoomScale;
+        set
+        {
+            if (Math.Abs(_zoomScale - value) > double.Epsilon)
+            {
+                _zoomScale = value;
+                OnPropertyChanged();
+                ClampOffset();
+                ZoomScaleChanged?.Invoke();
+            }
+        }
+    }
+    
     private double Offset { get; set; } = 0.0;
     private double _lastPointerX;
     private bool _isDragging;
@@ -240,5 +258,12 @@ public class EventTimelineDataContext
     private void ClampZoom()
     {
         ZoomScale = Math.Clamp(ZoomScale, 1, 20.0);
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
