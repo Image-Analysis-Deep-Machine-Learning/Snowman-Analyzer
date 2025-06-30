@@ -6,12 +6,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Snowman.Controls;
 using Snowman.Core;
 
 namespace Snowman.DataContexts;
 
 public class FrameTimelineDataContext
 {
+    public FrameTimelineControl ParentRendererControl { get; set; }
     private List<TimelineFrame>? _timelineFrames;
     
     private static IImage GetFrameAtIndex(int index)

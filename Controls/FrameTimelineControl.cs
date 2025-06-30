@@ -11,6 +11,16 @@ namespace Snowman.Controls;
 
 public class FrameTimelineControl : Control
 {
+    public FrameTimelineControl()
+    {
+        SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl = this;
+        
+        PointerWheelChanged += OnPointerWheelChanged;
+        PointerPressed += OnPointerPressed;
+        Focusable = true;
+        KeyDown += OnKeyDown;
+    }
+    
     public static readonly StyledProperty<ICommand> PrevFrameCommandProperty =
         AvaloniaProperty.Register<FrameTimelineControl, ICommand>(nameof(PrevFrameCommand));
 
@@ -36,14 +46,6 @@ public class FrameTimelineControl : Control
     {
         get => GetValue(UpdateFrameCommandProperty);
         set => SetValue(UpdateFrameCommandProperty, value);
-    }
-    
-    public FrameTimelineControl()
-    {
-        PointerWheelChanged += OnPointerWheelChanged;
-        PointerPressed += OnPointerPressed;
-        Focusable = true;
-        KeyDown += OnKeyDown;
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)

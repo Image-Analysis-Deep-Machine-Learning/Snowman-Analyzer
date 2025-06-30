@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Snowman.Core;
 using Snowman.Data;
 using Snowman.DataContexts;
 
@@ -36,6 +37,13 @@ public class EventPinControl : Control
         {
             _isHovered = false;
             InvalidateVisual();
+        };
+
+        PointerPressed += (s, e) =>
+        {
+            SnowmanApp.Instance.Project.CurrentFrameIndex = eventData.FrameIndex;
+            SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
+            SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
     }
 
