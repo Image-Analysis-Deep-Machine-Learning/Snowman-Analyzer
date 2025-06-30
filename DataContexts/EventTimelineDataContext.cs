@@ -6,10 +6,13 @@ using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Snowman.Controls;
 using Snowman.Core;
 using Snowman.Data;
+using Snowman.Utilities;
+using Color = System.Drawing.Color;
 
 namespace Snowman.DataContexts;
 
@@ -17,7 +20,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
 {
     public EventTimelineControl ParentRendererControl { get; set; }
     
-    public List<EventData> Events { get; set; } = [];
+    public Dictionary<int, List<EventData>> EventsByRuleId { get; } = [];
 
     public event Action? ZoomScaleChanged;
     private double _zoomScale = 1.0;
@@ -35,35 +38,47 @@ public class EventTimelineDataContext : INotifyPropertyChanged
             }
         }
     }
-    
+
     private double Offset { get; set; } = 0.0;
     private double _lastPointerX;
     private bool _isDragging;
 
-    private const double EventPinHeight = 28;
-    private const double EventPinWidth = 28;
-    private const double BaseHeight = 5;
-    
+    public const double BaseHeight = 10;
+    public const double GapHeight = 15;
     private static readonly IBrush TickBrush = Brushes.Gray;
     private readonly Pen _penMajor = new(TickBrush, 1);
     private readonly Pen _penMinor = new(TickBrush, 0.5);
     private readonly Typeface _font = new("Arial");
+    public static Dictionary<int, (Avalonia.Media.Color, Avalonia.Media.Color)> TimelineColors { get; } = [];
 
     public void Render(DrawingContext context)
     {
         var bounds = ParentRendererControl.Bounds;
-        // base line
-        var lineY = (int)(bounds.Height / 2);
-        context.DrawLine(new Pen(Brushes.Gray, BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
         
+        var rules = SnowmanApp.Instance.Project.Rules;
+        var timelineCount = Math.Max(rules.Count, 1);
+        var totalHeightTimelines = (timelineCount - 1) * BaseHeight + (timelineCount - 1) * GapHeight;
+
+        var startY = (bounds.Height - totalHeightTimelines) / 2.0;
+
         DrawTicks(context);
-        DrawEventPins(context);
+        
+        for (var i = 0; i < timelineCount; i++) {
+            // draw base lines
+            var lineY = startY + i * (BaseHeight + GapHeight);
+            context.DrawLine(new Pen(new SolidColorBrush(rules.Count > 0 ? TimelineColors[i].Item2 : Colors.Gray), BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
+        }
     }
 
     private void DrawTicks(DrawingContext context)
     {
         var bounds = ParentRendererControl.Bounds;
         var lineY = (int)(bounds.Height / 2);
+        var rules = SnowmanApp.Instance.Project.Rules;
+        
+        var timelineCount = Math.Max(rules.Count, 1);
+        var totalHeightTimelines = (timelineCount - 1) * BaseHeight + (timelineCount - 1) * GapHeight;
+        
         var totalFrames = SnowmanApp.Instance.Project.FrameCount;
         
         var (majorInterval, minorInterval) = GetTickIntervals(bounds.Width, totalFrames);
@@ -81,7 +96,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
             
             if (x < 0 || x > bounds.Width) continue;
             
-            context.DrawLine(_penMinor, new Point(x, lineY + 2 * BaseHeight), new Point(x, lineY));
+            context.DrawLine(_penMinor, new Point(x, lineY + totalHeightTimelines / 2 + BaseHeight * 2), new Point(x, lineY - totalHeightTimelines / 2));
         }
         
         // major ticks with labels
@@ -92,7 +107,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
             
             if (x < 0 || x > bounds.Width) continue;
             
-            context.DrawLine(_penMajor, new Point(x, lineY + 3 * BaseHeight), new Point(x, lineY));
+            context.DrawLine(_penMajor, new Point(x, lineY + totalHeightTimelines / 2 + BaseHeight * 3), new Point(x, lineY - totalHeightTimelines / 2));
 
             // frames in the event timeline are numbered from 1
             var label = new FormattedText(
@@ -104,7 +119,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
                 TickBrush
             );
             
-            context.DrawText(label, new Point(x - label.Width / 2, lineY + 3 * BaseHeight + 5));
+            context.DrawText(label, new Point(x, lineY + totalHeightTimelines / 2 + BaseHeight * 3 + 5));
         }
     }
     
@@ -145,57 +160,6 @@ public class EventTimelineDataContext : INotifyPropertyChanged
         }
         
         return (int)(10 * magnitude);
-    }
-
-    private void DrawEventPins(DrawingContext context)
-    {
-        var bounds = ParentRendererControl.Bounds;
-        var lineY = (int)(bounds.Height / 2);
-        var totalFrames = SnowmanApp.Instance.Project.FrameCount;
-        
-        foreach (var eventData in Events)
-        {
-            for (var i = 0; i < eventData.FrameIndices.Count; i++)
-            {
-                var frameIndex = eventData.FrameIndices[i];
-                var norm = (double)frameIndex / totalFrames;
-                var x = norm * bounds.Width * ZoomScale - Offset;
-                
-                var normPrev = (double)(frameIndex - 1) / totalFrames;
-                var xPrev = normPrev * bounds.Width * ZoomScale - Offset;
-
-                // only use the pin icon for the first event of the sequence (relating to an object with the same track ID)
-                // draw highlighted lines for the following events
-                if (i == 0)
-                {
-                    if (x < 0 || x > bounds.Width) continue;
-                    
-                    var resource = Application.Current?.FindResource("EventPinIcon");
-                    if (resource is not PathGeometry geometry) continue;
-
-                    var scaleFactor = Math.Min(EventPinWidth / geometry.Bounds.Width, EventPinHeight / geometry.Bounds.Height);
-                    var scale = Matrix.CreateScale(scaleFactor, scaleFactor);
-                    var scaledSize = geometry.Bounds.Size * scaleFactor;
-                
-                    var translate = Matrix.CreateTranslation(x - scaledSize.Width, lineY - scaledSize.Height * (4.0 / 5.0));
-                    var transform = scale * translate;
-                
-                    using (context.PushTransform(transform))
-                    {
-                        context.DrawGeometry(MainWindow.SystemColorBrush, null, geometry);
-                    }
-                }
-                else
-                {
-                    if (x < 0 && xPrev < 0) continue;
-                    if (x > bounds.Width && xPrev > bounds.Width) continue;
-                    x = Math.Clamp(x, 0, bounds.Width);
-                    xPrev = Math.Clamp(xPrev, 0, bounds.Width);
-                    
-                    context.DrawLine(new Pen(MainWindow.SystemColorBrush, BaseHeight), new Point(xPrev, lineY), new Point(x, lineY));
-                }
-            }
-        }
     }
 
     public void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -242,8 +206,9 @@ public class EventTimelineDataContext : INotifyPropertyChanged
         }
     }
 
-    private void Redraw()
+    public void Redraw()
     {
+        ParentRendererControl.UpdateEventPins(EventsByRuleId, ZoomScale, Offset);
         ParentRendererControl.InvalidateVisual();
     }
     

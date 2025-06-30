@@ -32,6 +32,8 @@ public class Project {
     private Bitmap?[] _cachedThumbnails;
     private DateTime _lastCachePurgeTime;
     public event EventHandler? SelectedEntityChanged;
+    
+    public List<RuleData> Rules { get; } = [];
 
     private XmlData XmlData { get; set; }
     public int FrameCount { get; private set; }
