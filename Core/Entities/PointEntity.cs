@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Core;
+using Snowman.Data;
 using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
@@ -23,5 +24,10 @@ public class PointEntity : Entity
     {
         var brush = IsHit ? Brushes.Lime : Selected ? Brushes.DeepSkyBlue : Brushes.Red;
         context.DrawEllipse(brush, Pen, Position, Radius, Radius);
+    }
+
+    public override EntityData ToEntityData()
+    {
+        return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = ScriptPaths };
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using Avalonia;
 using Avalonia.Media;
+using Snowman.Data;
 using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
@@ -89,5 +90,10 @@ public class RectangleEntity : Entity
         
         SetPositionWithoutRaisingEvent(new Point(minX, minY));
         Rectangle = new Rect(Position, new Point(maxX, maxY));
+    }
+    
+    public override EntityData ToEntityData()
+    {
+        return new EntityRectangleData { X = Position.X, Y = Position.Y, ScriptPaths = ScriptPaths, Width = Rectangle.Width, Height = Rectangle.Height };
     }
 }

@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 using Python.Runtime;
 using Snowman.Core.Tools;
 using Snowman.DataContexts;
@@ -14,7 +18,7 @@ namespace Snowman.Core
         public static SnowmanApp Instance => _instance ??= new SnowmanApp();
         public CanvasDataContext CanvasDataContext { get; }
         public TimelineDataContext TimelineDataContext { get; }
-        public Project Project { get; }
+        public Project Project { get; private set; }
 
         public Tool ActiveTool
         {
@@ -48,9 +52,27 @@ namespace Snowman.Core
         {
             if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
             
-            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "Python38/python38.dll"); // TODO: check env for Mac/Linux so it actually works
+            // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
+            var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
+            Runtime.PythonDLL = Path.Combine(pythonDir, "python312.dll"); 
+            PythonEngine.PythonHome = pythonDir;
             PythonEngine.Initialize();
             PythonEngine.BeginAllowThreads();
+            
+            // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
+            // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
+            // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
+            /*Process p = new Process(); 
+            var exe = Path.Combine(pythonDir, "python.exe");
+            p.StartInfo.FileName = exe;
+            p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
+            p.Start();*/
+        }
+
+        public async Task OpenProject(IStorageFile file)
+        {
+            Project =  new Project();
+            await Project.OpenProject(file);
         }
     }
 }

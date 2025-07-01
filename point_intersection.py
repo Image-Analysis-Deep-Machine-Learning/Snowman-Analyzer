@@ -1,6 +1,9 @@
+# PROPERTIES_START
+# INPUT_TYPE: EntityPoint
+# PROPERTIES_END
+
 intersections = 0
 intersected_track_ids = {}
-
 
 for image_frame in images_metadata:
     for bounding_box in image_frame.BoundingBoxes.BoundingBoxList:
