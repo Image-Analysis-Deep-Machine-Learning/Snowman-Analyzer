@@ -18,7 +18,25 @@ public class XmlData
 	{
 		var serializer = new XmlSerializer(typeof(XmlData));
 		using var reader = new StringReader(data);
-		return (XmlData?)serializer.Deserialize(reader);
+		var xmlData = (XmlData?)serializer.Deserialize(reader);
+		
+		if (xmlData == null)  return null;
+
+		foreach (var image in xmlData.Images.ImageList)
+		{
+			image.Src = image.Src.Replace("\\", "/"); // ALL paths must have '/' as a directory separator, while Windows supports '\', macOS and Linux do not
+		}
+		
+		return xmlData;
+	}
+
+	public static string Serialize(XmlData data)
+	{
+		var serializer = new XmlSerializer(typeof(XmlData));
+		using var writer = new StringWriter();
+		serializer.Serialize(writer, data);
+		
+		return writer.ToString();
 	}
 }
 
@@ -38,7 +56,6 @@ public class Metadata
 	
 	[XmlElement(ElementName="description")] public string Description { get; set; } = string.Empty;
 }
-
 
 [XmlRoot(ElementName="images")]
 public class Images

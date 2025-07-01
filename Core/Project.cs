@@ -13,6 +13,7 @@ using Avalonia.Platform.Storage;
 using BitMiracle.LibTiff.Classic;
 using Python.Runtime;
 using Snowman.Core.Entities;
+using Snowman.Core.Scripting;
 using Snowman.Data;
 using Snowman.VideoLoading;
 
@@ -26,13 +27,15 @@ public class Project {
     
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
-    private string _baseFolder = string.Empty;
+    private string _baseFolder;
     private Entity? _selectedEntity;
     private Bitmap?[] _cachedFrames;
     private Bitmap?[] _cachedThumbnails;
     private DateTime _lastCachePurgeTime;
+    private string _currentXmlPath;
     public event EventHandler? SelectedEntityChanged;
     
+    public List<Entity> Entities { get; }
     public List<RuleData> Rules { get; } = [];
     /**
      * EventsByFrameIndexByRuleId Dictionary<int ruleId, Dictionary<int frameIndex, List<EventData>>>
@@ -55,8 +58,6 @@ public class Project {
         }
     }
     
-    public List<Entity> Entities { get; set; }
-
     public Entity? SelectedEntity
     {
         get => _selectedEntity;
@@ -75,8 +76,15 @@ public class Project {
         _cachedFrames = new  Bitmap[1];
         _cachedThumbnails = new  Bitmap[1];
         _lastCachePurgeTime = DateTime.Now;
+        _currentXmlPath =  string.Empty;
+        _baseFolder = string.Empty;
         LoadCurrentFrame();
         FrameCount = 1;
+    }
+
+    public Project(IStorageFile file) : this()
+    {
+        
     }
 
     private void LoadCurrentFrame()
@@ -116,7 +124,7 @@ public class Project {
         if (cachedFrame is not null) return cachedFrame;
         
         var imageFrame = XmlData.Images.ImageList[index];
-        var fileName = Path.Combine(_baseFolder, imageFrame.Src.Replace("\\", "/")); // ALL paths must have '/' as a directory separator, while Windows supports '\', macOS and probably Linux does not
+        var fileName = Path.Combine(_baseFolder, imageFrame.Src);
 
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
         {
@@ -198,14 +206,21 @@ public class Project {
 
     public async Task OpenXml(IStorageFile file)
     {
-        var fileStream = await file.OpenReadAsync();
+        _currentXmlPath = file.Path.AbsolutePath; // TODO: the user should have an option to open XML files (datasets) as a relative path
+        await OpenXmlInternal();
+    }
+
+    // I love 7 levels of abstraction. I eat it for breakfast
+    private async Task OpenXmlInternal()
+    {
+        var fileStream = new FileStream(_currentXmlPath, FileMode.Open);
         using var reader = new StreamReader(fileStream);
         
         var fileContent = await reader.ReadToEndAsync();
         
         XmlData = XmlData.Deserialize(fileContent) ?? XmlData;
         _currentFrameIndex = 0;
-        _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
+        _baseFolder = Path.GetDirectoryName(_currentXmlPath) ?? string.Empty;
         FrameCount = XmlData.Images.ImageList.Count;
         _lastCachePurgeTime = DateTime.Now;
         ResetFrameCache();
@@ -222,37 +237,55 @@ public class Project {
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
+    // TODO: make async so the GUI won't get locked
     private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
+        if (string.IsNullOrEmpty(entity.ScriptPaths)) return "1 entity ignored - no script set"; // make it better
         var output = "Running script...\n";
-        string script;
+        List<Script> scripts = [];
         Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
+
+        foreach (var scriptPath in entity.ScriptPaths.Split('>'))
+        {
+            try
+            {
+                var pathToScript = Path.GetFullPath(scriptPath.Replace("\"", ""));
+                var script = new Script(pathToScript);
+                scripts.Add(script);
+            }
+
+            catch (Exception e)
+            {
+                output += $"\nCould not read the script from path: {scriptPath}. Ignoring this entity\n";
+                output += e.Message;
+                return (output, null, 0);
+            }
+        }
         
-        try
-        {
-            script = File.ReadAllText(entity.ScriptPath.Replace("\"", ""));
-        }
-
-        catch (Exception e)
-        {
-            output += $"\nCould not read the script from path: {entity.ScriptPath}\n";
-            output += e.Message;
-            return (output, null, 0);
-        }
-
         try
         {
             using (Py.GIL())
             {
                 using (var scope = Py.CreateScope())
                 {
+                    //Dictionary<string, object?> lastUsedVariables = [];
                     scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
                     scope.Set("entity", entity.ToPython());
                     scope.Set("create_event_data", createEventData.ToPython());
                     scope.Set("events_by_frame_index", events.ToPython());
                     scope.Set("max_frequency", maxFrequency.ToPython());
-                    
-                    scope.Exec(script);
+
+                    foreach (var script in scripts)
+                    {
+                        // TODO: maybe output variables will not be needed because of scope
+                        // TODO: check if this makes more harm than good, run every script in its own scope?
+                        //if (script.InputType == InputType.Script)
+                        //{
+                        //scope.Set()
+                        //}
+                        scope.Set("__file__", Path.GetDirectoryName(script.PathToScript)); // set the __file__ "constant" for every script
+                        scope.Exec(script.ScriptContent);
+                    }
                     
                     output += scope.Get<string>("string_output");
                     events = scope.Get<Dictionary<int, List<EventData>>>("events_by_frame_index");
@@ -263,7 +296,7 @@ public class Project {
 
         catch (Exception e)
         {
-            output += $"\nThere was a problem running script on path {entity.ScriptPath}:\n";
+            output += $"\nThere was a problem running script on path {entity.ScriptPaths}:\n";
             output += e.Message;
         }
         
@@ -335,5 +368,42 @@ public class Project {
     {
         selectedEntity.Selected = true;
         SelectedEntity = selectedEntity;
+    }
+
+    public async Task OpenProject(IStorageFile file)
+    {
+        var fileStream = await file.OpenReadAsync();
+        using var reader = new StreamReader(fileStream);
+        
+        var fileContent = await reader.ReadToEndAsync();
+        
+        var projectData = ProjectData.Deserialize(fileContent);
+        
+        if (projectData == null) throw new Exception("Project data could not be deserialized");
+
+        foreach (var entity in projectData.Entities)
+        {
+            AddEntity(entity.ToEntity());
+        }
+
+        if (!string.IsNullOrEmpty(projectData.LoadedDatasetPath))
+        {
+            _currentXmlPath = projectData.LoadedDatasetPath;
+            await OpenXmlInternal();
+        }
+    }
+
+    public async Task SaveProject(IStorageFile file)
+    {
+        var projectData = new ProjectData {LoadedDatasetPath = _currentXmlPath};
+        
+        foreach (var entity in Entities.Where(e => e.Parent is null))
+        {
+            projectData.Entities.Add(entity.ToEntityData());
+        }
+
+        var fileStream = await file.OpenWriteAsync();
+        await using var writer = new StreamWriter(fileStream);
+        await writer.WriteAsync(ProjectData.Serialize(projectData));
     }
 }

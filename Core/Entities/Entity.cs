@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
+using Snowman.Data;
 using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
@@ -11,7 +12,7 @@ public abstract class Entity(Entity? parent = null)
     private Point _pos;
     protected internal bool _selected;
     private bool _isHit;
-    private string _scriptPath = string.Empty;
+    private string _scriptPaths = string.Empty;
     protected const int Radius = 5;
     public event EventHandler<Point>? PositionChanges;
     
@@ -45,19 +46,19 @@ public abstract class Entity(Entity? parent = null)
         }
     }
 
-    public string ScriptPath
+    public string ScriptPaths
     {
-        get => IsChild ? Parent.ScriptPath : _scriptPath;
+        get => IsChild ? Parent.ScriptPaths : _scriptPaths;
         set
         {
             if (IsChild)
             {
-                Parent.ScriptPath = value;
+                Parent.ScriptPaths = value;
             }
 
             else
             {
-                _scriptPath = value;
+                _scriptPaths = value;
             }
         }
     }
@@ -75,6 +76,8 @@ public abstract class Entity(Entity? parent = null)
     public abstract bool EvaluateHit(Point cursorPosition);
 
     public abstract void Render(DrawingContext context, CanvasDataContext canvasDataContext);
+    
+    public abstract EntityData ToEntityData();
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)
     {

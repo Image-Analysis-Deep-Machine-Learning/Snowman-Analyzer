@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -13,10 +14,12 @@ using Python.Runtime;
 using Snowman.Core;
 using Snowman.Core.Entities;
 using Snowman.Core.Tools;
+using Ursa.Controls;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
 using Dispatcher = Avalonia.Threading.Dispatcher;
+
 namespace Snowman
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -35,12 +38,12 @@ namespace Snowman
 
         public string CurrentStringPath
         {
-            get => SnowmanApp.Instance.Project.SelectedEntity is null ? string.Empty : SnowmanApp.Instance.Project.SelectedEntity.ScriptPath;
+            get => SnowmanApp.Instance.Project.SelectedEntity is null ? string.Empty : SnowmanApp.Instance.Project.SelectedEntity.ScriptPaths;
 
             set
             {
                 if (SnowmanApp.Instance.Project.SelectedEntity is null) return;
-                SnowmanApp.Instance.Project.SelectedEntity.ScriptPath = value;
+                SnowmanApp.Instance.Project.SelectedEntity.ScriptPaths = value;
                 OnPropertyChanged();
             }
         }
@@ -95,12 +98,80 @@ namespace Snowman
             });
 
             if (!filePickerResult.Any()) return;
+
+            try
+            {
+                await SnowmanApp.Instance.Project.OpenXml(filePickerResult[0]);
+            }
+
+            catch (Exception ex)
+            {
+                await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+                return;
+            }
             
-            await SnowmanApp.Instance.Project.OpenXml(filePickerResult[0]);
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
+        }
+
+        public async Task OpenProject()
+        {
+            var filePickerResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                AllowMultiple = false,
+                FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
+                Title = "Open Project File"
+            });
+
+            if (!filePickerResult.Any()) return;
+
+            try
+            {
+                await SnowmanApp.Instance.OpenProject(filePickerResult[0]);
+                SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
+            }
+
+            catch (Exception ex)
+            {
+                await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+                return;
+            }
+            
+            OnPropertyChanged(nameof(CurrentStringPath));
+            
+            Canvas.InvalidateVisual();
+            Timeline.InvalidateVisual();
+        }
+
+        public async Task SaveProject()
+        {
+            var filePickerResult = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+            {
+                FileTypeChoices = [AdditionalFilePickerFileTypes.Xml],
+                Title = "Save Project File"
+            });
+
+            if (filePickerResult is null) return;
+
+            try
+            {
+                await SnowmanApp.Instance.Project.SaveProject(filePickerResult);
+            }
+
+            catch (Exception ex)
+            {
+                await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+                return;
+            }
             
             Canvas.InvalidateVisual();
             FrameTimeline.InvalidateVisual();
             EventTimeline.InvalidateVisual();
+        }
+
+        public void NewProject()
+        {
+            
         }
 
         public void PrevFrame()

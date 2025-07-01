@@ -19,9 +19,10 @@
         <!-- menu -->
         <Menu Grid.Row="0" Background="#2b2d30">
             <MenuItem Header="_File">
-                <MenuItem Header="_Open" Command="{Binding OpenXml}"/>
-                <MenuItem Header="_Save"/>
-                <MenuItem Header="_New Project"/>
+                <MenuItem Header="_New Project" Command ="{Binding NewProject}"/>
+                <MenuItem Header="_Open Project" Command ="{Binding OpenProject}"/>
+                <MenuItem Header="_Save Project" Command ="{Binding SaveProject}"/>
+                <MenuItem Header="_Open Dataset" Command="{Binding OpenXml}"/>
                 <MenuItem Header="_Settings"/>
                 <Separator/>
                 <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
