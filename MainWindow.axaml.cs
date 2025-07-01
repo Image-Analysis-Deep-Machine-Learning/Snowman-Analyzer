@@ -111,7 +111,8 @@ namespace Snowman
             }
             
             Canvas.InvalidateVisual();
-            Timeline.InvalidateVisual();
+            FrameTimeline.InvalidateVisual();
+            EventTimeline.InvalidateVisual();
         }
 
         public async Task OpenProject()
@@ -140,7 +141,8 @@ namespace Snowman
             OnPropertyChanged(nameof(CurrentStringPath));
             
             Canvas.InvalidateVisual();
-            Timeline.InvalidateVisual();
+            FrameTimeline.InvalidateVisual();
+            EventTimeline.InvalidateVisual();
         }
 
         public async Task SaveProject()

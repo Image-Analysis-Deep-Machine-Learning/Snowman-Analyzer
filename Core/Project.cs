@@ -206,7 +206,7 @@ public class Project {
 
     public async Task OpenXml(IStorageFile file)
     {
-        _currentXmlPath = file.Path.AbsolutePath; // TODO: the user should have an option to open XML files (datasets) as a relative path
+        _currentXmlPath = file.Path.LocalPath; // TODO: the user should have an option to open XML files (datasets) as a relative path
         await OpenXmlInternal();
     }
 
@@ -240,7 +240,7 @@ public class Project {
     // TODO: make async so the GUI won't get locked
     private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
-        if (string.IsNullOrEmpty(entity.ScriptPaths)) return "1 entity ignored - no script set"; // make it better
+        if (string.IsNullOrEmpty(entity.ScriptPaths)) return ("1 entity ignored - no script set", null, 0); // make it better
         var output = "Running script...\n";
         List<Script> scripts = [];
         Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
