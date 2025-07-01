@@ -9,7 +9,7 @@ namespace Snowman.Core.Entities;
 public abstract class Entity(Entity? parent = null)
 {
     private Point _pos;
-    private bool _selected;
+    protected internal bool _selected;
     private bool _isHit;
     private string _scriptPath = string.Empty;
     protected const int Radius = 5;
@@ -19,17 +19,17 @@ public abstract class Entity(Entity? parent = null)
     public Entity? Parent { get; set; } = parent;
     public List<Entity> Children { get; set; } = [];
 
-    public bool Selected
+    public virtual bool Selected
     {
-        get => /*IsChild ? Parent.Selected :*/ _selected;
+        get => IsChild ? Parent.Selected : _selected;
         set
         {
-            /*if (IsChild)
+            if (IsChild)
             {
                 Parent.Selected = value;
             }
 
-            else*/
+            else
             {
                 _selected = value;
             }
@@ -41,15 +41,7 @@ public abstract class Entity(Entity? parent = null)
         get => _isHit;
         set
         {
-            /*if (IsChild)
-            {
-                Parent.IsHit = value;
-            }
-
-            else*/
-            {
-                _isHit = value;
-            }
+            _isHit = value;
         }
     }
 

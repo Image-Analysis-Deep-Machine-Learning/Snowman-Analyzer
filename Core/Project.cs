@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,11 +21,23 @@ namespace Snowman.Core;
 public class Project {
     
     public static readonly Bitmap PlaceHolderBitmap = new("../../../placeholder.png");
+    // clear image cache every X seconds to free memory
+    private const int CachePurgeInterval = 2;
+    
     private int _currentFrameIndex;
     public Bitmap? CurrentFrame;
     private string _baseFolder = string.Empty;
     private Entity? _selectedEntity;
+    private Bitmap?[] _cachedFrames;
+    private Bitmap?[] _cachedThumbnails;
+    private DateTime _lastCachePurgeTime;
     public event EventHandler? SelectedEntityChanged;
+    
+    public List<RuleData> Rules { get; } = [];
+    /**
+     * EventsByFrameIndexByRuleId Dictionary<int ruleId, Dictionary<int frameIndex, List<EventData>>>
+     */
+    public Dictionary<int, Dictionary<int, List<EventData>>> EventsByFrameIndexByRuleId { get; } = [];
 
     private XmlData XmlData { get; set; }
     public int FrameCount { get; private set; }
@@ -48,7 +61,7 @@ public class Project {
     {
         get => _selectedEntity;
         
-        set
+        private set
         {
             _selectedEntity = value;
             SelectedEntityChanged?.Invoke(this, EventArgs.Empty);
@@ -59,6 +72,9 @@ public class Project {
     {
         XmlData = new XmlData();
         Entities = [];
+        _cachedFrames = new  Bitmap[1];
+        _cachedThumbnails = new  Bitmap[1];
+        _lastCachePurgeTime = DateTime.Now;
         LoadCurrentFrame();
         FrameCount = 1;
     }
@@ -67,37 +83,88 @@ public class Project {
     {
         CurrentFrame = FrameAtIndex(_currentFrameIndex);
     }
-    
-    public Bitmap? FrameAtIndex(int index)
+
+    public Bitmap ThumbnailAtIndex(int index)
     {
+        var cachedThumbnail = _cachedThumbnails[index];
+        
+        if (cachedThumbnail is not null) return cachedThumbnail;
+
+        var frame = FrameAtIndex(index);
+        var thumbnail = frame.CreateScaledBitmap(new PixelSize(100, (int)(100 / frame.Size.AspectRatio)), BitmapInterpolationMode.LowQuality);
+        _cachedThumbnails[index] = thumbnail;
+        return thumbnail;
+    }
+    
+    /// <summary>
+    /// Returns current frame at given index. Either from cache if it's cached or loads the corresponding frame, caches it and returns.
+    /// The cache is regularly cleared to avoid large images taking up precious space in RAM
+    /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory after regular cache clearing. 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns>Current frame at given index</returns>
+    private Bitmap FrameAtIndex(int index)
+    {
+        ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization
         if (XmlData.Images.ImageList.Count == 0)
             return PlaceHolderBitmap;
 
-        if (index >= XmlData.Images.ImageList.Count)
-            return null;
+        // do no return null, rather throw an exception as this should be checked by other methods, and they should not rely on null values
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, XmlData.Images.ImageList.Count);
+        var cachedFrame = _cachedFrames[index];
+        
+        if (cachedFrame is not null) return cachedFrame;
         
         var imageFrame = XmlData.Images.ImageList[index];
-        var fileName = Path.Combine(_baseFolder, imageFrame.Src);
-        
+        var fileName = Path.Combine(_baseFolder, imageFrame.Src.Replace("\\", "/")); // ALL paths must have '/' as a directory separator, while Windows supports '\', macOS and probably Linux does not
+
         switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
         {
             case ".tiff":
-                // TODO: fix: .tiff images are flipped vertically
-                var tiff = Tiff.Open(fileName, "r");
+            {
+                using var tiff = Tiff.Open(fileName, "r");
                 var tiffRgbaImage = TiffRgbaImage.Create(tiff, false, out _);
-                var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
-                tiffRgbaImage.GetRaster(data, 0, tiffRgbaImage.Width, tiffRgbaImage.Height);
-                var bitmap = new WriteableBitmap(new PixelSize(tiffRgbaImage.Width, tiffRgbaImage.Height), new Vector(96, 96), PixelFormats.Rgba8888);
+                //var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
+                var raster = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
+                tiff.ReadRGBAImageOriented(tiffRgbaImage.Width, tiffRgbaImage.Height, raster, Orientation.TOPLEFT);
                 
-                using (var frameBuffer = bitmap.Lock())
+                // Pin the array in memory
+                var handle = GCHandle.Alloc(raster, GCHandleType.Pinned);
+                try
                 {
-                    Marshal.Copy(data, 0, frameBuffer.Address, data.Length);
+                    var ptr = handle.AddrOfPinnedObject();
+                    var stride = tiffRgbaImage.Width * sizeof(int); // 4 bytes per pixel (RGBA8888)
+
+                    var immutableBitmap = new Bitmap(
+                        PixelFormats.Rgba8888,
+                        AlphaFormat.Unpremul,
+                        ptr,
+                        new PixelSize(tiffRgbaImage.Width, tiffRgbaImage.Height),
+                        new Vector(96, 96), // typical DPI
+                        stride
+                    );
+
+                    _cachedFrames[index] = immutableBitmap;
+                    return immutableBitmap;
                 }
-                
-                return bitmap;
+                finally
+                {
+                    handle.Free();
+                }
+            }
             default:
-                return new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
+                var bitmap = new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
+                _cachedFrames[index] = bitmap;
+                return bitmap;
         }
+    }
+
+    private void ClearCache()
+    {
+        if (_lastCachePurgeTime.AddSeconds(CachePurgeInterval) > DateTime.Now) return;
+        
+        _lastCachePurgeTime = DateTime.Now;
+        ResetFrameCache();
     }
 
     public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
@@ -129,35 +196,48 @@ public class Project {
         }
     }
 
-    public void OpenXml(IStorageFile file)
+    public async Task OpenXml(IStorageFile file)
     {
-        using var reader = new StreamReader(file.OpenReadAsync().Result);
-        XmlData = XmlData.Deserialize(reader.ReadToEnd()) ?? XmlData;
+        var fileStream = await file.OpenReadAsync();
+        using var reader = new StreamReader(fileStream);
+        
+        var fileContent = await reader.ReadToEndAsync();
+        
+        XmlData = XmlData.Deserialize(fileContent) ?? XmlData;
         _currentFrameIndex = 0;
         _baseFolder = Path.GetDirectoryName(file.Path.LocalPath) ?? string.Empty;
         FrameCount = XmlData.Images.ImageList.Count;
+        _lastCachePurgeTime = DateTime.Now;
+        ResetFrameCache();
         LoadCurrentFrame();
+    }
+
+    private void ResetFrameCache()
+    {
+        _cachedFrames = new Bitmap[FrameCount];
+        _cachedThumbnails = new Bitmap[FrameCount];
     }
 
     public void NextFrame() => CurrentFrameIndex++;
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
-    public string RunScript(Entity entity)
+    private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
         var output = "Running script...\n";
         string script;
+        Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
         
         try
         {
-            script = File.ReadAllText(entity.ScriptPath);
+            script = File.ReadAllText(entity.ScriptPath.Replace("\"", ""));
         }
 
         catch (Exception e)
         {
             output += $"\nCould not read the script from path: {entity.ScriptPath}\n";
             output += e.Message;
-            return output;
+            return (output, null, 0);
         }
 
         try
@@ -168,8 +248,15 @@ public class Project {
                 {
                     scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
                     scope.Set("entity", entity.ToPython());
+                    scope.Set("create_event_data", createEventData.ToPython());
+                    scope.Set("events_by_frame_index", events.ToPython());
+                    scope.Set("max_frequency", maxFrequency.ToPython());
+                    
                     scope.Exec(script);
+                    
                     output += scope.Get<string>("string_output");
+                    events = scope.Get<Dictionary<int, List<EventData>>>("events_by_frame_index");
+                    maxFrequency = scope.Get<int>("max_frequency");
                 }
             }
         }
@@ -180,19 +267,30 @@ public class Project {
             output += e.Message;
         }
         
-        return output;
+        return (output, events, maxFrequency);
     }
 
-    public string Demo()
+    /**
+     * output events after applying a rule = a dictionary mapping frame indices (int) to event data lists
+     * the keys are only the frame indices at which AT LEAST 1 EVENT has occurred when applying this rule
+     * the corresponding values are lists of events which occurred at the given frame indices
+     * (e.g. only 1 event occurred at frame 5: the value at key 5 will be a list containing 1 event data object)
+     */
+    public (string, Dictionary<int, List<EventData>>?, int) Demo()
     {
         var output = new StringBuilder();
+        Dictionary<int, List<EventData>> events = new();
+        var maxFrequency = 0;
         
-        foreach (var entity in Entities) // TODO: only run on top level entities (entities that are not children)
+        foreach (var entity in Entities.Where(e => e.Parent is null))
         {
-            output.AppendLine(RunScript(entity));
+            var outputRun = RunScript(entity, events, maxFrequency);
+            output.AppendLine(outputRun.Item1);
+            events = outputRun.Item2 ?? events;
+            maxFrequency = outputRun.Item3;
         }
         
-        return output.ToString();
+        return (output.ToString(), events, maxFrequency);
     }
 
     public void AddEntity(Entity entity)

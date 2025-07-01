@@ -16,6 +16,7 @@
         <StreamGeometry x:Key="ArrowRightRegular">M15.2685,4.20949 C14.97,3.92233 14.4952,3.93153 14.208,4.23005 C13.9209,4.52857 13.9301,5.00335 14.2286,5.29051 L22.5028,13.25 L3.75,13.25 C3.33579,13.25 3,13.5858 3,13.9999982 C3,14.4142 3.33579,14.75 3.75,14.75 L22.5018,14.75 L14.2286,22.7085 C13.9301,22.9957 13.9209,23.4705 14.208,23.769 C14.4952,24.0675 14.97,24.0767 15.2685,23.7896 L24.6965,14.7202 C25.1054,14.3268 25.1054,13.6723 24.6965,13.2788 L15.2685,4.20949 Z</StreamGeometry>
     </Window.Resources>
     <Grid RowDefinitions="Auto, *, Auto">
+        <!-- menu -->
         <Menu Grid.Row="0" Background="#2b2d30">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Command="{Binding OpenXml}"/>
@@ -34,31 +35,103 @@
                 <MenuItem Header="_Rect Create" Command="{Binding SetTool}" CommandParameter="{Binding RectTool}"/>
             </MenuItem>
         </Menu>
+        
+        <!-- main display window -->
         <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">
+            <!-- canvas -->
             <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
                 <control:CanvasControl Name="Canvas"/>
             </Border>
-            <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto" Margin="0, 5, 0, 0">
-                <Button Grid.Column="0" Command="{Binding PrevFrame}">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource ArrowLeftRegular}" Fill="White" Margin="0, 0, 0, 10"/>
-                        <TextBlock Text="Prev" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Border Grid.Column="1" Margin="5, 0, 5, 0">
-                    <control:TimelineControl
-                        PrevFrameCommand="{Binding PrevFrame}"
-                        NextFrameCommand="{Binding NextFrame}"
-                        UpdateFrameCommand="{Binding UpdateFrame}"
-                        Name="Timeline"/>
+            
+            <!-- timeline container -->
+            <Grid Grid.Row="1" Grid.Column="0" Margin="0, 5, 0, 0">
+                <Grid Name="FrameTimelineGrid" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto">
+                    <!-- prev -->
+                    <Button Grid.Column="0" Command="{Binding PrevFrame}">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <Path Data="{StaticResource ArrowLeftRegular}" Fill="White" Margin="0, 0, 0, 10"/>
+                            <TextBlock Text="Prev" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- frame timeline -->
+                    <Border Grid.Column="1" Margin="5, 0, 5, 0">
+                        <control:FrameTimelineControl
+                            PrevFrameCommand="{Binding PrevFrame}"
+                            NextFrameCommand="{Binding NextFrame}"
+                            UpdateFrameCommand="{Binding UpdateFrame}"
+                            Name="FrameTimeline"/>
+                    </Border>
+                    
+                    <!-- next -->
+                    <Button Grid.Column="2" Command="{Binding NextFrame}">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <Path Data="{StaticResource ArrowRightRegular}" Fill="White" Margin="0, 0, 0, 10"/>
+                            <TextBlock Text="Next" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                
+                <!-- event timeline -->
+                <Border Name="EventTimelineBorder" IsVisible="False" Margin="10, 0, 10, 0">
+                    <control:EventTimelineControl Name="EventTimeline"/>
                 </Border>
-                <Button Grid.Column="2" Command="{Binding NextFrame}">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource ArrowRightRegular}" Fill="White" Margin="0, 0, 0, 10"/>
-                        <TextBlock Text="Next" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                
+                <!-- zoom -->
+                <ComboBox
+                    Name="ZoomComboBox"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom" ZIndex="100"
+                    ItemsSource="{Binding ZoomScaleOptions}"
+                    SelectedItem="{Binding  ZoomScaleString, Mode=TwoWay}"
+                    Width="75" MinHeight="15" FontSize="12"
+                    Background="Transparent" BorderBrush="Transparent"
+                    HorizontalContentAlignment="Right"
+                    IsVisible="False">
+                    <ComboBox.Styles>
+                        <Style Selector="ComboBox:pointerover /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="ComboBox:pressed /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                        <Style Selector="ComboBox:dropdownopen /template/ Border">
+                            <Setter Property="Background" Value="#4b4c4e"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Style>
+                    </ComboBox.Styles>
+                </ComboBox>
+                
+                <!-- timeline toggle buttons -->
+                <StackPanel
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" ZIndex="100">
+                    
+                    <!-- frame timeline -->
+                    <Button Name="ToggleFrameTimelineButton" Width="24" Height="24" Margin="0, 0, 5, 0" Click="ToggleFrameTimelineButton_OnClick" ToolTip.Tip="Frame Timeline">
+                        <Path Name="FrameTimelinePath"
+                            Data="{StaticResource FrameTimelineIcon}"
+                            Fill="{DynamicResource SystemAccentColor}"
+                            Stretch="Uniform"
+                            Width="16" Height="16"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
+                    
+                    <!-- event timeline -->
+                    <Button Name="ToggleEventTimelineButton" Width="24" Height="24" Click="ToggleEventTimelineButton_OnClick" ToolTip.Tip="Event Timeline">
+                        <Path Name="EventTimelinePath"
+                              Data="{StaticResource EventTimelineIcon}"
+                              Fill="White"
+                              Stretch="Uniform"
+                              Width="16" Height="16"
+                              VerticalAlignment="Center" HorizontalAlignment="Center">
+                        </Path>
+                    </Button>
+                </StackPanel>
             </Grid>
+            
+            <!-- run script -->
             <DockPanel Grid.Row="0" Grid.Column="1">
                 <Label DockPanel.Dock="Top" Content="Script Path:" Margin="10"></Label>
                 <TextBox DockPanel.Dock="Top" Margin="10" Height="30" Text="{Binding CurrentStringPath}" ></TextBox>
@@ -66,7 +139,10 @@
                 <TextBox DockPanel.Dock="Top" Margin="10" AcceptsReturn="True" Name="DemoOutput"></TextBox>
             </DockPanel>
         </Grid>
+        
+        <!-- bottom bar -->
         <Border Grid.Row="2" Background="#2b2d30" Padding="5" Height="25">
+            <!-- progress bar -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                 <ProgressBar Height="15" MaxWidth="200"
                              x:Name="ProgressBar"
