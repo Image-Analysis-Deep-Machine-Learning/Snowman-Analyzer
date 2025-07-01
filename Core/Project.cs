@@ -222,10 +222,11 @@ public class Project {
     
     public void PreviousFrame() => CurrentFrameIndex--;
 
-    private string RunScript(Entity entity)
+    private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
         var output = "Running script...\n";
         string script;
+        Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
         
         try
         {
@@ -236,7 +237,7 @@ public class Project {
         {
             output += $"\nCould not read the script from path: {entity.ScriptPath}\n";
             output += e.Message;
-            return output;
+            return (output, null, 0);
         }
 
         try
@@ -247,8 +248,15 @@ public class Project {
                 {
                     scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
                     scope.Set("entity", entity.ToPython());
+                    scope.Set("create_event_data", createEventData.ToPython());
+                    scope.Set("events_by_frame_index", events.ToPython());
+                    scope.Set("max_frequency", maxFrequency.ToPython());
+                    
                     scope.Exec(script);
+                    
                     output += scope.Get<string>("string_output");
+                    events = scope.Get<Dictionary<int, List<EventData>>>("events_by_frame_index");
+                    maxFrequency = scope.Get<int>("max_frequency");
                 }
             }
         }
@@ -259,19 +267,30 @@ public class Project {
             output += e.Message;
         }
         
-        return output;
+        return (output, events, maxFrequency);
     }
 
-    public string Demo()
+    /**
+     * output events after applying a rule = a dictionary mapping frame indices (int) to event data lists
+     * the keys are only the frame indices at which AT LEAST 1 EVENT has occurred when applying this rule
+     * the corresponding values are lists of events which occurred at the given frame indices
+     * (e.g. only 1 event occurred at frame 5: the value at key 5 will be a list containing 1 event data object)
+     */
+    public (string, Dictionary<int, List<EventData>>?, int) Demo()
     {
         var output = new StringBuilder();
+        Dictionary<int, List<EventData>> events = new();
+        var maxFrequency = 0;
         
         foreach (var entity in Entities.Where(e => e.Parent is null))
         {
-            output.AppendLine(RunScript(entity));
+            var outputRun = RunScript(entity, events, maxFrequency);
+            output.AppendLine(outputRun.Item1);
+            events = outputRun.Item2 ?? events;
+            maxFrequency = outputRun.Item3;
         }
         
-        return output.ToString();
+        return (output.ToString(), events, maxFrequency);
     }
 
     public void AddEntity(Entity entity)

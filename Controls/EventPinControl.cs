@@ -32,7 +32,7 @@ public class EventPinControl : Control
         Frequency = frequency;
         
         _isFirst = eventData.IsFirstEventOfObject;
-        ToolTip.SetTip(this, $" Frame: {FrameIndex + 1}\n" + eventData + $" Rule {Rule.Id}: {Rule.Name}");
+        ToolTip.SetTip(this, $" Frame: {FrameIndex + 1}\n" + eventData + $" Rule {Rule.Id + 1}: {Rule.Name}");
         Width = Height = WidthHeight;
         
         IsHitTestVisible = true;
@@ -61,7 +61,7 @@ public class EventPinControl : Control
     {
         var bounds = Bounds;
         var colorByIntensity = ColorGeneration.GetIntensityColor(Frequency, Rule.MaxFrequency,
-            EventTimelineDataContext.TimelineHues[Rule.Id].Item1);
+            EventTimelineDataContext.TimelineColors[Rule.Id].Item1);
         var brush = new SolidColorBrush(_isHovered ? Colors.Red : colorByIntensity);
 
         // horizontal line

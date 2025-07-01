@@ -31,7 +31,7 @@ namespace Snowman.Data;
 public class EventData(BoundingBox objectBbox, bool isFirstEventOfObject, Entity entity)
 {
     private BoundingBox ObjectBbox { get;} = objectBbox;
-    public bool IsFirstEventOfObject { get; } = isFirstEventOfObject;
+    public bool IsFirstEventOfObject { get; set; } = isFirstEventOfObject;
     private Entity Entity { get; } = entity;
 
     public override string ToString()
