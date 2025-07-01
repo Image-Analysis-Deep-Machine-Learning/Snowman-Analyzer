@@ -6,23 +6,33 @@ using Avalonia.Media;
 using Snowman.Core;
 using Snowman.Data;
 using Snowman.DataContexts;
+using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
 public class EventPinControl : Control
 {
     private EventData EventData { get; }
-    private const double WidthHeight = 28;
+    public int FrameIndex { get; }
+    private int Frequency;
+    private RuleData Rule { get; set; }
+    
     private bool _isHovered;
     private readonly bool _isFirst;
+
+    private const double WidthHeight = 28;
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
-
-    public EventPinControl(EventData eventData)
+    
+    public EventPinControl(EventData eventData, int frameIndex, RuleData rule, int frequency)
     {
         EventData = eventData;
+        FrameIndex = frameIndex;
+        Rule = rule;
+        Frequency = frequency;
+        
         _isFirst = eventData.IsFirstEventOfObject;
-        ToolTip.SetTip(this, eventData.ToString());
+        ToolTip.SetTip(this, $" Frame: {FrameIndex + 1}\n" + eventData + $" Rule {Rule.Id}: {Rule.Name}");
         Width = Height = WidthHeight;
         
         IsHitTestVisible = true;
@@ -41,7 +51,7 @@ public class EventPinControl : Control
 
         PointerPressed += (s, e) =>
         {
-            SnowmanApp.Instance.Project.CurrentFrameIndex = eventData.FrameIndex;
+            SnowmanApp.Instance.Project.CurrentFrameIndex = FrameIndex;
             SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
             SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
@@ -50,7 +60,9 @@ public class EventPinControl : Control
     public override void Render(DrawingContext context)
     {
         var bounds = Bounds;
-        var brush = new SolidColorBrush(_isHovered ? Colors.Red : EventTimelineDataContext.TimelineColors[EventData.RuleId].Item1);
+        var colorByIntensity = ColorGeneration.GetIntensityColor(Frequency, Rule.MaxFrequency,
+            EventTimelineDataContext.TimelineHues[Rule.Id].Item1);
+        var brush = new SolidColorBrush(_isHovered ? Colors.Red : colorByIntensity);
 
         // horizontal line
         var lineY = bounds.Height / 2;

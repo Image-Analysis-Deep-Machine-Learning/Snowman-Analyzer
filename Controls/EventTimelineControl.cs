@@ -34,7 +34,7 @@ public class EventTimelineControl : UserControl
         };*/
     }
     
-    public void UpdateEventPins(Dictionary<int, List<EventData>> eventsByRuleId, double zoomScale, double offset)
+    public void UpdateEventPins(Dictionary<int, Dictionary<int, List<EventData>>> eventsByFrameIndexByRuleId, double zoomScale, double offset)
     {
         _canvas.Children.Clear();
 
@@ -51,42 +51,93 @@ public class EventTimelineControl : UserControl
         foreach (var rule in rules)
         {
             // access all events triggered by the rule
-            var events = eventsByRuleId[rule.Id];
+            var eventsByFrameIndex = eventsByFrameIndexByRuleId[rule.Id];
             var ruleTimelineY = startY + i * (EventTimelineDataContext.BaseHeight + EventTimelineDataContext.GapHeight);
             
-            foreach (var eventData in events)
+            foreach (var frameIndex in eventsByFrameIndex.Keys)
             {
-                // display every event triggered by the rule
-                var frameIndex = eventData.FrameIndex;
-            
-                var norm = (double)frameIndex / totalFrames;
-                var x = norm * canvasWidth * zoomScale - offset;
-
-                // out of control bounds
-                if (x < -50 || x > canvasWidth + 50) continue;
-
-                double width;
-                double leftX;
-            
+                var events = eventsByFrameIndex[frameIndex];
+                var frequency = events.Count;
+                
+                if (frequency == 1)
                 {
-                    var normNext = (double)(frameIndex + 1) / totalFrames;
-                    var xNext = normNext * canvasWidth * zoomScale - offset;
+                    // if only 1 event has occurred at given frame
+                    var eventData = events[0];
+                    
+                    var norm = (double)frameIndex / totalFrames;
+                    var x = norm * canvasWidth * zoomScale - offset;
 
-                    // line width .. from current to next
-                    width = Math.Abs(x - xNext);
-                    leftX = Math.Min(x, xNext);
+                    // out of control bounds
+                    if (x < -50 || x > canvasWidth + 50) continue;
+
+                    double width;
+                    double leftX;
+            
+                    {
+                        var normNext = (double)(frameIndex + 1) / totalFrames;
+                        var xNext = normNext * canvasWidth * zoomScale - offset;
+
+                        // line width .. from current to next
+                        width = Math.Abs(x - xNext);
+                        leftX = Math.Min(x, xNext);
+                    }
+
+                    var pin = new EventPinControl(eventData, frameIndex, rule, frequency)
+                    {
+                        Width = width,
+                        Height = 28
+                    };
+
+                    Canvas.SetLeft(pin, leftX);
+                    Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
+
+                    _canvas.Children.Add(pin);
                 }
-
-                var pin = new EventPinControl(eventData)
+                else if (frequency == 0)
                 {
-                    Width = width,
-                    Height = 28
-                };
+                    continue;
+                }
+                else
+                {
+                    // if multiple events have occurred at given frame
+                    
+                    // TODO: implement event pin representation for multiple events happening simultaneously
+                        // ToolTip should say how many events have occurred at this frame
+                        // maybe even an icon that will represent grouping of multiple events?
+                        // display detailed info about all the events in a separate window
+                        // change canvas to the target frame on click + highlight ALL the events occurring in this frame
+                    
+                    var eventData = events[0];
+                    
+                    var norm = (double)frameIndex / totalFrames;
+                    var x = norm * canvasWidth * zoomScale - offset;
 
-                Canvas.SetLeft(pin, leftX);
-                Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
+                    // out of control bounds
+                    if (x < -50 || x > canvasWidth + 50) continue;
 
-                _canvas.Children.Add(pin);
+                    double width;
+                    double leftX;
+            
+                    {
+                        var normNext = (double)(frameIndex + 1) / totalFrames;
+                        var xNext = normNext * canvasWidth * zoomScale - offset;
+
+                        // line width .. from current to next
+                        width = Math.Abs(x - xNext);
+                        leftX = Math.Min(x, xNext);
+                    }
+
+                    var pin = new EventPinControl(eventData, frameIndex, rule, frequency)
+                    {
+                        Width = width,
+                        Height = 28
+                    };
+
+                    Canvas.SetLeft(pin, leftX);
+                    Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
+
+                    _canvas.Children.Add(pin);
+                }
             }
 
             i++;

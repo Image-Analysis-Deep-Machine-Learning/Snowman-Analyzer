@@ -34,6 +34,10 @@ public class Project {
     public event EventHandler? SelectedEntityChanged;
     
     public List<RuleData> Rules { get; } = [];
+    /**
+     * EventsByFrameIndexByRuleId Dictionary<int ruleId, Dictionary<int frameIndex, List<EventData>>>
+     */
+    public Dictionary<int, Dictionary<int, List<EventData>>> EventsByFrameIndexByRuleId { get; } = [];
 
     private XmlData XmlData { get; set; }
     public int FrameCount { get; private set; }

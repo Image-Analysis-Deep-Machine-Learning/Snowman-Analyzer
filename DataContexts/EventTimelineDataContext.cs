@@ -19,8 +19,6 @@ namespace Snowman.DataContexts;
 public class EventTimelineDataContext : INotifyPropertyChanged
 {
     public EventTimelineControl ParentRendererControl { get; set; }
-    
-    public Dictionary<int, List<EventData>> EventsByRuleId { get; } = [];
 
     public event Action? ZoomScaleChanged;
     private double _zoomScale = 1.0;
@@ -49,7 +47,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
     private readonly Pen _penMajor = new(TickBrush, 1);
     private readonly Pen _penMinor = new(TickBrush, 0.5);
     private readonly Typeface _font = new("Arial");
-    public static Dictionary<int, (Avalonia.Media.Color, Avalonia.Media.Color)> TimelineColors { get; } = [];
+    public static Dictionary<int, (double, Avalonia.Media.Color)> TimelineHues { get; } = [];
 
     public void Render(DrawingContext context)
     {
@@ -66,7 +64,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
         for (var i = 0; i < timelineCount; i++) {
             // draw base lines
             var lineY = startY + i * (BaseHeight + GapHeight);
-            context.DrawLine(new Pen(new SolidColorBrush(rules.Count > 0 ? TimelineColors[i].Item2 : Colors.Gray), BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
+            context.DrawLine(new Pen(new SolidColorBrush(rules.Count > 0 ? TimelineHues[i].Item2 : Colors.Gray), BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
         }
     }
 
@@ -208,7 +206,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
 
     public void Redraw()
     {
-        ParentRendererControl.UpdateEventPins(EventsByRuleId, ZoomScale, Offset);
+        ParentRendererControl.UpdateEventPins(SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId, ZoomScale, Offset);
         ParentRendererControl.InvalidateVisual();
     }
     

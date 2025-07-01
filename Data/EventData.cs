@@ -12,9 +12,7 @@ namespace Snowman.Data;
 // Dictionary<int frameIndex, List<EventData> eventsOccurringInTheSameFrame>
     // to access all the events occurring in the same frame .. to distinguish overlapping events triggered by the same rule
 
-/**
- * frameIndex - frame in which the event happened
- * 
+/** 
  * objectBbox - identifies the object (its annotation) which triggered the event
  *      (e.g. cell or car; to highlight bbox of the object in the main canvas)
  * 
@@ -24,31 +22,28 @@ namespace Snowman.Data;
  * entity - user defined graphic entity which has triggered the event
  *      (e.g. point or rectangle; to highlight the entity in the main canvas;
  *      useful for cases when one rule is simultaneously applied to multiple graphic entities)
- * 
+ *
+ * -- redacted: these are already defined on a higher level, not for individual events --
+ * frameIndex - frame in which the event happened
  * ruleId - identifies the rule that has been applied, triggering the events
  *      (to distinguish between outputs of applying multiple rules)
  */
-public class EventData(int frameIndex, BoundingBox objectBbox, bool isFirstEventOfObject, Entity entity, int ruleId)
+public class EventData(BoundingBox objectBbox, bool isFirstEventOfObject, Entity entity)
 {
-    public int FrameIndex { get; } = frameIndex;
     private BoundingBox ObjectBbox { get;} = objectBbox;
     public bool IsFirstEventOfObject { get; } = isFirstEventOfObject;
-    private Entity Entity { get; set;} = entity;
-    public int RuleId { get; } = ruleId;
+    private Entity Entity { get; } = entity;
 
     public override string ToString()
     {
         StringBuilder sb = new();
-        sb.Append($" Frame: {FrameIndex + 1}\n");
         sb.Append($" Object track ID: {ObjectBbox.ClassName.TrackId}\n");
         
         // TODO: info about entity (maybe add entity IDs to identify them easily?)
         var entityType = Entity.GetType().Name;
         if (entityType.EndsWith("Entity")) entityType = entityType.Substring(0, entityType.Length - 6);
         sb.Append($" Entity: {entityType}\n");
-        
-        // TODO: info about rule (its name, e.g. "Point intersection", "Rectangle intersection", "Line passing"...)
-        sb.Append($" Rule: {RuleId}");
+       
         return sb.ToString();
     }
 }

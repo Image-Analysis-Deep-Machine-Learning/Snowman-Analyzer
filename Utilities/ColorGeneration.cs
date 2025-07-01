@@ -5,31 +5,44 @@ namespace Snowman.Utilities;
 
 public static class ColorGeneration
 {
-    public static (Color baseColor, Color lightColor) GetColorPair(int index, int total)
+    public static (double hue, Color lightColor) GetHuePair(int index, int total)
     {
-        if (total <= 0) return (Colors.Gray, Colors.LightGray);
-
-        // Avoid red hues (skip 0°–30° and 330°–360°)
+        if (total <= 0) return (0, Colors.LightGray);
+        
         const double minHue = 20;
-        const double maxHue = 340;
-        const double hueRange = maxHue - minHue;
+        const double saturation = 0.5;
+        const double valueLight = 1.0;
 
-        var hueStep = hueRange / total;
-        var hue = minHue + (index * hueStep);
+        const double goldenRatioConjugate = 0.61803398875;
+        
+        var hue = (minHue + 360 * (index * goldenRatioConjugate % 1.0)) % 360;
+        
+        if (hue is < 30 or > 330)
+            hue = (hue + 60) % 360;
+
+        var lightColor = ColorFromHSV(hue % 360, saturation * 0.2, valueLight);
+
+        return (hue % 360, lightColor);
+    }
+    
+    public static Color GetIntensityColor(int frequency, int maxFrequency, double hue)
+    {
+        if (maxFrequency <= 0) return Colors.Gray;
+
+        frequency = Math.Max(0, Math.Min(frequency, maxFrequency));
+
+        // inverse map: low frequency .. bright, high frequency .. darker
+        const double minValue = 0.6;
+        const double maxValue = 1.0;
+
+        var t = 1.0 - (double)frequency / maxFrequency;
+        var value = minValue + t * (maxValue - minValue);
 
         const double saturation = 0.85;
 
-        // base color
-        const double valueBase = 0.95;
-
-        // lighter color
-        const double valueLight = 1.0;
-
-        var baseColor = ColorFromHSV(hue % 360, saturation, valueBase);
-        var lightColor = ColorFromHSV(hue % 360, saturation * 0.3, valueLight); // lower saturation for softer feel
-
-        return (baseColor, lightColor);
+        return ColorFromHSV(hue % 360, saturation, value);
     }
+
 
     private static Color ColorFromHSV(double hue, double saturation, double value)
     {
