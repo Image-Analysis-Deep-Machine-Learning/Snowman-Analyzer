@@ -17,7 +17,8 @@ namespace Snowman.Core
         
         public static SnowmanApp Instance => _instance ??= new SnowmanApp();
         public CanvasDataContext CanvasDataContext { get; }
-        public TimelineDataContext TimelineDataContext { get; }
+        public FrameTimelineDataContext FrameTimelineDataContext { get; }
+        public EventTimelineDataContext EventTimelineDataContext { get; }
         public Project Project { get; private set; }
 
         public Tool ActiveTool
@@ -33,7 +34,8 @@ namespace Snowman.Core
         private SnowmanApp()
         {
             CanvasDataContext = new CanvasDataContext();
-            TimelineDataContext = new TimelineDataContext();
+            FrameTimelineDataContext = new FrameTimelineDataContext();
+            EventTimelineDataContext = new EventTimelineDataContext();
             Project = new Project();
             InitializePythonExecutionEnvironment();
         }

@@ -36,6 +36,11 @@ public class Project {
     public event EventHandler? SelectedEntityChanged;
     
     public List<Entity> Entities { get; }
+    public List<RuleData> Rules { get; } = [];
+    /**
+     * EventsByFrameIndexByRuleId Dictionary<int ruleId, Dictionary<int frameIndex, List<EventData>>>
+     */
+    public Dictionary<int, Dictionary<int, List<EventData>>> EventsByFrameIndexByRuleId { get; } = [];
 
     private XmlData XmlData { get; set; }
     public int FrameCount { get; private set; }
@@ -233,18 +238,18 @@ public class Project {
     public void PreviousFrame() => CurrentFrameIndex--;
 
     // TODO: make async so the GUI won't get locked
-    private string RunScript(Entity entity)
+    private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
         if (string.IsNullOrEmpty(entity.ScriptPaths)) return "1 entity ignored - no script set"; // make it better
         var output = "Running script...\n";
-        string pathToScript;
         List<Script> scripts = [];
+        Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
 
         foreach (var scriptPath in entity.ScriptPaths.Split('>'))
         {
             try
             {
-                pathToScript = Path.GetFullPath(scriptPath.Replace("\"", ""));
+                var pathToScript = Path.GetFullPath(scriptPath.Replace("\"", ""));
                 var script = new Script(pathToScript);
                 scripts.Add(script);
             }
@@ -253,7 +258,7 @@ public class Project {
             {
                 output += $"\nCould not read the script from path: {scriptPath}. Ignoring this entity\n";
                 output += e.Message;
-                return output;
+                return (output, null, 0);
             }
         }
         
@@ -266,7 +271,10 @@ public class Project {
                     //Dictionary<string, object?> lastUsedVariables = [];
                     scope.Set("images_metadata", XmlData.Images.ImageList.ToPython());
                     scope.Set("entity", entity.ToPython());
-                    
+                    scope.Set("create_event_data", createEventData.ToPython());
+                    scope.Set("events_by_frame_index", events.ToPython());
+                    scope.Set("max_frequency", maxFrequency.ToPython());
+
                     foreach (var script in scripts)
                     {
                         // TODO: maybe output variables will not be needed because of scope
@@ -280,6 +288,8 @@ public class Project {
                     }
                     
                     output += scope.Get<string>("string_output");
+                    events = scope.Get<Dictionary<int, List<EventData>>>("events_by_frame_index");
+                    maxFrequency = scope.Get<int>("max_frequency");
                 }
             }
         }
@@ -290,19 +300,30 @@ public class Project {
             output += e.Message;
         }
         
-        return output;
+        return (output, events, maxFrequency);
     }
 
-    public string Demo()
+    /**
+     * output events after applying a rule = a dictionary mapping frame indices (int) to event data lists
+     * the keys are only the frame indices at which AT LEAST 1 EVENT has occurred when applying this rule
+     * the corresponding values are lists of events which occurred at the given frame indices
+     * (e.g. only 1 event occurred at frame 5: the value at key 5 will be a list containing 1 event data object)
+     */
+    public (string, Dictionary<int, List<EventData>>?, int) Demo()
     {
         var output = new StringBuilder();
+        Dictionary<int, List<EventData>> events = new();
+        var maxFrequency = 0;
         
         foreach (var entity in Entities.Where(e => e.Parent is null))
         {
-            output.AppendLine(RunScript(entity));
+            var outputRun = RunScript(entity, events, maxFrequency);
+            output.AppendLine(outputRun.Item1);
+            events = outputRun.Item2 ?? events;
+            maxFrequency = outputRun.Item3;
         }
         
-        return output.ToString();
+        return (output.ToString(), events, maxFrequency);
     }
 
     public void AddEntity(Entity entity)
