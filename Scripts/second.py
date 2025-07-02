@@ -1,5 +1,6 @@
 # PROPERTIES_START
 # INPUT_TYPE: Script
+# NAME: Random script
 # PROPERTIES_END
 
 if intersections > 0:

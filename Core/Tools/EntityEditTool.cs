@@ -113,4 +113,16 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
             base.PointerMovedAction(sender, e);
         }
     }
+
+    public override void KeyPressed(object? sender, KeyEventArgs keyEventArgs)
+    {
+        base.KeyPressed(sender, keyEventArgs);
+
+        if (keyEventArgs.Key == Key.Delete) // delete selected entity
+        {
+            var selectedEntity = SnowmanApp.Instance.Project.SelectedEntity;
+            SnowmanApp.Instance.Project.DeselectAllEntities();
+            SnowmanApp.Instance.Project.RemoveEntity(selectedEntity);
+        }
+    }
 }

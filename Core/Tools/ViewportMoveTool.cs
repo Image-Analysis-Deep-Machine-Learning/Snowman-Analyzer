@@ -68,4 +68,6 @@ public class ViewportMoveTool : Tool
         CurrentMouseMovement = e.GetPosition((Visual?)sender) - ClickOrigin;
         CanvasDataContext.AdditionalTranslation = CurrentMouseMovement + _originalMovement;
     }
+
+    public override void KeyPressed(object? sender, KeyEventArgs keyEventArgs) {} // no keybindings at the moment
 }

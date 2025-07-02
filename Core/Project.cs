@@ -240,28 +240,10 @@ public class Project {
     // TODO: make async so the GUI won't get locked
     private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
-        if (string.IsNullOrEmpty(entity.ScriptPaths)) return ("1 entity ignored - no script set", null, 0); // make it better
+        if (entity.Scripts.Count == 0) return ("1 entity ignored - no scripts set", null, 0); // make it better
         var output = "Running script...\n";
-        List<Script> scripts = [];
         Func<BoundingBox, bool, Entity, EventData> createEventData = (bb, flag, ent) => new EventData(bb, flag, ent);
 
-        foreach (var scriptPath in entity.ScriptPaths.Split('>'))
-        {
-            try
-            {
-                var pathToScript = Path.GetFullPath(scriptPath.Replace("\"", ""));
-                var script = new Script(pathToScript);
-                scripts.Add(script);
-            }
-
-            catch (Exception e)
-            {
-                output += $"\nCould not read the script from path: {scriptPath}. Ignoring this entity\n";
-                output += e.Message;
-                return (output, null, 0);
-            }
-        }
-        
         try
         {
             using (Py.GIL())
@@ -275,7 +257,7 @@ public class Project {
                     scope.Set("events_by_frame_index", events.ToPython());
                     scope.Set("max_frequency", maxFrequency.ToPython());
 
-                    foreach (var script in scripts)
+                    foreach (var script in entity.Scripts)
                     {
                         // TODO: maybe output variables will not be needed because of scope
                         // TODO: check if this makes more harm than good, run every script in its own scope?
@@ -283,10 +265,21 @@ public class Project {
                         //{
                         //scope.Set()
                         //}
-                        scope.Set("__file__", Path.GetDirectoryName(script.PathToScript)); // set the __file__ "constant" for every script
-                        scope.Exec(script.ScriptContent);
+                        try
+                        {
+                            scope.Set("__file__",
+                                Path.GetDirectoryName(script
+                                    .PathToScript)); // set the __file__ "constant" for every script
+                            scope.Exec(script.ScriptContent);
+                        }
+
+                        catch (Exception e)
+                        {
+                            output += $"\nThere was a problem running script {script}:\n";
+                            output += e.Message;
+                        }
                     }
-                    
+
                     output += scope.Get<string>("string_output");
                     events = scope.Get<Dictionary<int, List<EventData>>>("events_by_frame_index");
                     maxFrequency = scope.Get<int>("max_frequency");
@@ -296,7 +289,7 @@ public class Project {
 
         catch (Exception e)
         {
-            output += $"\nThere was a problem running script on path {entity.ScriptPaths}:\n";
+            output += $"\nThere was a problem running script on entity with scripts:\n\t{string.Join("\n\t", entity.Scripts)}:\n";
             output += e.Message;
         }
         
@@ -319,6 +312,7 @@ public class Project {
         {
             var outputRun = RunScript(entity, events, maxFrequency);
             output.AppendLine(outputRun.Item1);
+            output.AppendLine();
             events = outputRun.Item2 ?? events;
             maxFrequency = outputRun.Item3;
         }
@@ -336,8 +330,10 @@ public class Project {
         }
     }
 
-    public void RemoveEntity(Entity entity)
+    public void RemoveEntity(Entity? entity)
     {
+        if (entity is null) return;
+        
         Entities.Remove(entity);
         
         foreach (var child in entity.Children)

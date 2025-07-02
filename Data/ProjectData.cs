@@ -1,8 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 using Avalonia;
+using Snowman.Core;
 using Snowman.Core.Entities;
+using Snowman.Core.Scripting;
 
 namespace Snowman.Data;
 
@@ -39,16 +43,21 @@ public abstract class EntityData
 {
     [XmlElement(ElementName="x")] public double X { get; set; }
     [XmlElement(ElementName="y")] public double Y { get; set; }
-    [XmlElement(ElementName="script_paths")] public string ScriptPaths { get; set; } = string.Empty;
+    [XmlElement(ElementName="script_paths")] public List<string> ScriptPaths { get; set; } = [];
 
     public abstract Entity ToEntity();
+
+    public ObservableCollection<Script> FromSavedScriptPaths()
+    {
+        return new ObservableCollection<Script>(SnowmanApp.Instance.Scripts.Where(script => ScriptPaths.Contains(script.PathToScript)));
+    }
 }
 
 public class EntityPointData : EntityData
 {
     public override Entity ToEntity()
     {
-        return new PointEntity(new Point(X, Y)) {ScriptPaths = ScriptPaths};
+        return new PointEntity(new Point(X, Y)) {Scripts = FromSavedScriptPaths()};
     }
 }
 
@@ -61,6 +70,6 @@ public class EntityRectangleData : EntityData
 
     public override Entity ToEntity()
     {
-        return new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height)) {ScriptPaths = ScriptPaths};
+        return new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height)) {Scripts = FromSavedScriptPaths() };
     }
 }
