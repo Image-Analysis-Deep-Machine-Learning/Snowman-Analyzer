@@ -38,6 +38,18 @@ public class EventTimelineDataContext : INotifyPropertyChanged
     }
 
     private double Offset { get; set; } = 0.0;
+    
+    private string _infoText;
+    public string InfoText
+    {
+        get => _infoText;
+        set
+        {
+            _infoText = value;
+            OnPropertyChanged();
+        }
+    }
+
     private double _lastPointerX;
     private bool _isDragging;
 

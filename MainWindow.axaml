@@ -143,8 +143,12 @@
                     SelectedItems="{Binding CurrentSelectedScripts}"
                     HorizontalAlignment="Stretch">
                 </u:MultiComboBox>
-                <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
-                <TextBox Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10" AcceptsReturn="True" Name="DemoOutput"></TextBox>
+                <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
+                <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
+            </DockPanel>
+            <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10">
+                <Button DockPanel.Dock="Bottom" VerticalAlignment="Top" Margin="10, 10, 10, 0" Content="Clear Event Info" Command="{Binding ClearEventInfo}"></Button>
+                <TextBox DockPanel.Dock="Top" Name="InfoBox" TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch"></TextBox>
             </DockPanel>
         </Grid>
         

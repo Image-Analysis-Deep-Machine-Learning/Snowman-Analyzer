@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Snowman.Core;
 using Snowman.Data;
 using Snowman.DataContexts;
+using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
@@ -59,87 +61,54 @@ public class EventTimelineControl : UserControl
                 var events = eventsByFrameIndex[frameIndex];
                 var frequency = events.Count;
                 
-                if (frequency == 1)
+                var norm = (double)frameIndex / totalFrames;
+                var x = norm * canvasWidth * zoomScale - offset;
+
+                // out of control bounds
+                if (x < -50 || x > canvasWidth + 50) continue;
+
+                double width;
+                double leftX;
+        
                 {
-                    // if only 1 event has occurred at given frame
-                    var eventData = events[0];
-                    
-                    var norm = (double)frameIndex / totalFrames;
-                    var x = norm * canvasWidth * zoomScale - offset;
+                    var normNext = (double)(frameIndex + 1) / totalFrames;
+                    var xNext = normNext * canvasWidth * zoomScale - offset;
 
-                    // out of control bounds
-                    if (x < -50 || x > canvasWidth + 50) continue;
+                    // line width .. from current to next
+                    width = Math.Abs(x - xNext);
+                    leftX = Math.Min(x, xNext);
+                }
+                
+                // TODO: implement event pin representation for multiple events happening simultaneously
+                // ToolTip should say how many events have occurred at this frame
+                // maybe even an icon that will represent grouping of multiple events?
+                // display detailed info about all the events in a separate window
+                // change canvas to the target frame on click + highlight ALL the events occurring in this frame
 
-                    double width;
-                    double leftX;
-            
+                var pin = new EventPinControl(events, frameIndex, rule, frequency)
+                {
+                    Width = width,
+                    Height = 28
+                };
+                
+                pin.PointerPressed += (s, e) =>
+                {
+                    UIEventBus.RaiseInfo(string.Empty);
+                };
+
+                if (events.Count > 1)
+                {
+                    pin.PointerPressed += (s, e) =>
                     {
-                        var normNext = (double)(frameIndex + 1) / totalFrames;
-                        var xNext = normNext * canvasWidth * zoomScale - offset;
-
-                        // line width .. from current to next
-                        width = Math.Abs(x - xNext);
-                        leftX = Math.Min(x, xNext);
-                    }
-
-                    var pin = new EventPinControl(eventData, frameIndex, rule, frequency)
-                    {
-                        Width = width,
-                        Height = 28
+                        UIEventBus.RaiseInfo(pin.GetInfo());
                     };
-
-                    Canvas.SetLeft(pin, leftX);
-                    Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
-
-                    _canvas.Children.Add(pin);
                 }
-                else if (frequency == 0)
-                {
-                    continue;
-                }
-                else
-                {
-                    // if multiple events have occurred at given frame
-                    
-                    // TODO: implement event pin representation for multiple events happening simultaneously
-                        // ToolTip should say how many events have occurred at this frame
-                        // maybe even an icon that will represent grouping of multiple events?
-                        // display detailed info about all the events in a separate window
-                        // change canvas to the target frame on click + highlight ALL the events occurring in this frame
-                    
-                    var eventData = events[0];
-                    
-                    var norm = (double)frameIndex / totalFrames;
-                    var x = norm * canvasWidth * zoomScale - offset;
 
-                    // out of control bounds
-                    if (x < -50 || x > canvasWidth + 50) continue;
+                Canvas.SetLeft(pin, leftX);
+                Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
 
-                    double width;
-                    double leftX;
-            
-                    {
-                        var normNext = (double)(frameIndex + 1) / totalFrames;
-                        var xNext = normNext * canvasWidth * zoomScale - offset;
-
-                        // line width .. from current to next
-                        width = Math.Abs(x - xNext);
-                        leftX = Math.Min(x, xNext);
-                    }
-
-                    var pin = new EventPinControl(eventData, frameIndex, rule, frequency)
-                    {
-                        Width = width,
-                        Height = 28
-                    };
-
-                    Canvas.SetLeft(pin, leftX);
-                    Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
-
-                    _canvas.Children.Add(pin);
-                }
+                _canvas.Children.Add(pin);
             }
-
             i++;
         }
     }
