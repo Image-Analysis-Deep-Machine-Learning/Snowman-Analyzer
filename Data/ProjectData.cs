@@ -70,6 +70,8 @@ public class EntityRectangleData : EntityData
 
     public override Entity ToEntity()
     {
-        return new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height)) {Scripts = FromSavedScriptPaths() };
+        var newRectangleEntity = new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height)) {Scripts = FromSavedScriptPaths() };
+        newRectangleEntity.BindMoveEvent();
+        return newRectangleEntity;
     }
 }

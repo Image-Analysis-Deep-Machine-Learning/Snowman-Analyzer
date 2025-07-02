@@ -39,13 +39,13 @@ public class RectTool : EntityEditTool<RectangleEntity>
                             SnowmanApp.Instance.Project.AddEntity(newRectangleEntity);
                             _initialDraggedPoint = newRectangleEntity.Children[2] as PointEntity;
                             SnowmanApp.Instance.Project.SelectEntity(_initialDraggedPoint);
+                            newRectangleEntity.BindMoveEvent();
                         }
                     }
                 }
 
                 else
                 {
-                    ((RectangleEntity)_initialDraggedPoint.Parent).BindMoveEvent();
                     _initialDraggedPoint = null;
                 }
             }
