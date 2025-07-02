@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Core;
+using Snowman.Core.Entities;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
@@ -12,27 +15,24 @@ namespace Snowman.Controls;
 
 public class EventPinControl : Control
 {
-    private EventData EventData { get; }
+    private List<EventData> Events { get; }
     public int FrameIndex { get; }
-    private int Frequency;
+    private readonly int _frequency;
     private RuleData Rule { get; set; }
     
     private bool _isHovered;
-    private readonly bool _isFirst;
 
     private const double WidthHeight = 28;
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
     
-    public EventPinControl(EventData eventData, int frameIndex, RuleData rule, int frequency)
+    public EventPinControl(List<EventData> events, int frameIndex, RuleData rule, int frequency)
     {
-        EventData = eventData;
+        Events = events;
         FrameIndex = frameIndex;
         Rule = rule;
-        Frequency = frequency;
+        _frequency = frequency;
         
-        _isFirst = eventData.IsFirstEventOfObject;
-        ToolTip.SetTip(this, $" Frame: {FrameIndex + 1}\n" + eventData + $" Rule {Rule.Id + 1}: {Rule.Name}");
         Width = Height = WidthHeight;
         
         IsHitTestVisible = true;
@@ -52,6 +52,19 @@ public class EventPinControl : Control
         PointerPressed += (s, e) =>
         {
             SnowmanApp.Instance.Project.CurrentFrameIndex = FrameIndex;
+            
+            var tempEntities = new HashSet<Entity>();
+            var tempBoundingBoxes = new HashSet<IRenderedAnnotation>();
+            
+            foreach (var eventData in Events)
+            {
+                tempEntities.Add(eventData.Entity);
+                tempBoundingBoxes.Add(eventData.ObjectBbox);
+            }
+            
+            SnowmanApp.Instance.Project.TempEntities = tempEntities;
+            SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
+            
             SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
             SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
@@ -60,7 +73,7 @@ public class EventPinControl : Control
     public override void Render(DrawingContext context)
     {
         var bounds = Bounds;
-        var colorByIntensity = ColorGeneration.GetIntensityColor(Frequency, Rule.MaxFrequency,
+        var colorByIntensity = ColorGeneration.GetIntensityColor(_frequency, Rule.MaxFrequency,
             EventTimelineDataContext.TimelineColors[Rule.Id].Item1);
         var brush = new SolidColorBrush(_isHovered ? Colors.Red : colorByIntensity);
 
@@ -68,30 +81,74 @@ public class EventPinControl : Control
         var lineY = bounds.Height / 2;
         context.DrawLine(new Pen(brush, EventTimelineDataContext.BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
 
-        // only draw the pin icon for the first event relating to the same tracked object   
-        if (_isFirst)
+        if (Events.Count == 1)
         {
-            // pin icon
-            var resource = Application.Current?.FindResource("EventPinIcon");
-            if (resource is not PathGeometry geometry) return;
+            // the pin represents only one event
+            ToolTip.SetTip(this,
+                "Single event\n" +
+                $"Frame: {FrameIndex + 1}\n" +
+                Events[0] +
+                $"Rule {Rule.Id + 1}: {Rule.Name}");
             
-            var scaleFactor = Math.Min(
-                EventPinWidth / geometry.Bounds.Width,
-                EventPinHeight / geometry.Bounds.Height
-            );
-            
-            var scaledSize = geometry.Bounds.Size * scaleFactor;
-
-            // center the pin icon
-            var iconX = (bounds.Width - scaledSize.Width) / 2;
-            var iconY = lineY - scaledSize.Height;
-            
-            var transform = 
-                Matrix.CreateTranslation(-geometry.Bounds.X, -geometry.Bounds.Y) *  // Normalize to (0,0)
-                Matrix.CreateScale(scaleFactor, scaleFactor) *
-                Matrix.CreateTranslation(iconX, iconY);
-            
-            using (context.PushTransform(transform)) context.DrawGeometry(brush, null, geometry);
+            if (Events[0].IsFirstEventOfObject)
+            {
+                // only draw the pin icon for the first event relating to the same tracked object   
+                DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
+            }
         }
+        else
+        {
+            // the pin represents multiple simultaneous events
+            ToolTip.SetTip(this,
+                "Multiple events\n" +
+                $"Frame: {FrameIndex + 1}\n" +
+                $"Number of events: {_frequency}\n" +
+                $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
+                "Click for more info");
+            
+            DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
+        }
+    }
+
+    private static void DrawGeom(DrawingContext context, Rect bounds, double lineY, IBrush brush, string geomResource)
+    {
+        // only draw the pin icon for the first event relating to the same tracked object   
+        var resource = Application.Current?.FindResource(geomResource);
+        if (resource is not PathGeometry geometry) return;
+
+        var scaleFactor = Math.Min(
+            EventPinWidth / geometry.Bounds.Width,
+            EventPinHeight / geometry.Bounds.Height
+        );
+
+        var scaledSize = geometry.Bounds.Size * scaleFactor;
+
+        // center the pin icon
+        var iconX = (bounds.Width - scaledSize.Width) / 2;
+        var iconY = lineY - scaledSize.Height;
+
+        var transform =
+            Matrix.CreateTranslation(-geometry.Bounds.X, -geometry.Bounds.Y) *
+            Matrix.CreateScale(scaleFactor, scaleFactor) *
+            Matrix.CreateTranslation(iconX, iconY);
+
+        using (context.PushTransform(transform)) context.DrawGeometry(brush, null, geometry);
+    }
+
+    public string GetInfo()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Details of multiple events");
+        sb.AppendLine($"Frame: {FrameIndex + 1}");
+        sb.AppendLine($"Rule {Rule.Id + 1}: {Rule.Name}\n");
+        
+        for (var i = 0; i < Events.Count; i++)
+        {
+            var ev = Events[i];
+            sb.AppendLine($"Event {i + 1}:");
+            sb.AppendLine($"{Events[i]}");
+        }
+        
+        return sb.ToString();
     }
 }

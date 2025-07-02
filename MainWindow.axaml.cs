@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -54,6 +55,11 @@ namespace Snowman
             _brush = new SolidColorBrush(Colors.White);
             
             SetupZoomScaleChangedHandler();
+            
+            UIEventBus.InfoRequested += msg =>
+            {
+                InfoBox.Text = msg;
+            };
         }
         
         public void SetTool(Tool tool) => SnowmanApp.Instance.ActiveTool = tool;
@@ -190,20 +196,38 @@ namespace Snowman
             if (Design.IsDesignMode) return;
 
             var ruleId = SnowmanApp.Instance.Project.Rules.Count;
-            // TODO: get the name of the rule based on the selected script
-            var ruleName = "Point intersection";
-            
+            var ruleName = new StringBuilder();
+
+            if (SnowmanApp.Instance.Project.SelectedEntity != null)
+                for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count; i++)
+                {
+                    var script = SnowmanApp.Instance.Project.SelectedEntity.Scripts[i];
+                    ruleName.Append(script.Name);
+                    if (i != SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count - 1) ruleName.Append(" + ");
+                }
+
             var (baseColor, lightColor) = ColorGeneration.GetHuePair(ruleId);
             EventTimelineDataContext.TimelineColors.TryAdd(ruleId, (baseColor, lightColor));
             
             var output = SnowmanApp.Instance.Project.Demo();
             DemoOutput.Text = output.Item1;
 
-            SnowmanApp.Instance.Project.Rules.Add(new RuleData(ruleId, ruleName, output.Item3));
+            SnowmanApp.Instance.Project.Rules.Add(new RuleData(ruleId, ruleName.ToString(), output.Item3));
             SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId.Add(ruleId, output.Item2 ?? new Dictionary<int, List<EventData>>());
             
             SnowmanApp.Instance.EventTimelineDataContext.Redraw();
             EventTimeline.InvalidateVisual();
+        }
+
+        public void ClearEventInfo()
+        {
+            SnowmanApp.Instance.Project.TempEntities = null;
+            SnowmanApp.Instance.Project.TempBoundingBoxes = null;
+            
+            SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
+            SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
+            
+            InfoBox.Text = string.Empty;
         }
         
         public ObservableCollection<string> ZoomScaleOptions { get; } = ["1x", "2x", "5x", "10x", "20x"];
@@ -284,6 +308,11 @@ namespace Snowman
                 
                 OnPropertyChanged(nameof(ZoomScaleString));
             };
+        }
+
+        public void DisplayInfo(string info)
+        {
+            InfoBox.Text = info;
         }
     }
 }

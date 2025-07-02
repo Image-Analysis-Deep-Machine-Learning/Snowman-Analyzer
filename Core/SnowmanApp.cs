@@ -45,6 +45,7 @@ namespace Snowman.Core
             InitializePythonExecutionEnvironment();
         }
 
+        // TODO: dynamically load scripts from the directory while the app is running when the user opens combobox for script selection
         private void LoadScripts()
         {
             foreach (var file in Directory.EnumerateFiles(ScriptsDirectory))
@@ -61,6 +62,21 @@ namespace Snowman.Core
                 CurrentEntities = Project.Entities,
                 CurrentAnnotations = Project.GetCurrentBoundingBoxes()
             };
+        }
+        
+        public ObjectsToRender? GetTempViewportVisuals()
+        {
+            if (Project is { TempEntities: not null, TempBoundingBoxes: not null })
+            {
+                return new ObjectsToRender
+                {
+                    CurrentImage = Project.CurrentFrame,
+                    CurrentEntities = Project.TempEntities,
+                    CurrentAnnotations = Project.TempBoundingBoxes
+                };
+            }
+            
+            return null;
         }
 
         private static void InitializePythonExecutionEnvironment()

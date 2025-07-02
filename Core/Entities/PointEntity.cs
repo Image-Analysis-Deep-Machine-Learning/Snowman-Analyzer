@@ -24,11 +24,29 @@ public class PointEntity : Entity
     public override void Render(DrawingContext context, CanvasDataContext canvasDataContext)
     {
         var brush = IsHit ? Brushes.Lime : Selected ? Brushes.DeepSkyBlue : Brushes.Red;
+        
+        var tempVisuals = SnowmanApp.Instance.GetTempViewportVisuals();
+        if (tempVisuals != null && tempVisuals.CurrentEntities.Contains(this))
+        {
+            brush = Brushes.Purple;
+        }
+        
         context.DrawEllipse(brush, Pen, Position, Radius, Radius);
     }
 
     public override EntityData ToEntityData()
     {
         return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList() };
+    }
+
+    public override Entity Clone()
+    {
+        var copy = new PointEntity(Position, Parent)
+        {
+            Selected = Selected,
+            IsHit = IsHit,
+            Scripts = Scripts
+        };
+        return copy;
     }
 }

@@ -80,6 +80,8 @@ public abstract class Entity(Entity? parent = null)
     public abstract void Render(DrawingContext context, CanvasDataContext canvasDataContext);
     
     public abstract EntityData ToEntityData();
+    
+    public abstract Entity Clone();
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)
     {

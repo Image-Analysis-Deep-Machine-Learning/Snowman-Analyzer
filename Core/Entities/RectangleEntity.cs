@@ -10,7 +10,9 @@ namespace Snowman.Core.Entities;
 public class RectangleEntity : Entity
 {
     private static readonly Brush FillBrush = new SolidColorBrush(Colors.Red, 0.2);
+    private static readonly Brush TempFillBrush = new SolidColorBrush(Colors.Purple, 0.2);
     private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
+    private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
     public Rect Rectangle { get; set; }
 
     public override bool Selected
@@ -67,8 +69,18 @@ public class RectangleEntity : Entity
 
     public override void Render(DrawingContext context, CanvasDataContext canvasDataContext)
     {
-        context.FillRectangle(FillBrush, Rectangle);
-        context.DrawRectangle(Pen, Rectangle);
+        var fillBrush = FillBrush;
+        var pen = Pen;
+        
+        var tempVisuals = SnowmanApp.Instance.GetTempViewportVisuals();
+        if (tempVisuals != null && tempVisuals.CurrentEntities.Contains(this))
+        {
+            fillBrush = TempFillBrush;
+            pen = TempPen;
+        }
+        
+        context.FillRectangle(fillBrush, Rectangle);
+        context.DrawRectangle(pen, Rectangle);
         
         foreach (var child in Children)
         {
@@ -96,5 +108,17 @@ public class RectangleEntity : Entity
     public override EntityData ToEntityData()
     {
         return new EntityRectangleData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList(), Width = Rectangle.Width, Height = Rectangle.Height };
+    }
+
+    public override Entity Clone()
+    {
+        var copy = new RectangleEntity(Position,
+            Position.WithX(Position.X + Rectangle.Width).WithY(Position.Y + Rectangle.Height))
+        {
+            Selected = Selected,
+            IsHit = IsHit,
+            Scripts = Scripts
+        };
+        return copy;
     }
 }

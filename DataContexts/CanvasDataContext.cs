@@ -26,10 +26,12 @@ namespace Snowman.DataContexts
                 var visualsToRender = SnowmanApp.Instance.GetViewportVisuals();
                 _cachedImageSize = visualsToRender.CurrentImage.Size;
                 
+                var tempVisualsToRender = SnowmanApp.Instance.GetTempViewportVisuals();
+                
                 using (context.PushTransform(GetTransformationMatrix()))
                 {
                     using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
-                    RenderObjects(context, visualsToRender);
+                    RenderObjects(context, visualsToRender, tempVisualsToRender);
                 }
             }
         }
@@ -83,7 +85,7 @@ namespace Snowman.DataContexts
             return fitScale.Append(centerTranslate).Append(additionalScale).Append(additionalTranslate);
         }
 
-        private void RenderObjects(DrawingContext context, ObjectsToRender objectsToRender)
+        private void RenderObjects(DrawingContext context, ObjectsToRender objectsToRender, ObjectsToRender? tempObjectsToRender)
         {
             // render frame
             context.DrawImage(objectsToRender.CurrentImage, new Rect(0, 0, objectsToRender.CurrentImage.Size.Width, objectsToRender.CurrentImage.Size.Height));
@@ -98,6 +100,21 @@ namespace Snowman.DataContexts
             foreach (var entity in objectsToRender.CurrentEntities)
             {
                 entity.Render(context, this);
+            }
+            
+            if (tempObjectsToRender != null)
+            {
+                // render temporary annotations   
+                foreach (var annotation in tempObjectsToRender.CurrentAnnotations)
+                {
+                    annotation.Render(context);
+                }
+
+                // render temporary entities
+                foreach (var entity in tempObjectsToRender.CurrentEntities)
+                {
+                    entity.Render(context, this);
+                }
             }
         }
     }

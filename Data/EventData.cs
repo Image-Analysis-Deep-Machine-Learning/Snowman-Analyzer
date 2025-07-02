@@ -30,19 +30,20 @@ namespace Snowman.Data;
  */
 public class EventData(BoundingBox objectBbox, bool isFirstEventOfObject, Entity entity)
 {
-    private BoundingBox ObjectBbox { get;} = objectBbox;
+    public BoundingBox ObjectBbox { get;} = objectBbox;
     public bool IsFirstEventOfObject { get; set; } = isFirstEventOfObject;
-    private Entity Entity { get; } = entity;
+    public Entity Entity { get; } = entity;
 
     public override string ToString()
     {
         StringBuilder sb = new();
-        sb.Append($" Object track ID: {ObjectBbox.ClassName.TrackId}\n");
+        sb.Append($"Object track ID: {ObjectBbox.ClassName.TrackId}\n");
+        sb.Append($"The first event of this object: {IsFirstEventOfObject}\n");
         
         // TODO: info about entity (maybe add entity IDs to identify them easily?)
         var entityType = Entity.GetType().Name;
         if (entityType.EndsWith("Entity")) entityType = entityType.Substring(0, entityType.Length - 6);
-        sb.Append($" Entity: {entityType}\n");
+        sb.Append($"Entity: {entityType}\n");
        
         return sb.ToString();
     }

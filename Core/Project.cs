@@ -69,6 +69,9 @@ public class Project {
         }
     }
 
+    public HashSet<Entity>? TempEntities { get; set; } = null;
+    public HashSet<IRenderedAnnotation>? TempBoundingBoxes { get; set; } = null;
+
     public Project()
     {
         XmlData = new XmlData();
@@ -310,7 +313,8 @@ public class Project {
         
         foreach (var entity in Entities.Where(e => e.Parent is null))
         {
-            var outputRun = RunScript(entity, events, maxFrequency);
+            var entityCopy = entity.Clone();
+            var outputRun = RunScript(entityCopy, events, maxFrequency);
             output.AppendLine(outputRun.Item1);
             output.AppendLine();
             events = outputRun.Item2 ?? events;
@@ -381,6 +385,8 @@ public class Project {
         {
             AddEntity(entity.ToEntity());
         }
+        
+        // TODO: project using dataset loaded from a video does not reopen with the video frames
 
         if (!string.IsNullOrEmpty(projectData.LoadedDatasetPath))
         {
