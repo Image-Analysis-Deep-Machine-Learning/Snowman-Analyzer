@@ -1,6 +1,7 @@
 
 # PROPERTIES_START
 # INPUT_TYPE: EntityPoint
+# NAME: Point intersection
 # PROPERTIES_END
 from Snowman.Data import EventData
 from System.Collections.Generic import List

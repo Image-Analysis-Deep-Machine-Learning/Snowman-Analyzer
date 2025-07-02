@@ -13,6 +13,7 @@ using Avalonia.Platform.Storage;
 using Python.Runtime;
 using Snowman.Core;
 using Snowman.Core.Entities;
+using Snowman.Core.Scripting;
 using Snowman.Core.Tools;
 using Ursa.Controls;
 using Snowman.Data;
@@ -35,24 +36,12 @@ namespace Snowman
         private readonly IBrush _brush;
         
         private string? _lastCustomZoom = null;
-
-        public string CurrentStringPath
-        {
-            get => SnowmanApp.Instance.Project.SelectedEntity is null ? string.Empty : SnowmanApp.Instance.Project.SelectedEntity.ScriptPaths;
-
-            set
-            {
-                if (SnowmanApp.Instance.Project.SelectedEntity is null) return;
-                SnowmanApp.Instance.Project.SelectedEntity.ScriptPaths = value;
-                OnPropertyChanged();
-            }
-        }
         
         public MainWindow()
         {
             DataContext = this;
             InitializeComponent();
-            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
+            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentSelectedScripts));
             SnowmanApp.Instance.ActiveTool = MoveTool;
             
             var theme = Application.Current?.ActualThemeVariant;
@@ -129,7 +118,7 @@ namespace Snowman
             try
             {
                 await SnowmanApp.Instance.OpenProject(filePickerResult[0]);
-                SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentStringPath));
+                SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentSelectedScripts));
             }
 
             catch (Exception ex)
@@ -138,7 +127,7 @@ namespace Snowman
                 return;
             }
             
-            OnPropertyChanged(nameof(CurrentStringPath));
+            OnPropertyChanged(nameof(CurrentSelectedScripts));
             
             Canvas.InvalidateVisual();
             FrameTimeline.InvalidateVisual();
@@ -232,7 +221,21 @@ namespace Snowman
                 }
             }
         }
-                
+
+        public List<Script> AvailableScripts => SnowmanApp.Instance.Scripts;
+
+        public ObservableCollection<Script> CurrentSelectedScripts
+        {
+            get => SnowmanApp.Instance.Project.SelectedEntity is null ? [] : SnowmanApp.Instance.Project.SelectedEntity.Scripts;
+
+            set
+            {
+                if (SnowmanApp.Instance.Project.SelectedEntity is null) return;
+                SnowmanApp.Instance.Project.SelectedEntity.Scripts = value;
+                OnPropertyChanged();
+            }
+        }
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -34,4 +34,9 @@
   <ItemGroup>
     <None Include="$(Pkgpython)\tools\**\*" LinkBase="python_win64" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

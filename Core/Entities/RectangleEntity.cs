@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Data;
@@ -94,6 +95,6 @@ public class RectangleEntity : Entity
     
     public override EntityData ToEntityData()
     {
-        return new EntityRectangleData { X = Position.X, Y = Position.Y, ScriptPaths = ScriptPaths, Width = Rectangle.Width, Height = Rectangle.Height };
+        return new EntityRectangleData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList(), Width = Rectangle.Width, Height = Rectangle.Height };
     }
 }

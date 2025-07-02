@@ -28,8 +28,8 @@ public class Script
         ScriptContent = string.Join(Environment.NewLine, scriptLines);
         ProcessScriptProperties(scriptLines);
         
-        Name ??= Path.GetFileName(path); // TODO: this will be in the properties file
-        Description ??= "I'm tired boss"; // TODO: also in the properties file, soon™
+        Name ??= Path.GetFileName(path);
+        Description ??= "no description";
     }
 
     private void ProcessScriptProperties(string[] lines)
@@ -99,7 +99,6 @@ public class Script
                             catch
                             {
                                 // TODO: inform the user that the type is wrong, for now the type does not matter so it's fine if it's worng
-                                
                             }
                             
                             InputVariables.Add(token, type);
@@ -117,7 +116,6 @@ public class Script
                             catch
                             {
                                 // TODO: inform the user that the type is wrong, for now the type does not matter so it's fine if it's worng
-                                
                             }
                             
                             OutputVariables.Add(token, type);
@@ -140,6 +138,11 @@ public class Script
         }
         
         if (!propertiesStartFound || !propertiesEndFound || !inputTypeSet) throw new ScriptPropertiesFormatMalformedException(PathToScript, $"prop_start: {propertiesStartFound}, prop_end: {propertiesEndFound},  input_type: {inputTypeSet}");
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 }
 

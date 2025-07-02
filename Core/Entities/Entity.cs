@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Media;
+using Snowman.Core.Scripting;
 using Snowman.Data;
 using Snowman.DataContexts;
 
@@ -12,7 +14,7 @@ public abstract class Entity(Entity? parent = null)
     private Point _pos;
     protected internal bool _selected;
     private bool _isHit;
-    private string _scriptPaths = string.Empty;
+    private ObservableCollection<Script> _scripts = [];
     protected const int Radius = 5;
     public event EventHandler<Point>? PositionChanges;
     
@@ -46,19 +48,19 @@ public abstract class Entity(Entity? parent = null)
         }
     }
 
-    public string ScriptPaths
+    public ObservableCollection<Script> Scripts
     {
-        get => IsChild ? Parent.ScriptPaths : _scriptPaths;
+        get => IsChild ? Parent.Scripts : _scripts;
         set
         {
             if (IsChild)
             {
-                Parent.ScriptPaths = value;
+                Parent.Scripts = value;
             }
 
             else
             {
-                _scriptPaths = value;
+                _scripts = value;
             }
         }
     }

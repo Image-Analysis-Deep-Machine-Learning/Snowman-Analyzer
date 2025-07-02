@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:u="https://irihi.tech/ursa"
         xmlns:snowman="using:Snowman"
         xmlns:control="using:Snowman.Controls"
         xmlns:core="clr-namespace:Snowman.Core"
@@ -133,11 +134,17 @@
             </Grid>
             
             <!-- run script -->
-            <DockPanel Grid.Row="0" Grid.Column="1">
-                <Label DockPanel.Dock="Top" Content="Script Path:" Margin="10"></Label>
-                <TextBox DockPanel.Dock="Top" Margin="10" Height="30" Text="{Binding CurrentStringPath}" ></TextBox>
+            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch">
+                <Label DockPanel.Dock="Top" Content="Scripts to run:" Margin="10"></Label>
+                <u:MultiComboBox
+                    DockPanel.Dock="Top"
+                    Margin="10"
+                    ItemsSource="{Binding AvailableScripts}"
+                    SelectedItems="{Binding CurrentSelectedScripts}"
+                    HorizontalAlignment="Stretch">
+                </u:MultiComboBox>
                 <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
-                <TextBox DockPanel.Dock="Top" Margin="10" AcceptsReturn="True" Name="DemoOutput"></TextBox>
+                <TextBox Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10" AcceptsReturn="True" Name="DemoOutput"></TextBox>
             </DockPanel>
         </Grid>
         

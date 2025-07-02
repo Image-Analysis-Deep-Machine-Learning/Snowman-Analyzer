@@ -10,6 +10,7 @@ namespace Snowman.Controls
     {
         public CanvasControl()
         {
+            Focusable = true;
             SnowmanApp.Instance.CanvasDataContext.ParentRendererControl = this;
 
             PointerWheelChanged += SnowmanApp.Instance.CanvasDataContext.OnPointerWheelChanged;
@@ -20,6 +21,8 @@ namespace Snowman.Controls
             PointerReleased += ForceRedraw;
             PointerMoved += SnowmanApp.Instance.CanvasDataContext.OnPointerMoved;
             PointerMoved += ForceRedraw;
+            KeyDown += SnowmanApp.Instance.CanvasDataContext.OnKeyDown;
+            KeyDown += ForceRedraw;
             return;
 
             void ForceRedraw(object? _, EventArgs __) => InvalidateVisual();

@@ -36,6 +36,7 @@ namespace Snowman.DataContexts
 
         public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
+            //ParentRendererControl.Focus();
             ActiveTool.PointerPressedAction(sender, e);
         }
 
@@ -52,6 +53,11 @@ namespace Snowman.DataContexts
         public void OnPointerMoved(object? sender, PointerEventArgs e)
         {
             ActiveTool.PointerMovedAction(sender, e);
+        }
+
+        public void OnKeyDown(object? sender, KeyEventArgs e)
+        {
+            ActiveTool.KeyPressed(sender, e);
         }
         
         public Matrix GetTransformationMatrix()

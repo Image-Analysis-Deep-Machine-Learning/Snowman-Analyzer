@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Python.Runtime;
+using Snowman.Core.Scripting;
 using Snowman.Core.Tools;
 using Snowman.DataContexts;
 
@@ -11,6 +12,7 @@ namespace Snowman.Core
 {
     public class SnowmanApp
     {
+        private const string ScriptsDirectory = "Scripts";
         private static SnowmanApp? _instance;
         
         private Tool _activeTool = null!;
@@ -20,6 +22,7 @@ namespace Snowman.Core
         public FrameTimelineDataContext FrameTimelineDataContext { get; }
         public EventTimelineDataContext EventTimelineDataContext { get; }
         public Project Project { get; private set; }
+        public List<Script> Scripts  { get; } = [];
 
         public Tool ActiveTool
         {
@@ -37,7 +40,16 @@ namespace Snowman.Core
             FrameTimelineDataContext = new FrameTimelineDataContext();
             EventTimelineDataContext = new EventTimelineDataContext();
             Project = new Project();
+            LoadScripts();
             InitializePythonExecutionEnvironment();
+        }
+
+        private void LoadScripts()
+        {
+            foreach (var file in Directory.EnumerateFiles(ScriptsDirectory))
+            {
+                Scripts.Add(new Script(file));
+            }
         }
 
         public ObjectsToRender GetViewportVisuals()

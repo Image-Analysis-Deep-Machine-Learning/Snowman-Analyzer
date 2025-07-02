@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Core;
@@ -28,6 +29,6 @@ public class PointEntity : Entity
 
     public override EntityData ToEntityData()
     {
-        return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = ScriptPaths };
+        return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList() };
     }
 }

@@ -21,4 +21,5 @@ public abstract class Tool
     public abstract void PointerReleasedAction(object? sender, PointerReleasedEventArgs e);
     public abstract void PointerWheelChangedAction(object? sender, PointerWheelEventArgs e);
     public abstract void PointerMovedAction(object? sender, PointerEventArgs e);
+    public abstract void KeyPressed(object? sender, KeyEventArgs keyEventArgs);
 }
