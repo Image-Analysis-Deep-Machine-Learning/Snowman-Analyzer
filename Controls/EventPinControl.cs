@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Avalonia;
 using Avalonia.Animation;
@@ -106,7 +107,9 @@ public class EventPinControl : Control
                 $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
                 "Click for more info");
             
-            DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
+            var containsFirst = Events.Any(eventData => eventData.IsFirstEventOfObject);
+            // only draw filled pin icon if at least one event is the first event
+            if (containsFirst) DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
         }
     }
 

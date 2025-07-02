@@ -78,12 +78,6 @@ public class EventTimelineControl : UserControl
                     width = Math.Abs(x - xNext);
                     leftX = Math.Min(x, xNext);
                 }
-                
-                // TODO: implement event pin representation for multiple events happening simultaneously
-                // ToolTip should say how many events have occurred at this frame
-                // maybe even an icon that will represent grouping of multiple events?
-                // display detailed info about all the events in a separate window
-                // change canvas to the target frame on click + highlight ALL the events occurring in this frame
 
                 var pin = new EventPinControl(events, frameIndex, rule, frequency)
                 {
