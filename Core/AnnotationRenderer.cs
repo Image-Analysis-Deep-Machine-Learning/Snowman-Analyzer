@@ -2,7 +2,6 @@
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Data;
-using Snowman.DataContexts;
 
 namespace Snowman.Core;
 

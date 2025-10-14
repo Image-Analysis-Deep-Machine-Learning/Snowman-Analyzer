@@ -9,27 +9,35 @@ using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
 
-public abstract class Entity(Entity? parent = null)
+public abstract class Entity
 {
-    private Point _pos;
-    protected internal bool _selected;
-    private bool _isHit;
-    private ObservableCollection<Script> _scripts = [];
     protected const int Radius = 5;
-    public event EventHandler<Point>? PositionChanges;
     
+    private Point _pos;
+    private bool _isHit;
+    private readonly Entity? _parent;
+    protected internal bool _selected;
+
+    protected Entity(Entity? parent = null)
+    {
+        _parent = parent;
+    }
+
+    public event EventHandler<Point>? PositionChanges;
+    public int Id { get; set; }
+    public string Name { get; set; }
     public bool IsChild => Parent is not null;
-    public Entity? Parent { get; set; } = parent;
+    public Entity? Parent => _parent;
     public List<Entity> Children { get; set; } = [];
 
     public virtual bool Selected
     {
-        get => IsChild ? Parent.Selected : _selected;
+        get => IsChild ? Parent!.Selected : _selected;
         set
         {
             if (IsChild)
             {
-                Parent.Selected = value;
+                Parent!.Selected = value;
             }
 
             else
@@ -42,27 +50,7 @@ public abstract class Entity(Entity? parent = null)
     public bool IsHit
     {
         get => _isHit;
-        set
-        {
-            _isHit = value;
-        }
-    }
-
-    public ObservableCollection<Script> Scripts
-    {
-        get => IsChild ? Parent.Scripts : _scripts;
-        set
-        {
-            if (IsChild)
-            {
-                Parent.Scripts = value;
-            }
-
-            else
-            {
-                _scripts = value;
-            }
-        }
+        set => _isHit = value;
     }
 
     public Point Position

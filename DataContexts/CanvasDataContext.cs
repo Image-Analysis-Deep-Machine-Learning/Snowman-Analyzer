@@ -1,10 +1,10 @@
-﻿using Avalonia;
+﻿using System;
+using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Snowman.Core;
-using System;
-using Avalonia.Input;
 using Snowman.Controls;
+using Snowman.Core;
 using Snowman.Core.Tools;
 
 namespace Snowman.DataContexts

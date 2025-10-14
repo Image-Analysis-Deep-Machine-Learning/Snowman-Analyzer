@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Python.Runtime;
 using Snowman.Core.Scripting;
+using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Tools;
 using Snowman.DataContexts;
 
@@ -93,12 +94,13 @@ namespace Snowman.Core
             // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
             // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
             // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
+            // TODO: DEBUGGER
             var p = new Process();
             var exe = Path.Combine(pythonDir, "python.exe");
             p.StartInfo.FileName = exe;
             //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
             p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
-            p.Start();
+            //p.Start();
         }
 
         public async Task OpenProject(IStorageFile file)

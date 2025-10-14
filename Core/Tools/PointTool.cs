@@ -11,7 +11,7 @@ namespace Snowman.Core.Tools;
 /// </summary>
 public class PointTool : EntityEditTool<PointEntity>
 {
-    public PointTool()
+    public PointTool() : base("_Point Create")
     {
         Cursor = new Cursor(StandardCursorType.Arrow);
     }

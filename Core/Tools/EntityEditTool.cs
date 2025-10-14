@@ -14,7 +14,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
     private Point _originalClickPosition;
     private Point _originalEntityPosition;
     
-    public EntityEditTool()
+    public EntityEditTool(string name = "_Entity Edit") : base(name)
     {
         Cursor = new Cursor(StandardCursorType.Arrow);
     }

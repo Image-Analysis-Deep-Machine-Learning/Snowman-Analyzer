@@ -241,7 +241,7 @@ public class Project {
     public void PreviousFrame() => CurrentFrameIndex--;
 
     // TODO: make async so the GUI won't get locked
-    private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
+    /*private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
         if (entity.Scripts.Count == 0) return ("1 entity ignored - no scripts set", null, 0); // make it better
         var output = "Running script...\n";
@@ -297,7 +297,7 @@ public class Project {
         }
         
         return (output, events, maxFrequency);
-    }
+    }*/
 
     /**
      * output events after applying a rule = a dictionary mapping frame indices (int) to event data lists
@@ -314,11 +314,11 @@ public class Project {
         foreach (var entity in Entities.Where(e => e.Parent is null))
         {
             var entityCopy = entity.Clone();
-            var outputRun = RunScript(entityCopy, events, maxFrequency);
+            /*var outputRun = RunScript(entityCopy, events, maxFrequency);
             output.AppendLine(outputRun.Item1);
             output.AppendLine();
             events = outputRun.Item2 ?? events;
-            maxFrequency = outputRun.Item3;
+            maxFrequency = outputRun.Item3;*/
         }
         
         return (output.ToString(), events, maxFrequency);

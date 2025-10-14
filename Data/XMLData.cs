@@ -3,7 +3,6 @@ using System.IO;
 using System.Xml.Serialization;
 using Avalonia.Media;
 using Snowman.Core;
-using Snowman.DataContexts;
 
 namespace Snowman.Data;
 

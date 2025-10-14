@@ -107,7 +107,7 @@ public class RectangleEntity : Entity
     
     public override EntityData ToEntityData()
     {
-        return new EntityRectangleData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList(), Width = Rectangle.Width, Height = Rectangle.Height };
+        return new EntityRectangleData { X = Position.X, Y = Position.Y, Width = Rectangle.Width, Height = Rectangle.Height };
     }
 
     public override Entity Clone()
@@ -117,7 +117,6 @@ public class RectangleEntity : Entity
         {
             Selected = Selected,
             IsHit = IsHit,
-            Scripts = Scripts
         };
         return copy;
     }

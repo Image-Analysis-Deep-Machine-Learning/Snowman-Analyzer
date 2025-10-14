@@ -1,7 +1,6 @@
 using System.Linq;
 using Avalonia;
 using Avalonia.Media;
-using Snowman.Core;
 using Snowman.Data;
 using Snowman.DataContexts;
 
@@ -36,7 +35,7 @@ public class PointEntity : Entity
 
     public override EntityData ToEntityData()
     {
-        return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList() };
+        return new EntityPointData { X = Position.X, Y = Position.Y };
     }
 
     public override Entity Clone()
@@ -45,8 +44,8 @@ public class PointEntity : Entity
         {
             Selected = Selected,
             IsHit = IsHit,
-            Scripts = Scripts
         };
+        
         return copy;
     }
 }

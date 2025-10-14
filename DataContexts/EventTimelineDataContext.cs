@@ -4,14 +4,10 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Snowman.Controls;
 using Snowman.Core;
-using Snowman.Data;
-using Snowman.Utilities;
 using Color = System.Drawing.Color;
 
 namespace Snowman.DataContexts;

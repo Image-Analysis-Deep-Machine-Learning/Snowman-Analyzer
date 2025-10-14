@@ -1,7 +1,6 @@
 ﻿using System;
 using Avalonia;
 using Avalonia.Input;
-using Snowman.DataContexts;
 
 namespace Snowman.Core.Tools;
 
@@ -13,13 +12,13 @@ public class ViewportMoveTool : Tool
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.5;
     private const double MaxZoom = 10.0;
+    
     private double _zoom = 1;
     private Vector _originalMovement;
     private bool _pressed;
+    private Point _clickOrigin;
     
-    protected Point ClickOrigin;
-    
-    public Vector CurrentMouseMovement { get; set; }
+    protected Vector CurrentMouseMovement { get; private set; }
 
     private double Zoom
     {
@@ -27,7 +26,7 @@ public class ViewportMoveTool : Tool
         set => _zoom = Math.Clamp(value, MinZoom, MaxZoom);
     }
     
-    public ViewportMoveTool()
+    public ViewportMoveTool(string name = "_Move") : base(name)
     {
         Zoom = CanvasDataContext.AdditionalScale;
         Cursor = new Cursor(StandardCursorType.SizeAll);
@@ -35,7 +34,7 @@ public class ViewportMoveTool : Tool
 
     public override void PointerPressedAction(object? sender, PointerPressedEventArgs e)
     {
-        ClickOrigin = e.GetCurrentPoint((Visual?)sender).Position;
+        _clickOrigin = e.GetCurrentPoint((Visual?)sender).Position;
         _originalMovement = CanvasDataContext.AdditionalTranslation; 
         _pressed = true;
     }
@@ -44,7 +43,7 @@ public class ViewportMoveTool : Tool
     {
         CanvasDataContext.AdditionalTranslation = _originalMovement + CurrentMouseMovement;
         _pressed = false;
-        ClickOrigin = default;
+        _clickOrigin = default;
         _originalMovement = default;
         CurrentMouseMovement = Vector.Zero;
     }
@@ -65,7 +64,7 @@ public class ViewportMoveTool : Tool
     {
         if (!_pressed) return;
         
-        CurrentMouseMovement = e.GetPosition((Visual?)sender) - ClickOrigin;
+        CurrentMouseMovement = e.GetPosition((Visual?)sender) - _clickOrigin;
         CanvasDataContext.AdditionalTranslation = CurrentMouseMovement + _originalMovement;
     }
 

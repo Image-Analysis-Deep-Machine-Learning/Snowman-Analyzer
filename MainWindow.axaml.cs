@@ -11,10 +11,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Python.Runtime;
 using Snowman.Core;
 using Snowman.Core.Entities;
-using Snowman.Core.Scripting;
 using Snowman.Core.Tools;
 using Ursa.Controls;
 using Snowman.Data;
@@ -28,10 +26,7 @@ namespace Snowman
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         
-        public static ViewportMoveTool MoveTool { get; } = new();
-        public static EntityEditTool<Entity> EntityEditTool { get; } = new();
-        public static PointTool PointTool { get; } = new();
-        public static RectTool RectTool { get; } = new();
+        public List<Tool> Tools { get; } = ToolRegistry.Tools;
 
         public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
         private readonly IBrush _brush;
@@ -42,8 +37,8 @@ namespace Snowman
         {
             DataContext = this;
             InitializeComponent();
-            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentSelectedScripts));
-            SnowmanApp.Instance.ActiveTool = MoveTool;
+            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(IsEntitySelected));
+            SnowmanApp.Instance.ActiveTool = Tools[0];
             
             var theme = Application.Current?.ActualThemeVariant;
             
@@ -124,7 +119,6 @@ namespace Snowman
             try
             {
                 await SnowmanApp.Instance.OpenProject(filePickerResult[0]);
-                SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged(nameof(CurrentSelectedScripts));
             }
 
             catch (Exception ex)
@@ -132,8 +126,6 @@ namespace Snowman
                 await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
                 return;
             }
-            
-            OnPropertyChanged(nameof(CurrentSelectedScripts));
             
             Canvas.InvalidateVisual();
             FrameTimeline.InvalidateVisual();
@@ -198,14 +190,14 @@ namespace Snowman
             var ruleId = SnowmanApp.Instance.Project.Rules.Count;
             var ruleName = new StringBuilder();
 
-            if (SnowmanApp.Instance.Project.SelectedEntity != null)
-                for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count; i++)
+            /*if (IsEntitySelected)
+                for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity!.Scripts.Count; i++)
                 {
                     var script = SnowmanApp.Instance.Project.SelectedEntity.Scripts[i];
                     ruleName.Append(script.Name);
                     if (i != SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count - 1) ruleName.Append(" + ");
                 }
-
+*/
             var (baseColor, lightColor) = ColorGeneration.GetHuePair(ruleId);
             EventTimelineDataContext.TimelineColors.TryAdd(ruleId, (baseColor, lightColor));
             
@@ -246,21 +238,9 @@ namespace Snowman
             }
         }
 
-        public List<Script> AvailableScripts => SnowmanApp.Instance.Scripts;
+        public bool IsEntitySelected => SnowmanApp.Instance.Project.SelectedEntity is not null;
 
-        public ObservableCollection<Script> CurrentSelectedScripts
-        {
-            get => SnowmanApp.Instance.Project.SelectedEntity is null ? [] : SnowmanApp.Instance.Project.SelectedEntity.Scripts;
-
-            set
-            {
-                if (SnowmanApp.Instance.Project.SelectedEntity is null) return;
-                SnowmanApp.Instance.Project.SelectedEntity.Scripts = value;
-                OnPropertyChanged();
-            }
-        }
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

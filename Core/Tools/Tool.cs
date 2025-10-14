@@ -8,13 +8,15 @@ namespace Snowman.Core.Tools;
 
 public abstract class Tool
 {
+    public string Name { get; }
     public Cursor Cursor { get; set; }
 
     public CanvasDataContext CanvasDataContext => SnowmanApp.Instance.CanvasDataContext;
 
-    public Tool()
+    public Tool(string name)
     {
         Cursor = new Cursor(StandardCursorType.Arrow);
+        Name = name;
     }
     
     public abstract void PointerPressedAction(object? sender, PointerPressedEventArgs e);

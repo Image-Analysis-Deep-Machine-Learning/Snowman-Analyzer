@@ -5,7 +5,9 @@
         xmlns:u="https://irihi.tech/ursa"
         xmlns:snowman="using:Snowman"
         xmlns:control="using:Snowman.Controls"
+        xmlns:tools="using:Snowman.Core.Tools"
         xmlns:core="clr-namespace:Snowman.Core"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         mc:Ignorable="d" Width="1920" Height="1080"
         x:Class="Snowman.MainWindow"
         x:DataType="snowman:MainWindow"
@@ -30,11 +32,15 @@
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding Close}"/>
             </MenuItem>
-            <MenuItem Header="_Tool">
-                <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/>
-                <MenuItem Header="_Entity Edit" Command="{Binding SetTool}" CommandParameter="{Binding EntityEditTool}"/>
-                <MenuItem Header="_Point Create" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/>
-                <MenuItem Header="_Rect Create" Command="{Binding SetTool}" CommandParameter="{Binding RectTool}"/>
+            <!-- this mindfuck took me 3 hours to figure out, I love this framework -->
+            <MenuItem Header="_Tools" ItemsSource="{Binding Tools}" Classes="SubItems">
+                <MenuItem.Styles>
+                    <Style Selector="MenuItem.SubItems MenuItem" x:DataType="tools:Tool">
+                        <Setter Property="Header" Value="{Binding Name}"/>
+                        <Setter Property="Command" Value="{Binding $parent[snowman:MainWindow].SetTool}"/>
+                        <Setter Property="CommandParameter" Value="{Binding}"/>
+                    </Style>
+                </MenuItem.Styles>  
             </MenuItem>
         </Menu>
         
@@ -134,15 +140,14 @@
             </Grid>
             
             <!-- run script -->
-            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch">
-                <Label DockPanel.Dock="Top" Content="Scripts to run:" Margin="10"></Label>
-                <u:MultiComboBox
-                    DockPanel.Dock="Top"
-                    Margin="10"
-                    ItemsSource="{Binding AvailableScripts}"
-                    SelectedItems="{Binding CurrentSelectedScripts}"
-                    HorizontalAlignment="Stretch">
-                </u:MultiComboBox>
+            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding IsEntitySelected}">
+                <DockPanel DockPanel.Dock="Top">
+                    <Label Content="Scripts to run:" Margin="10" VerticalAlignment="Center"></Label>
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top">
+                    <Label Margin="10" VerticalAlignment="Center">ID:</Label>
+                    <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox>
+                </DockPanel>
                 <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
                 <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
             </DockPanel>

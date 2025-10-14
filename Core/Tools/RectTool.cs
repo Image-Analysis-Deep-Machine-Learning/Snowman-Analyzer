@@ -7,7 +7,7 @@ namespace Snowman.Core.Tools;
 public class RectTool : EntityEditTool<RectangleEntity>
 {
     private PointEntity? _initialDraggedPoint;
-    public RectTool()
+    public RectTool() : base("_Rect Create")
     {
         Cursor = new Cursor(StandardCursorType.Arrow);
     }
