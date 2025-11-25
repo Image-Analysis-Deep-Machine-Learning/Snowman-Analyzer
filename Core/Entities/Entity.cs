@@ -65,7 +65,7 @@ public abstract class Entity
 
     public abstract bool EvaluateHit(Point cursorPosition);
 
-    public abstract void Render(DrawingContext context, CanvasDataContext canvasDataContext);
+    public abstract void Render(DrawingContext context);
     
     public abstract EntityData ToEntityData();
     

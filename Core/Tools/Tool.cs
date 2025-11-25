@@ -1,8 +1,6 @@
-﻿using System;
-using Avalonia;
-using Avalonia.Input;
+﻿using Avalonia.Input;
+using Snowman.Core.Commands;
 using Snowman.DataContexts;
-using Point = System.Drawing.Point;
 
 namespace Snowman.Core.Tools;
 
@@ -19,9 +17,9 @@ public abstract class Tool
         Name = name;
     }
     
-    public abstract void PointerPressedAction(object? sender, PointerPressedEventArgs e);
-    public abstract void PointerReleasedAction(object? sender, PointerReleasedEventArgs e);
-    public abstract void PointerWheelChangedAction(object? sender, PointerWheelEventArgs e);
-    public abstract void PointerMovedAction(object? sender, PointerEventArgs e);
-    public abstract void KeyPressed(object? sender, KeyEventArgs keyEventArgs);
+    public abstract ICommand PointerPressedAction(object? sender, PointerPressedEventArgs e);
+    public abstract ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e);
+    public abstract ICommand PointerWheelChangedAction(object? sender, PointerWheelEventArgs e);
+    public abstract ICommand PointerMovedAction(object? sender, PointerEventArgs e);
+    public abstract ICommand KeyPressed(object? sender, KeyEventArgs e);
 }

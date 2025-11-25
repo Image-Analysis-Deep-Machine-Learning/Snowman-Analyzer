@@ -14,16 +14,18 @@ namespace Snowman.Core
 {
     public class SnowmanApp
     {
+        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
+        public Project Project { get; private set; }
+        
+        
         private const string ScriptsDirectory = "Scripts";
         private static SnowmanApp? _instance;
         
         private Tool _activeTool = null!;
         
-        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
         public CanvasDataContext CanvasDataContext { get; }
         public FrameTimelineDataContext FrameTimelineDataContext { get; }
         public EventTimelineDataContext EventTimelineDataContext { get; }
-        public Project Project { get; private set; }
         public List<Script> Scripts  { get; } = [];
 
         public Tool ActiveTool

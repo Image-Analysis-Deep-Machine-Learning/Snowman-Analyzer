@@ -20,7 +20,7 @@ public class PointEntity : Entity
         return cursorPosition.DistanceTo(Position) <= Radius;
     }
 
-    public override void Render(DrawingContext context, CanvasDataContext canvasDataContext)
+    public override void Render(DrawingContext context)
     {
         var brush = IsHit ? Brushes.Lime : Selected ? Brushes.DeepSkyBlue : Brushes.Red;
         

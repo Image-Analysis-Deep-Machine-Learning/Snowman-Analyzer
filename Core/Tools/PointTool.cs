@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Avalonia;
 using Avalonia.Input;
+using Snowman.Core.Commands;
 using Snowman.Core.Entities;
 
 namespace Snowman.Core.Tools;
@@ -16,7 +17,7 @@ public class PointTool : EntityEditTool<PointEntity>
         Cursor = new Cursor(StandardCursorType.Arrow);
     }
 
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
     {
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
@@ -41,6 +42,6 @@ public class PointTool : EntityEditTool<PointEntity>
             }
         }
         
-        base.PointerReleasedAction(sender, e);
+        return base.PointerReleasedAction(sender, e);
     }
 }

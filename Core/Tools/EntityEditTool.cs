@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Input;
+using Snowman.Core.Commands;
 using Snowman.Core.Entities;
 
 namespace Snowman.Core.Tools;
@@ -10,7 +11,7 @@ namespace Snowman.Core.Tools;
 /// <typeparam name="TEntity">Filters entities that the tool can edit</typeparam>
 public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 {
-    private Entity? _draggedEntity;
+    private Entity? _draggedEntity; // currently dragged entity TODO: merge with selected entity?
     private Point _originalClickPosition;
     private Point _originalEntityPosition;
     
@@ -19,7 +20,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         Cursor = new Cursor(StandardCursorType.Arrow);
     }
 
-    public void SetDraggedEntity(Entity? draggedEntity, Point originalClickPosition =  default)
+    protected void SetDraggedEntity(Entity? draggedEntity, Point originalClickPosition = default)
     {
         _draggedEntity = draggedEntity;
         _originalClickPosition = originalClickPosition;
@@ -30,7 +31,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         }
     }
 
-    public override void PointerPressedAction(object? sender, PointerPressedEventArgs e)
+    public override ICommand PointerPressedAction(object? sender, PointerPressedEventArgs e)
     {
         SetDraggedEntity(null);
         
@@ -41,10 +42,11 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
             if (entity.EvaluateHit(pointerPosition)) SetDraggedEntity(entity, pointerPosition);
         }
         
-        base.PointerPressedAction(sender, e);
+        var baseCommand = base.PointerPressedAction(sender, e);
+        return baseCommand;
     }
 
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
     {
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
@@ -75,10 +77,10 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
             SetDraggedEntity(null);
         }
         
-        base.PointerReleasedAction(sender, e);
+        return base.PointerReleasedAction(sender, e);
     }
 
-    public override void PointerMovedAction(object? sender, PointerEventArgs e)
+    public override ICommand PointerMovedAction(object? sender, PointerEventArgs e)
     {
         var cursorPositionLocal = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
         
@@ -110,19 +112,23 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
                 hitEntityCandidate.IsHit = true;
             }
             
-            base.PointerMovedAction(sender, e);
+            return base.PointerMovedAction(sender, e);
         }
+        
+        return ICommand.EmptyCommand;
     }
 
-    public override void KeyPressed(object? sender, KeyEventArgs keyEventArgs)
+    public override ICommand KeyPressed(object? sender, KeyEventArgs e)
     {
-        base.KeyPressed(sender, keyEventArgs);
+        var command = base.KeyPressed(sender, e);
 
-        if (keyEventArgs.Key == Key.Delete) // delete selected entity
+        if (e.Key == Key.Delete) // delete selected entity
         {
             var selectedEntity = SnowmanApp.Instance.Project.SelectedEntity;
             SnowmanApp.Instance.Project.DeselectAllEntities();
             SnowmanApp.Instance.Project.RemoveEntity(selectedEntity);
         }
+        
+        return command;
     }
 }

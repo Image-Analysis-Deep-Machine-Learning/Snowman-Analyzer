@@ -1,5 +1,7 @@
-﻿using Avalonia;
+﻿using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Input;
+using Snowman.Core.Commands;
 using Snowman.Core.Entities;
 
 namespace Snowman.Core.Tools;
@@ -12,7 +14,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
         Cursor = new Cursor(StandardCursorType.Arrow);
     }
     
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
     { 
         var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
         
@@ -37,7 +39,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
                         {
                             var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
                             SnowmanApp.Instance.Project.AddEntity(newRectangleEntity);
-                            _initialDraggedPoint = newRectangleEntity.Children[2] as PointEntity;
+                            _initialDraggedPoint = (PointEntity)newRectangleEntity.Children[2];
                             SnowmanApp.Instance.Project.SelectEntity(_initialDraggedPoint);
                             newRectangleEntity.BindMoveEvent();
                         }
@@ -50,12 +52,15 @@ public class RectTool : EntityEditTool<RectangleEntity>
                 }
             }
         }
-        
-        base.PointerReleasedAction(sender, e);
+
+        var baseCommand = base.PointerReleasedAction(sender, e);
+        List<ICommand> commandList = [baseCommand]; 
         
         if (_initialDraggedPoint is not null)
         {
-            SetDraggedEntity(_initialDraggedPoint, pointerPosition);
+            commandList.Add(new ActionCommand(x => SetDraggedEntity(_initialDraggedPoint, pointerPosition)));
         }
+        
+        return new AggregateCommand(commandList);
     }
 }

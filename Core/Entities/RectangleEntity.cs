@@ -67,7 +67,7 @@ public class RectangleEntity : Entity
         return Rectangle.Contains(cursorPosition);
     }
 
-    public override void Render(DrawingContext context, CanvasDataContext canvasDataContext)
+    public override void Render(DrawingContext context)
     {
         var fillBrush = FillBrush;
         var pen = Pen;
@@ -84,7 +84,7 @@ public class RectangleEntity : Entity
         
         foreach (var child in Children)
         {
-            child.Render(context, canvasDataContext);
+            child.Render(context);
         }
     }
 

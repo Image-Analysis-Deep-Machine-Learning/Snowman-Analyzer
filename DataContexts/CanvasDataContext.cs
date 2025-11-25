@@ -39,27 +39,32 @@ namespace Snowman.DataContexts
         public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
             //ParentRendererControl.Focus();
-            ActiveTool.PointerPressedAction(sender, e);
+            var command = ActiveTool.PointerPressedAction(sender, e);
+            command.Execute(this);
         }
 
         public void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
         {
-            ActiveTool.PointerReleasedAction(sender, e);
+            var command = ActiveTool.PointerReleasedAction(sender, e);
+            command.Execute(this);
         }
 
         public void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
         {
-            ActiveTool.PointerWheelChangedAction(sender, e);
+            var command = ActiveTool.PointerWheelChangedAction(sender, e);
+            command.Execute(this);
         }
 
         public void OnPointerMoved(object? sender, PointerEventArgs e)
         {
-            ActiveTool.PointerMovedAction(sender, e);
+            var command = ActiveTool.PointerMovedAction(sender, e);
+            command.Execute(this);
         }
 
         public void OnKeyDown(object? sender, KeyEventArgs e)
         {
-            ActiveTool.KeyPressed(sender, e);
+            var command = ActiveTool.KeyPressed(sender, e);
+            command.Execute(this);
         }
         
         public Matrix GetTransformationMatrix()
@@ -99,7 +104,7 @@ namespace Snowman.DataContexts
             // render entities
             foreach (var entity in objectsToRender.CurrentEntities)
             {
-                entity.Render(context, this);
+                entity.Render(context);
             }
             
             if (tempObjectsToRender != null)
@@ -113,7 +118,7 @@ namespace Snowman.DataContexts
                 // render temporary entities
                 foreach (var entity in tempObjectsToRender.CurrentEntities)
                 {
-                    entity.Render(context, this);
+                    entity.Render(context);
                 }
             }
         }

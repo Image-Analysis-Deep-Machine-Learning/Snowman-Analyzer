@@ -1,6 +1,7 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Input;
+using Snowman.Core.Commands;
+using Snowman.DataContexts;
 
 namespace Snowman.Core.Tools;
 
@@ -9,64 +10,62 @@ namespace Snowman.Core.Tools;
 /// </summary>
 public class ViewportMoveTool : Tool
 {
-    private const double ZoomStep = 0.1;
-    private const double MinZoom = 0.5;
-    private const double MaxZoom = 10.0;
-    
-    private double _zoom = 1;
     private Vector _originalMovement;
     private bool _pressed;
     private Point _clickOrigin;
     
     protected Vector CurrentMouseMovement { get; private set; }
-
-    private double Zoom
-    {
-        get => _zoom;
-        set => _zoom = Math.Clamp(value, MinZoom, MaxZoom);
-    }
     
     public ViewportMoveTool(string name = "_Move") : base(name)
     {
-        Zoom = CanvasDataContext.AdditionalScale;
         Cursor = new Cursor(StandardCursorType.SizeAll);
     }
 
-    public override void PointerPressedAction(object? sender, PointerPressedEventArgs e)
+    public override ICommand PointerPressedAction(object? sender, PointerPressedEventArgs e)
     {
         _clickOrigin = e.GetCurrentPoint((Visual?)sender).Position;
-        _originalMovement = CanvasDataContext.AdditionalTranslation; 
         _pressed = true;
+        
+        return new ActionCommand(x =>
+        {
+            if (x is not CanvasDataContext canvasDataContext) return;
+            _originalMovement = canvasDataContext.AdditionalTranslation;
+        });
     }
 
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
     {
-        CanvasDataContext.AdditionalTranslation = _originalMovement + CurrentMouseMovement;
         _pressed = false;
+        // next three lines are important, the canvas does not work properly without them
         _clickOrigin = default;
         _originalMovement = default;
         CurrentMouseMovement = Vector.Zero;
+        
+        return ICommand.EmptyCommand;
     }
 
-    public override void PointerWheelChangedAction(object? sender, PointerWheelEventArgs e)
+    public override ICommand PointerWheelChangedAction(object? sender, PointerWheelEventArgs e)
     {
-        var zoomOld = Zoom;
-        
-        if (e.Delta.Y < 0) Zoom *= 1 - ZoomStep;
-        else if (e.Delta.Y > 0) Zoom *= 1 + ZoomStep;
-        
-        CanvasDataContext.AdditionalScale = Zoom;
         var pos = e.GetCurrentPoint((Visual?)sender).Position;
-        CanvasDataContext.AdditionalTranslation += (zoomOld - Zoom) * (pos - CanvasDataContext.AdditionalTranslation) / zoomOld;
+
+        return e.Delta.Y switch
+        {
+            < 0 => new ZoomCommand(ZoomCommand.ZoomType.ZoomOut, pos),
+            > 0 => new ZoomCommand(ZoomCommand.ZoomType.ZoomIn, pos),
+            _ => ICommand.EmptyCommand
+        };
     }
 
-    public override void PointerMovedAction(object? sender, PointerEventArgs e)
+    public override ICommand PointerMovedAction(object? sender, PointerEventArgs e)
     {
-        if (!_pressed) return;
+        if (!_pressed) return ICommand.EmptyCommand;
         
         CurrentMouseMovement = e.GetPosition((Visual?)sender) - _clickOrigin;
-        CanvasDataContext.AdditionalTranslation = CurrentMouseMovement + _originalMovement;
+        return new MoveCommand(CurrentMouseMovement + _originalMovement, MoveCommand.MovementType.Absolute);
     }
 
-    public override void KeyPressed(object? sender, KeyEventArgs keyEventArgs) {} // no keybindings at the moment
+    public override ICommand KeyPressed(object? sender, KeyEventArgs e)
+    {
+        return ICommand.EmptyCommand; // no keybindings at the moment
+    }
 }
