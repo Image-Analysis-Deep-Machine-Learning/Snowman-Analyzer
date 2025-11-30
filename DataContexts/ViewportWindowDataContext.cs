@@ -2,7 +2,12 @@
 
 namespace Snowman.DataContexts;
 
-public class ViewportWindowDataContext
+public class ViewportWindowDataContext : ServiceableDataContext
 {
-    public IServiceProvider ServiceProvider { get; set; }
+    public ViewportWindowDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+        
+    }
+
+    public ViewportWindowDataContext() : base(null!) { }
 }

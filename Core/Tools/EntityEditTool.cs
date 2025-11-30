@@ -23,7 +23,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
     {
         
     }
-    
+
     protected EntityEditTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
     public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)

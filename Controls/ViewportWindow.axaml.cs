@@ -1,9 +1,23 @@
-﻿using Snowman.DataContexts;
+﻿using System;
+using Avalonia;
+using Snowman.DataContexts;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
 public partial class ViewportWindow : ServiceableUserControl<ViewportWindowDataContext>
 {
+    static ViewportWindow()
+    {
+        ServiceProviderProperty.Changed.AddClassHandler<ViewportWindow>((toolBar, e) =>
+        {
+            if (e.NewValue is IServiceProvider provider)
+            {
+                toolBar.DataContext = new ViewportWindowDataContext(provider);
+            }
+        });
+    }
+    
     public ViewportWindow()
     {
         InitializeComponent();

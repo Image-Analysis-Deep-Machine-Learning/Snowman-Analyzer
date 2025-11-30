@@ -19,17 +19,13 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class MainWindowDataContext
+public class MainWindowDataContext : ServiceableDataContext
 {
     private string? _lastCustomZoom;
     
     public bool IsEntitySelected => SnowmanApp.Instance.Project.SelectedEntity is not null;
-    public IServiceProvider ServiceProvider { get; set; }
     
-    public MainWindowDataContext()
-    {
-        ServiceProvider = new SnowmanServiceProvider();
-    }
+    public MainWindowDataContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
     
     public void NewProject()
     {

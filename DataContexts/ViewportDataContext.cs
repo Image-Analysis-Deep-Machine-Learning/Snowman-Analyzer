@@ -3,10 +3,11 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class ViewportDataContext
+public class ViewportDataContext : ServiceableDataContext
 {
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.5;
@@ -61,7 +62,10 @@ public class ViewportDataContext
     }
 
     public Matrix TransformationMatrix { get; private set; }
-    public IServiceProvider ServiceProvider { get; set; }
+
+    public ViewportDataContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+    public ViewportDataContext() : base(null!) { }
     
     public void Zoom(double delta, Point atPosition)
     {

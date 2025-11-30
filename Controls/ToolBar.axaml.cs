@@ -11,6 +11,17 @@ namespace Snowman.Controls;
 
 public partial class ToolBar : ServiceableUserControl<ToolBarDataContext>
 {
+    static ToolBar()
+    {
+        ServiceProviderProperty.Changed.AddClassHandler<ToolBar>((toolBar, e) =>
+        {
+            if (e.NewValue is IServiceProvider provider)
+            {
+                toolBar.DataContext = new ToolBarDataContext(provider);
+            }
+        });
+    }
+    
     public ToolBar()
     {
         InitializeComponent();

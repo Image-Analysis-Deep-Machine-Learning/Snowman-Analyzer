@@ -23,14 +23,12 @@ namespace Snowman.Core
         private const string ScriptsDirectory = "Scripts";
         private static SnowmanApp? _instance;
         
-        public ViewportDataContext ViewportDataContext { get; }
         public FrameTimelineDataContext FrameTimelineDataContext { get; }
         public EventTimelineDataContext EventTimelineDataContext { get; }
         public List<Script> Scripts  { get; } = [];
 
         private SnowmanApp()
         {
-            ViewportDataContext = new ViewportDataContext();
             FrameTimelineDataContext = new FrameTimelineDataContext();
             EventTimelineDataContext = new EventTimelineDataContext();
             Project = new Project();

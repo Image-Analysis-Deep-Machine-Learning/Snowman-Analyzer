@@ -25,11 +25,35 @@ namespace Snowman
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public IServiceProvider ServiceProvider { get; private set; }
+        public static readonly StyledProperty<IServiceProvider> ServiceProviderProperty =
+// this warning is a lie
+#pragma warning disable AVP1002
+            AvaloniaProperty.Register<MainWindow, IServiceProvider>(nameof(ServiceProvider));
+#pragma warning restore AVP1002
+
+        /// <summary>
+        /// Service provider property that must be set if this UserControl needs access to it
+        /// </summary>
+        public IServiceProvider ServiceProvider
+        {
+            get => GetValue(ServiceProviderProperty);
+            set => SetValue(ServiceProviderProperty, value);
+        }
         public new event PropertyChangedEventHandler? PropertyChanged;
 
         public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
         private readonly IBrush _brush;
+        
+        static MainWindow()
+        {
+            ServiceProviderProperty.Changed.AddClassHandler<MainWindow>((toolBar, e) =>
+            {
+                if (e.NewValue is IServiceProvider provider)
+                {
+                    toolBar.DataContext = new MainWindowDataContext(provider);
+                }
+            });
+        }
         
         public MainWindow()
         {

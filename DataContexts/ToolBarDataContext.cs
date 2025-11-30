@@ -5,16 +5,21 @@ using Snowman.Core.Tools;
 
 namespace Snowman.DataContexts;
 
-public class ToolBarDataContext
+public class ToolBarDataContext : ServiceableDataContext
 {
-    public ToolBarDataContext()
+    public ToolBarDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         Tools = ToolRegistry.GetTools(ServiceProvider);
         ActiveTool = Tools.First();
     }
 
-    public IServiceProvider ServiceProvider { get; set; }
-    
+    // TODO: add designer support for services using a static DesignerServiceProvider if needed
+    public ToolBarDataContext() : base(null!)
+    {
+        Tools = [];
+        ActiveTool = null!;
+    }
+
     public IEnumerable<Tool> Tools { get; set; }
     public Tool ActiveTool { get; set; }
 

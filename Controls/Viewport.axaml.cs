@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Input;
 using Avalonia.Media;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events;
 using Snowman.Events.Viewport;
@@ -18,7 +19,18 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>, IVi
     public new event EventHandler<ViewportDataContext, ViewportKeyDownEventArgs>? KeyDown;
 
     #endregion
-        
+    
+    static Viewport()
+    {
+        ServiceProviderProperty.Changed.AddClassHandler<Viewport>((toolBar, e) =>
+        {
+            if (e.NewValue is IServiceProvider provider)
+            {
+                toolBar.DataContext = new ViewportDataContext(provider);
+            }
+        });
+    }
+    
     public Viewport()
     {
         InitializeComponent();

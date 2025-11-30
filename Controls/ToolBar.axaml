@@ -1,23 +1,22 @@
-﻿<ctrl:ServiceableUserControl x:TypeArguments="ctx:ToolBarDataContext" xmlns="https://github.com/avaloniaui"
-                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                              x:Class="Snowman.Controls.ToolBar"
-                              xmlns:ctx="using:Snowman.DataContexts"
-                              xmlns:ctrl="using:Snowman.Controls"
-                              x:DataType="ctx:ToolBarDataContext"
-                              x:Name="Root">
-    <ctrl:ServiceableUserControl.DataContext>
-        <ctx:ToolBarDataContext></ctx:ToolBarDataContext>
-    </ctrl:ServiceableUserControl.DataContext>
+﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:ToolBarDataContext"
+                             xmlns="https://github.com/avaloniaui"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                             x:Class="Snowman.Controls.ToolBar"
+                             xmlns:dataContext="using:Snowman.DataContexts"
+                             xmlns:ctrl="using:Snowman.Controls"
+                             x:DataType="dataContext:ToolBarDataContext"
+                             x:Name="Root">
+    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
+    <ctrl:ServiceableUserControl.DataContext><dataContext:ToolBarDataContext/></ctrl:ServiceableUserControl.DataContext>
     <ItemsControl ItemsSource="{Binding Tools}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
                 <StackPanel Orientation="Horizontal" />
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
-        
         <ItemsControl.ItemTemplate>
             <DataTemplate>
                 <!-- This line doesn't work. Why? Because fuck you. That's why. -->
