@@ -4,5 +4,5 @@ namespace Snowman.DataContexts;
 
 public abstract class ServiceableDataContext(IServiceProvider serviceProvider)
 {
-    public IServiceProvider ServiceProvider { get; protected set; } = null!;
+    public IServiceProvider ServiceProvider { get; protected set; } = serviceProvider;
 }

@@ -1,7 +1,5 @@
 ﻿using Avalonia.Input;
 using Avalonia.Media;
-using Snowman.Controls;
-using Snowman.Core.Commands;
 using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events.Viewport;
@@ -11,8 +9,8 @@ namespace Snowman.Core.Tools;
 public abstract class Tool
 {
     public string Name { get; }
-    public Cursor Cursor { get; set; }
-    public ImageBrush Icon { get; set; }
+    public Cursor Cursor { get; }
+    public ImageBrush Icon { get; }
 
     public Tool(string name, Cursor cursor, ImageBrush icon)
     {
@@ -34,10 +32,11 @@ public abstract class Tool
     /// Clones this tool and injects services
     /// </summary>
     public abstract Tool Clone(IServiceProvider serviceProvider);
+    
     // TODO: avoid using ViewportDataContext directly and instead create an interface for it?
     public abstract void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e);
     public abstract void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e);
     public abstract void PointerWheelChangedAction(ViewportDataContext sender, ViewportPointerWheelChangedEventArgs e);
     public abstract void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e);
-    public abstract void KeyPressed(ViewportDataContext sender, ViewportKeyDownEventArgs e);
+    public abstract void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e);
 }

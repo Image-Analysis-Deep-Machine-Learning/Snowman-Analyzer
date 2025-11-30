@@ -67,6 +67,11 @@ public class RectangleEntity : Entity
         return Rectangle.Contains(cursorPosition);
     }
 
+    public override bool EvaluateHit(Rect selection)
+    {
+        throw new NotImplementedException();
+    }
+
     public override void Render(DrawingContext context)
     {
         var fillBrush = FillBrush;

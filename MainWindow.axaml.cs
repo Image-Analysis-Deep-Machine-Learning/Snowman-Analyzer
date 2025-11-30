@@ -13,6 +13,7 @@ using Avalonia.Platform.Storage;
 using Snowman.Core;
 using Snowman.Core.Entities;
 using Snowman.Core.Services;
+using Snowman.Core.Services.Impl;
 using Snowman.Core.Tools;
 using Ursa.Controls;
 using Snowman.Data;
@@ -57,7 +58,8 @@ namespace Snowman
         
         public MainWindow()
         {
-            ServiceProvider = new SnowmanServiceProvider();
+            ServiceProvider = new ServiceProviderImpl();
+            SnowmanApp._instance = new SnowmanApp(ServiceProvider); // prasačina jak delo
             InitializeComponent();
             StorageProviderFactory.InitializeStorageProvider(StorageProvider);
 
@@ -65,7 +67,6 @@ namespace Snowman
             {
                 dataContext.SetupZoomScaleChangedHandler();
             }
-            
             SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged("IsEntitySelected");
             
             var theme = Application.Current?.ActualThemeVariant;

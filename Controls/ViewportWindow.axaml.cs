@@ -26,6 +26,6 @@ public partial class ViewportWindow : ServiceableUserControl<ViewportWindowDataC
         Viewport.PointerReleased += (sender, e) => ToolBar.DataContext.ActiveTool.PointerReleasedAction(sender, e);
         Viewport.PointerMoved += (sender, e) => ToolBar.DataContext.ActiveTool.PointerMovedAction(sender, e);
         Viewport.PointerWheelChanged += (sender, e) => ToolBar.DataContext.ActiveTool.PointerWheelChangedAction(sender, e);
-        Viewport.KeyDown += (sender, e) => ToolBar.DataContext.ActiveTool.KeyPressed(sender, e);
+        Viewport.KeyDown += (sender, e) => ToolBar.DataContext.ActiveTool.KeyDownAction(sender, e);
     }
 }

@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Media;
+using Snowman.Core.Drawing;
 using Snowman.Core.Scripting;
 using Snowman.Data;
 using Snowman.DataContexts;
+using Snowman.Events;
 
 namespace Snowman.Core.Entities;
 
-public abstract class Entity
+public abstract class Entity : IDrawable
 {
     protected const int Radius = 5;
     
@@ -23,19 +25,19 @@ public abstract class Entity
         _parent = parent;
     }
 
-    public event EventHandler<Point>? PositionChanges;
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public bool IsChild => Parent is not null;
+    public event EventHandler<Entity, Point>? PositionChanges;
+    // TODO: maybe implement again if needed
+    // public int Id { get; set; }
+    // public string Name { get; set; }
     public Entity? Parent => _parent;
     public List<Entity> Children { get; } = [];
 
     public virtual bool Selected
     {
-        get => IsChild ? Parent!.Selected : _selected;
+        get => Parent is not null ? Parent!.Selected : _selected;
         set
         {
-            if (IsChild)
+            if (Parent is not null)
             {
                 Parent!.Selected = value;
             }
@@ -63,9 +65,10 @@ public abstract class Entity
         }
     }
 
-    public abstract bool EvaluateHit(Point cursorPosition);
-
     public abstract void Render(DrawingContext context);
+
+    public abstract bool EvaluateHit(Point cursorPosition);
+    public abstract bool EvaluateHit(Rect selection);
     
     public abstract EntityData ToEntityData();
     

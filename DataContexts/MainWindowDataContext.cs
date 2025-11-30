@@ -74,7 +74,7 @@ public class MainWindowDataContext : ServiceableDataContext
             await SnowmanApp.Instance.Project.SaveProject(filePickerResult);
         }
 
-        catch (Exception ex)
+        catch (Exception)
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
             return;

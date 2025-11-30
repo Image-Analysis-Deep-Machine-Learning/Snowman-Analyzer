@@ -14,8 +14,11 @@ using BitMiracle.LibTiff.Classic;
 using Python.Runtime;
 using Snowman.Core.Entities;
 using Snowman.Core.Scripting;
+using Snowman.Core.Services;
+using Snowman.Core.Services.Impl;
 using Snowman.Data;
 using Snowman.VideoLoading;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core;
 
@@ -70,24 +73,26 @@ public class Project {
     }
 
     public HashSet<Entity>? TempEntities { get; set; } = null;
-    public HashSet<IRenderedAnnotation>? TempBoundingBoxes { get; set; } = null;
-
-    public Project()
+    public HashSet<IRenderedAnnotation>? TempBoundingBoxes { get; set; }
+    private readonly IServiceProvider _serviceProvider;
+    public Project(IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
         XmlData = new XmlData();
         Entities = [];
-        _cachedFrames = new  Bitmap[1];
-        _cachedThumbnails = new  Bitmap[1];
+        _cachedFrames = new Bitmap[1];
+        _cachedThumbnails = new Bitmap[1];
         _lastCachePurgeTime = DateTime.Now;
         _currentXmlPath =  string.Empty;
         _baseFolder = string.Empty;
         LoadCurrentFrame();
         FrameCount = 1;
+        CreateServices();
     }
 
-    public Project(IStorageFile file) : this()
+    private void CreateServices()
     {
-        
+        _serviceProvider.RegisterService<IEntityManagerService>(new EntityManagerServiceImpl(Entities));
     }
 
     private void LoadCurrentFrame()
@@ -210,12 +215,16 @@ public class Project {
     public async Task OpenXml(IStorageFile file)
     {
         _currentXmlPath = file.Path.LocalPath; // TODO: the user should have an option to open XML files (datasets) as a relative path
+        Entities.Clear();
         await OpenXmlInternal();
     }
 
     // I love 7 levels of abstraction. I eat it for breakfast
     private async Task OpenXmlInternal()
     {
+        _cachedFrames = new Bitmap[1];
+        _cachedThumbnails = new Bitmap[1];
+        
         var fileStream = new FileStream(_currentXmlPath, FileMode.Open);
         using var reader = new StreamReader(fileStream);
         
@@ -331,36 +340,6 @@ public class Project {
         foreach (var child in entity.Children)
         {
             AddEntity(child);
-        }
-    }
-
-    public void RemoveEntity(Entity? entity)
-    {
-        if (entity is null) return;
-        
-        Entities.Remove(entity);
-        
-        foreach (var child in entity.Children)
-        {
-            Entities.Remove(child);
-        }
-    }
-
-    public void DeselectAllEntities()
-    {
-        foreach (var entity in Entities)
-        {
-            entity.Selected = false;
-        }
-
-        SelectedEntity = null; // create dummy entity
-    }
-
-    public void ResetIsHitOnAllEntities()
-    {
-        foreach (var entity in Entities)
-        {
-            entity.IsHit = false;
         }
     }
 

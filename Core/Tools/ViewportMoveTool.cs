@@ -57,9 +57,9 @@ public class ViewportMoveTool : Tool
         sender.Zoom(e.WrappedArgs.Delta.Y, pos);
     }
 
-    public override void KeyPressed(ViewportDataContext sender, ViewportKeyDownEventArgs e)
+    public override void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e)
     {
-        // no keybindings at the moment
+        // no keybindings
     }
 
     public override Tool Clone(IServiceProvider serviceProvider)

@@ -21,27 +21,15 @@ public class PointTool : EntityEditTool<PointEntity>
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {
-        if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
+        if (
+            CurrentMouseMovement.NearlyEquals(Vector.Zero) && // to prevent creating of entities when moving the viewport
+            e.WrappedArgs.InitialPressMouseButton == MouseButton.Left && // only left button creates new entities
+            !EntityManagerService.GetSelectedEntities().Any()) // only if no entities are selected
         {
-            SnowmanApp.Instance.Project.DeselectAllEntities();
-            
-            if (e.WrappedArgs.InitialPressMouseButton == MouseButton.Left)
-            {
-                Entity? selectedEntity = null;
-                var pointerPosition = e.GetTransformedPointerPosition();
-                    
-                foreach (var entity in SnowmanApp.Instance.Project.Entities.OfType<PointEntity>())
-                {
-                    if (entity.EvaluateHit(pointerPosition)) selectedEntity = entity;
-                }
-
-                if (selectedEntity == null)
-                {
-                    var newEntity = new PointEntity(pointerPosition);
-                    SnowmanApp.Instance.Project.AddEntity(newEntity);
-                    SnowmanApp.Instance.Project.SelectEntity(newEntity);
-                }
-            }
+            var pointerPosition = e.GetTransformedPointerPosition();
+            var newEntity = new PointEntity(pointerPosition);
+            EntityManagerService.CreateEntity(newEntity);
+            EntityManagerService.SelectEntities([newEntity]);
         }
         
         base.PointerReleasedAction(sender, e);
@@ -49,6 +37,9 @@ public class PointTool : EntityEditTool<PointEntity>
     
     public override Tool Clone(IServiceProvider serviceProvider)
     {
-        return new PointTool(Name, Cursor, Icon);
+        return new PointTool(Name, Cursor, Icon)
+        {
+            EntityManagerService = serviceProvider.GetService<IEntityManagerService>()
+        };
     }
 }

@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core;
+using Snowman.Core.Services.Impl;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -63,7 +64,9 @@ public class ViewportDataContext : ServiceableDataContext
 
     public Matrix TransformationMatrix { get; private set; }
 
-    public ViewportDataContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
+    public ViewportDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+    }
 
     public ViewportDataContext() : base(null!) { }
     

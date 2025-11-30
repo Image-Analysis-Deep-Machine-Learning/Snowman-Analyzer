@@ -10,28 +10,32 @@ using Snowman.Core.Scripting;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Tools;
 using Snowman.DataContexts;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core
 {
     public class SnowmanApp
     {
         // it was 74 before
-        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
+        public static SnowmanApp Instance => _instance;
         // it was 54 before
-        public Project Project { get; private set; }
+        public Project Project { get; }
         
         private const string ScriptsDirectory = "Scripts";
-        private static SnowmanApp? _instance;
+        public static SnowmanApp? _instance;
         
         public FrameTimelineDataContext FrameTimelineDataContext { get; }
         public EventTimelineDataContext EventTimelineDataContext { get; }
         public List<Script> Scripts  { get; } = [];
 
-        private SnowmanApp()
+        private IServiceProvider ServiceProvider { get; set; } = null!;
+
+        public SnowmanApp(IServiceProvider serviceProvider)
         {
+            ServiceProvider = serviceProvider;
             FrameTimelineDataContext = new FrameTimelineDataContext();
             EventTimelineDataContext = new EventTimelineDataContext();
-            Project = new Project();
+            Project = new Project(ServiceProvider); // TODO: this will need a factory that will rewire all existing services
             LoadScripts();
             InitializePythonExecutionEnvironment();
         }
@@ -95,7 +99,6 @@ namespace Snowman.Core
 
         public async Task OpenProject(IStorageFile file)
         {
-            Project =  new Project();
             await Project.OpenProject(file);
         }
     }

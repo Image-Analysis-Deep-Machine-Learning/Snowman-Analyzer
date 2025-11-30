@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Snowman.Core.Entities;
 using Snowman.Core.Services;
@@ -8,7 +7,7 @@ namespace Snowman.Core.Tools;
 
 public static class ToolRegistry
 {
-    private static List<Tool> _tools = [];
+    private static readonly List<Tool> _tools = [];
 
     /// <summary>
     /// Static contructor that registers all default tools

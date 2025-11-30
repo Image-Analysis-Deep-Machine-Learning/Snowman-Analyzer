@@ -2,7 +2,6 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Data;
-using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
 
@@ -18,6 +17,11 @@ public class PointEntity : Entity
     public override bool EvaluateHit(Point cursorPosition)
     {
         return cursorPosition.DistanceTo(Position) <= Radius;
+    }
+
+    public override bool EvaluateHit(Rect selection)
+    {
+        throw new System.NotImplementedException();
     }
 
     public override void Render(DrawingContext context)

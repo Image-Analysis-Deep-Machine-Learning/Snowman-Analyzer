@@ -11,7 +11,7 @@ public static class ExtensionMethods
 
     public static IEnumerable<Entity> OfParentType<T>(this IEnumerable<Entity> entities) => entities.Where(entity =>
     {
-        while (entity.IsChild) entity = entity.Parent;
+        while (entity.Parent is not null) entity = entity.Parent;
             
         return entity is T;
     });
