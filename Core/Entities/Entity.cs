@@ -28,7 +28,7 @@ public abstract class Entity
     public string Name { get; set; }
     public bool IsChild => Parent is not null;
     public Entity? Parent => _parent;
-    public List<Entity> Children { get; set; } = [];
+    public List<Entity> Children { get; } = [];
 
     public virtual bool Selected
     {

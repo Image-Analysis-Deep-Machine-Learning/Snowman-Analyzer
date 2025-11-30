@@ -1,28 +1,32 @@
 ﻿using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media;
 using Snowman.Core.Commands;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
 public class RectTool : EntityEditTool<RectangleEntity>
 {
     private PointEntity? _initialDraggedPoint;
-    public RectTool() : base("_Rect Create")
-    {
-        Cursor = new Cursor(StandardCursorType.Arrow);
-    }
     
-    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public RectTool() : base("_Rect Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
+    
+    protected RectTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+    
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
-        var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+        var pointerPosition = e.GetTransformedPointerPosition();
         
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
             SnowmanApp.Instance.Project.DeselectAllEntities();
             
-            if (e.InitialPressMouseButton == MouseButton.Left)
+            if (e.WrappedArgs.InitialPressMouseButton == MouseButton.Left)
             {
                 if (_initialDraggedPoint is null)
                 {
@@ -53,14 +57,16 @@ public class RectTool : EntityEditTool<RectangleEntity>
             }
         }
 
-        var baseCommand = base.PointerReleasedAction(sender, e);
-        List<ICommand> commandList = [baseCommand]; 
+        base.PointerReleasedAction(sender, e);
         
         if (_initialDraggedPoint is not null)
         {
-            commandList.Add(new ActionCommand(x => SetDraggedEntity(_initialDraggedPoint, pointerPosition)));
+            SetDraggedEntity(_initialDraggedPoint, pointerPosition);
         }
-        
-        return new AggregateCommand(commandList);
+    }
+    
+    public override Tool Clone(IServiceProvider serviceProvider)
+    {
+        return new RectTool(Name, Cursor, Icon);
     }
 }

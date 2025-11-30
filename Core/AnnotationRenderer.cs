@@ -19,7 +19,7 @@ public static class AnnotationRenderer
         {
             bboxPen = TempBoundingBoxPen;
         }
-        
+         
         var boundingBoxRectangle = new Rect(boundingBox.XLeftTop, boundingBox.YLeftTop, boundingBox.Width, boundingBox.Height);
         drawingContext.DrawRectangle(bboxPen, boundingBoxRectangle);
     }

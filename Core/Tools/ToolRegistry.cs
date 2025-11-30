@@ -1,44 +1,33 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
 
 namespace Snowman.Core.Tools;
 
 public static class ToolRegistry
 {
-    private static List<Tool>? _tools;
-
-    public static List<Tool> Tools
-    {
-        get
-        {
-            if (_tools is null)
-            {
-                _tools = [];
-                SetupBuiltinTools();
-            }
-            
-            return _tools;
-        }
-    }
-
-    public static bool RegisterTool(Tool tool)
-    {
-        _tools ??= [];
-        if (_tools.Any(x => x.Name == tool.Name)) return false;
-        
-        _tools.Add(tool);
-        return true;
-    }
+    private static List<Tool> _tools = [];
 
     /// <summary>
-    /// Registers all default tools
+    /// Static contructor that registers all default tools
     /// </summary>
-    private static void SetupBuiltinTools()
+    static ToolRegistry()
     {
         RegisterTool(new ViewportMoveTool());
         RegisterTool(new EntityEditTool<Entity>());
         RegisterTool(new PointTool());
         RegisterTool(new RectTool());
+    }
+
+    public static void RegisterTool(Tool tool)
+    {
+        _tools.Add(tool);
+    }
+
+    public static IEnumerable<Tool> GetTools(IServiceProvider serviceProvider)
+    {
+        return _tools.Select(x => x.Clone(serviceProvider));
     }
 }

@@ -1,7 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media;
 using Snowman.Core.Commands;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
@@ -11,51 +15,41 @@ namespace Snowman.Core.Tools;
 /// <typeparam name="TEntity">Filters entities that the tool can edit</typeparam>
 public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 {
-    private Entity? _draggedEntity; // currently dragged entity TODO: merge with selected entity?
+    private Entity? _draggedEntity; // TODO: change to currently selected entity/entities
     private Point _originalClickPosition;
     private Point _originalEntityPosition;
     
-    public EntityEditTool(string name = "_Entity Edit") : base(name)
+    public EntityEditTool() : base("_Entity Edit", new Cursor(StandardCursorType.Arrow), new ImageBrush())
     {
-        Cursor = new Cursor(StandardCursorType.Arrow);
-    }
-
-    protected void SetDraggedEntity(Entity? draggedEntity, Point originalClickPosition = default)
-    {
-        _draggedEntity = draggedEntity;
-        _originalClickPosition = originalClickPosition;
         
-        if (draggedEntity is not null)
-        {
-            _originalEntityPosition = draggedEntity.Position;
-        }
     }
+    
+    protected EntityEditTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
-    public override ICommand PointerPressedAction(object? sender, PointerPressedEventArgs e)
+    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
     {
         SetDraggedEntity(null);
         
-        var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+        var pointerPosition = e.GetTransformedPointerPosition();
 
         foreach (var entity in SnowmanApp.Instance.Project.Entities.OfParentType<TEntity>())
         {
             if (entity.EvaluateHit(pointerPosition)) SetDraggedEntity(entity, pointerPosition);
         }
         
-        var baseCommand = base.PointerPressedAction(sender, e);
-        return baseCommand;
+        base.PointerPressedAction(sender, e);
     }
 
-    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
             SnowmanApp.Instance.Project.DeselectAllEntities();
             
-            if (e.InitialPressMouseButton == MouseButton.Left)
+            if (e.WrappedArgs.InitialPressMouseButton == MouseButton.Left)
             {
                 Entity? hitEntityCandidate = null;
-                var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+                var pointerPosition = e.GetTransformedPointerPosition();
                     
                 foreach (var entity in SnowmanApp.Instance.Project.Entities.OfParentType<TEntity>())
                 {
@@ -77,12 +71,12 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
             SetDraggedEntity(null);
         }
         
-        return base.PointerReleasedAction(sender, e);
+        base.PointerReleasedAction(sender, e);
     }
 
-    public override ICommand PointerMovedAction(object? sender, PointerEventArgs e)
+    public override void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e)
     {
-        var cursorPositionLocal = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+        var cursorPositionLocal = e.GetTransformedPointerPosition();
         
         if (_draggedEntity is not null)
         {
@@ -112,23 +106,35 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
                 hitEntityCandidate.IsHit = true;
             }
             
-            return base.PointerMovedAction(sender, e);
+            base.PointerMovedAction(sender, e);
         }
-        
-        return ICommand.EmptyCommand;
     }
 
-    public override ICommand KeyPressed(object? sender, KeyEventArgs e)
+    public override void KeyPressed(ViewportDataContext sender, ViewportKeyDownEventArgs e)
     {
-        var command = base.KeyPressed(sender, e);
+        base.KeyPressed(sender, e);
 
-        if (e.Key == Key.Delete) // delete selected entity
+        if (e.WrappedArgs.Key == Key.Delete) // delete selected entity TODO: USE SERVICE
         {
             var selectedEntity = SnowmanApp.Instance.Project.SelectedEntity;
             SnowmanApp.Instance.Project.DeselectAllEntities();
             SnowmanApp.Instance.Project.RemoveEntity(selectedEntity);
         }
+    }
+    
+    public override Tool Clone(IServiceProvider serviceProvider)
+    {
+        return new EntityEditTool<TEntity>(Name, Cursor, Icon);
+    }
+
+    protected void SetDraggedEntity(Entity? draggedEntity, Point originalClickPosition = default)
+    {
+        _draggedEntity = draggedEntity;
+        _originalClickPosition = originalClickPosition;
         
-        return command;
+        if (draggedEntity is not null)
+        {
+            _originalEntityPosition = draggedEntity.Position;
+        }
     }
 }

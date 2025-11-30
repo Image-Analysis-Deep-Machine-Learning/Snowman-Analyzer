@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Python.Runtime;
+using Snowman.Controls;
 using Snowman.Core.Scripting;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Tools;
@@ -14,33 +15,22 @@ namespace Snowman.Core
 {
     public class SnowmanApp
     {
+        // it was 74 before
         public static SnowmanApp Instance => _instance ??= new SnowmanApp();
+        // it was 54 before
         public Project Project { get; private set; }
-        
         
         private const string ScriptsDirectory = "Scripts";
         private static SnowmanApp? _instance;
         
-        private Tool _activeTool = null!;
-        
-        public CanvasDataContext CanvasDataContext { get; }
+        public ViewportDataContext ViewportDataContext { get; }
         public FrameTimelineDataContext FrameTimelineDataContext { get; }
         public EventTimelineDataContext EventTimelineDataContext { get; }
         public List<Script> Scripts  { get; } = [];
 
-        public Tool ActiveTool
-        {
-            get => _activeTool;
-            set
-            {
-                _activeTool = value;
-                CanvasDataContext.ParentRendererControl.Cursor = value.Cursor;
-            }
-        }
-
         private SnowmanApp()
         {
-            CanvasDataContext = new CanvasDataContext();
+            ViewportDataContext = new ViewportDataContext();
             FrameTimelineDataContext = new FrameTimelineDataContext();
             EventTimelineDataContext = new EventTimelineDataContext();
             Project = new Project();

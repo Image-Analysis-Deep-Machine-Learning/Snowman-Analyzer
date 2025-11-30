@@ -52,7 +52,7 @@ public class ScriptNode : Node
             Invalid = false;
         }
             
-        catch (Exception e)
+        catch (Exception)
         {
             Invalid = true;
             // log exception somewhere so the user can see it, a log of some sort?

@@ -14,7 +14,7 @@ using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
-public class EventPinControl : Control
+public class EventPin : Control
 {
     private List<EventData> Events { get; }
     public int FrameIndex { get; }
@@ -27,7 +27,7 @@ public class EventPinControl : Control
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
     
-    public EventPinControl(List<EventData> events, int frameIndex, RuleData rule, int frequency)
+    public EventPin(List<EventData> events, int frameIndex, RuleData rule, int frequency)
     {
         Events = events;
         FrameIndex = frameIndex;
@@ -66,7 +66,7 @@ public class EventPinControl : Control
             SnowmanApp.Instance.Project.TempEntities = tempEntities;
             SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
             
-            SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
+            //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
             SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
     }

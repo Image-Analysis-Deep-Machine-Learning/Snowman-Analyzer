@@ -1,7 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media;
+using Snowman.Controls;
 using Snowman.Core.Commands;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
@@ -13,59 +17,53 @@ public class ViewportMoveTool : Tool
     private Vector _originalMovement;
     private bool _pressed;
     private Point _clickOrigin;
-    
+
+    /// <summary>
+    /// Tool for moving and zooming of the viewport. It does not allow any manipulation with the entities.
+    /// </summary>
+    public ViewportMoveTool() : base("_Move", new Cursor(StandardCursorType.SizeAll), new ImageBrush()) { }
+
+    protected ViewportMoveTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+
     protected Vector CurrentMouseMovement { get; private set; }
-    
-    public ViewportMoveTool(string name = "_Move") : base(name)
-    {
-        Cursor = new Cursor(StandardCursorType.SizeAll);
-    }
 
-    public override ICommand PointerPressedAction(object? sender, PointerPressedEventArgs e)
+    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
     {
-        _clickOrigin = e.GetCurrentPoint((Visual?)sender).Position;
+        _clickOrigin = e.GetPointerPosition();
         _pressed = true;
-        
-        return new ActionCommand(x =>
-        {
-            if (x is not CanvasDataContext canvasDataContext) return;
-            _originalMovement = canvasDataContext.AdditionalTranslation;
-        });
+        _originalMovement = sender.AdditionalTranslation;
     }
 
-    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         _pressed = false;
-        // next three lines are important, the canvas does not work properly without them
+        // next three lines are important, viewport does not work properly without them, I don't know why
         _clickOrigin = default;
         _originalMovement = default;
         CurrentMouseMovement = Vector.Zero;
+    }
+
+    public override void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e)
+    {
+        if (!_pressed) return;
         
-        return ICommand.EmptyCommand;
+        CurrentMouseMovement = e.GetPointerPosition() - _clickOrigin;
+        sender.AdditionalTranslation = _originalMovement + CurrentMouseMovement;
     }
 
-    public override ICommand PointerWheelChangedAction(object? sender, PointerWheelEventArgs e)
+    public override void PointerWheelChangedAction(ViewportDataContext sender, ViewportPointerWheelChangedEventArgs e)
     {
-        var pos = e.GetCurrentPoint((Visual?)sender).Position;
-
-        return e.Delta.Y switch
-        {
-            < 0 => new ZoomCommand(ZoomCommand.ZoomType.ZoomOut, pos),
-            > 0 => new ZoomCommand(ZoomCommand.ZoomType.ZoomIn, pos),
-            _ => ICommand.EmptyCommand
-        };
+        var pos = e.GetPointerPosition();
+        sender.Zoom(e.WrappedArgs.Delta.Y, pos);
     }
 
-    public override ICommand PointerMovedAction(object? sender, PointerEventArgs e)
+    public override void KeyPressed(ViewportDataContext sender, ViewportKeyDownEventArgs e)
     {
-        if (!_pressed) return ICommand.EmptyCommand;
-        
-        CurrentMouseMovement = e.GetPosition((Visual?)sender) - _clickOrigin;
-        return new MoveCommand(CurrentMouseMovement + _originalMovement, MoveCommand.MovementType.Absolute);
+        // no keybindings at the moment
     }
 
-    public override ICommand KeyPressed(object? sender, KeyEventArgs e)
+    public override Tool Clone(IServiceProvider serviceProvider)
     {
-        return ICommand.EmptyCommand; // no keybindings at the moment
+        return new ViewportMoveTool(Name, Cursor, Icon);
     }
 }

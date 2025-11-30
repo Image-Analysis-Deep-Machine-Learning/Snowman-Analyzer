@@ -4,16 +4,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:u="https://irihi.tech/ursa"
         xmlns:snowman="using:Snowman"
-        xmlns:control="using:Snowman.Controls"
+        xmlns:ctrl="using:Snowman.Controls"
         xmlns:tools="using:Snowman.Core.Tools"
-        xmlns:core="clr-namespace:Snowman.Core"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:ctx="using:Snowman.DataContexts"
         mc:Ignorable="d" Width="1920" Height="1080"
         x:Class="Snowman.MainWindow"
-        x:DataType="snowman:MainWindow"
+        x:DataType="ctx:MainWindowDataContext"
         Title="Snowman"
         WindowState="Maximized"
         Background="#1e1f22">
+    <Window.DataContext>
+        <ctx:MainWindowDataContext></ctx:MainWindowDataContext>
+    </Window.DataContext>
     <Window.Resources>
         <StreamGeometry x:Key="ArrowLeftRegular">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
         <StreamGeometry x:Key="ArrowRightRegular">M15.2685,4.20949 C14.97,3.92233 14.4952,3.93153 14.208,4.23005 C13.9209,4.52857 13.9301,5.00335 14.2286,5.29051 L22.5028,13.25 L3.75,13.25 C3.33579,13.25 3,13.5858 3,13.9999982 C3,14.4142 3.33579,14.75 3.75,14.75 L22.5018,14.75 L14.2286,22.7085 C13.9301,22.9957 13.9209,23.4705 14.208,23.769 C14.4952,24.0675 14.97,24.0767 15.2685,23.7896 L24.6965,14.7202 C25.1054,14.3268 25.1054,13.6723 24.6965,13.2788 L15.2685,4.20949 Z</StreamGeometry>
@@ -30,25 +32,15 @@
                 <Separator/>
                 <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
                 <Separator/>
-                <MenuItem Header="_Exit" Command="{Binding Close}"/>
-            </MenuItem>
-            <!-- this mindfuck took me 3 hours to figure out, I love this framework -->
-            <MenuItem Header="_Tools" ItemsSource="{Binding Tools}" Classes="SubItems">
-                <MenuItem.Styles>
-                    <Style Selector="MenuItem.SubItems MenuItem" x:DataType="tools:Tool">
-                        <Setter Property="Header" Value="{Binding Name}"/>
-                        <Setter Property="Command" Value="{Binding $parent[snowman:MainWindow].SetTool}"/>
-                        <Setter Property="CommandParameter" Value="{Binding}"/>
-                    </Style>
-                </MenuItem.Styles>  
+                <MenuItem Header="_Exit" Command="{Binding $parent[snowman:MainWindow].Close}"/>
             </MenuItem>
         </Menu>
         
         <!-- main display window -->
-        <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">
-            <!-- canvas -->
-            <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
-                <control:CanvasControl Name="Canvas"/>
+        <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5" HorizontalAlignment="Stretch">
+            <!-- viewport -->
+            <Border Grid.Row="0" Grid.Column="0"  Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
+                <ctrl:ViewportWindow ServiceProvider="{Binding $parent[snowman:MainWindow].ServiceProvider}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="ViewportWindow"/>
             </Border>
             
             <!-- timeline container -->
@@ -64,7 +56,7 @@
                     
                     <!-- frame timeline -->
                     <Border Grid.Column="1" Margin="5, 0, 5, 0">
-                        <control:FrameTimelineControl
+                        <ctrl:FrameTimelineControl
                             PrevFrameCommand="{Binding PrevFrame}"
                             NextFrameCommand="{Binding NextFrame}"
                             UpdateFrameCommand="{Binding UpdateFrame}"
@@ -82,7 +74,7 @@
                 
                 <!-- event timeline -->
                 <Border Name="EventTimelineBorder" IsVisible="False" Margin="10, 0, 10, 0">
-                    <control:EventTimelineControl Name="EventTimeline"/>
+                    <ctrl:EventTimeline Name="EventTimeline"/>
                 </Border>
                 
                 <!-- zoom -->

@@ -1,8 +1,11 @@
 ﻿using System.Linq;
 using Avalonia;
 using Avalonia.Input;
-using Snowman.Core.Commands;
+using Avalonia.Media;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
@@ -12,21 +15,20 @@ namespace Snowman.Core.Tools;
 /// </summary>
 public class PointTool : EntityEditTool<PointEntity>
 {
-    public PointTool() : base("_Point Create")
-    {
-        Cursor = new Cursor(StandardCursorType.Arrow);
-    }
-
-    public override ICommand PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public PointTool() : base("_Point Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
+    
+    protected PointTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+    
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
         {
             SnowmanApp.Instance.Project.DeselectAllEntities();
             
-            if (e.InitialPressMouseButton == MouseButton.Left)
+            if (e.WrappedArgs.InitialPressMouseButton == MouseButton.Left)
             {
                 Entity? selectedEntity = null;
-                var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+                var pointerPosition = e.GetTransformedPointerPosition();
                     
                 foreach (var entity in SnowmanApp.Instance.Project.Entities.OfType<PointEntity>())
                 {
@@ -42,6 +44,11 @@ public class PointTool : EntityEditTool<PointEntity>
             }
         }
         
-        return base.PointerReleasedAction(sender, e);
+        base.PointerReleasedAction(sender, e);
+    }
+    
+    public override Tool Clone(IServiceProvider serviceProvider)
+    {
+        return new PointTool(Name, Cursor, Icon);
     }
 }

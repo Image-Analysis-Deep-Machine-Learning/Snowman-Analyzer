@@ -14,7 +14,7 @@ namespace Snowman.DataContexts;
 
 public class EventTimelineDataContext : INotifyPropertyChanged
 {
-    public EventTimelineControl ParentRendererControl { get; set; }
+    public EventTimeline ParentRendererControl { get; set; }
 
     public event Action? ZoomScaleChanged;
     private double _zoomScale = 1.0;

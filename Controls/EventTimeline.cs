@@ -11,13 +11,13 @@ using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
-public class EventTimelineControl : UserControl
+public class EventTimeline : UserControl
 {
-    private readonly Canvas _canvas;
+    private readonly Avalonia.Controls.Canvas _canvas;
     
-    public EventTimelineControl()
+    public EventTimeline()
     {
-        _canvas = new Canvas();
+        _canvas = new Avalonia.Controls.Canvas();
         Content = _canvas;
         
         var dataContext = SnowmanApp.Instance.EventTimelineDataContext;
@@ -79,7 +79,7 @@ public class EventTimelineControl : UserControl
                     leftX = Math.Min(x, xNext);
                 }
 
-                var pin = new EventPinControl(events, frameIndex, rule, frequency)
+                var pin = new EventPin(events, frameIndex, rule, frequency)
                 {
                     Width = width,
                     Height = 28
@@ -98,8 +98,8 @@ public class EventTimelineControl : UserControl
                     };
                 }
 
-                Canvas.SetLeft(pin, leftX);
-                Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
+                Avalonia.Controls.Canvas.SetLeft(pin, leftX);
+                Avalonia.Controls.Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
 
                 _canvas.Children.Add(pin);
             }
