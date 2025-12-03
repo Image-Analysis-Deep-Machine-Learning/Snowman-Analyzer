@@ -21,11 +21,15 @@ namespace Snowman.DataContexts;
 
 public class MainWindowDataContext : ServiceableDataContext
 {
+    private readonly IDatasetImagesService _datasetImagesService;
     private string? _lastCustomZoom;
     
-    public bool IsEntitySelected => SnowmanApp.Instance.Project.SelectedEntity is not null;
-    
-    public MainWindowDataContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
+    public bool IsEntitySelected => false;
+
+    public MainWindowDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+    }
     
     public void NewProject()
     {
@@ -131,50 +135,41 @@ public class MainWindowDataContext : ServiceableDataContext
         FrameTimeline.InvalidateVisual();
         EventTimeline.InvalidateVisual();*/
     }
-    
-    public void PrevFrame()
-    {
-        SnowmanApp.Instance.Project.PreviousFrame();
-        //I will need to do these with events as well I guess FFS
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();*/
-    }
-        
-    public void NextFrame()
-    {
-        SnowmanApp.Instance.Project.NextFrame();
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();*/
-    }
 
-    public void UpdateFrame()
-    {
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();*/
-    }
-    
     public ObservableCollection<string> ZoomScaleOptions { get; } = ["1x", "2x", "5x", "10x", "20x"];
     private static string FormatZoomScale(double value) => $"{value:0.#}x";
     public string ZoomScaleString
     {
-        get => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
-        set
-        {
+        get;// => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
+        set;
+        /*{
             if (value.EndsWith('x') && double.TryParse(value.TrimEnd('x'), out var parsed))
             {
                 SnowmanApp.Instance.EventTimelineDataContext.ZoomScale = parsed;
                 // EVEEEEEENTS SDASOWFJIASNFLKJNASFNLASJKNFSJLABNFJLKSABFJKLasd
-                /*OnPropertyChanged();
-                EventTimeline.InvalidateVisual();*/
+                OnPropertyChanged();
+                EventTimeline.InvalidateVisual();
             }
-        }
+        }*/
     }
 
     public IEnumerable<Tool> Tools => ToolRegistry.GetTools(ServiceProvider);
 
+    public void PrevFrame()
+    {
+        _datasetImagesService.PrevFrame();
+    }
+
+    public void NextFrame()
+    {
+        _datasetImagesService.NextFrame();
+    }
+
+    public void UpdateFrame() {}
+    
     public void SetupZoomScaleChangedHandler()
     {
-        SnowmanApp.Instance.EventTimelineDataContext.ZoomScaleChanged += () =>
+        /*SnowmanApp.Instance.EventTimelineDataContext.ZoomScaleChanged += () =>
         {
             var zoomScale = FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
 
@@ -196,37 +191,37 @@ public class MainWindowDataContext : ServiceableDataContext
             }
             //you know what
             //OnPropertyChanged(nameof(ZoomScaleString));
-        };
+        };*/
     }
     
     
-    public void Demo()
-    {
-        if (Design.IsDesignMode) return;
-
-        var ruleId = SnowmanApp.Instance.Project.Rules.Count;
-        var ruleName = new StringBuilder();
-
-        /*if (IsEntitySelected)
-            for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity!.Scripts.Count; i++)
-            {
-                var script = SnowmanApp.Instance.Project.SelectedEntity.Scripts[i];
-                ruleName.Append(script.Name);
-                if (i != SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count - 1) ruleName.Append(" + ");
-            }
-*/
-        var (baseColor, lightColor) = ColorGeneration.GetHuePair(ruleId);
-        EventTimelineDataContext.TimelineColors.TryAdd(ruleId, (baseColor, lightColor));
-            
-        var output = SnowmanApp.Instance.Project.Demo();
-        //DemoOutput.Text = output.Item1; // TODO: bindings
-
-        SnowmanApp.Instance.Project.Rules.Add(new RuleData(ruleId, ruleName.ToString(), output.Item3));
-        SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId.Add(ruleId, output.Item2 ?? new Dictionary<int, List<EventData>>());
-            
-        SnowmanApp.Instance.EventTimelineDataContext.Redraw();
-        //EventTimeline.InvalidateVisual();
-    }
+//     public void Demo()
+//     {
+//         if (Design.IsDesignMode) return;
+//
+//         var ruleId = SnowmanApp.Instance.Project.Rules.Count;
+//         var ruleName = new StringBuilder();
+//
+//         /*if (IsEntitySelected)
+//             for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity!.Scripts.Count; i++)
+//             {
+//                 var script = SnowmanApp.Instance.Project.SelectedEntity.Scripts[i];
+//                 ruleName.Append(script.Name);
+//                 if (i != SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count - 1) ruleName.Append(" + ");
+//             }
+// */
+//         var (baseColor, lightColor) = ColorGeneration.GetHuePair(ruleId);
+//         EventTimelineDataContext.TimelineColors.TryAdd(ruleId, (baseColor, lightColor));
+//             
+//         var output = SnowmanApp.Instance.Project.Demo();
+//         //DemoOutput.Text = output.Item1; // TODO: bindings
+//
+//         SnowmanApp.Instance.Project.Rules.Add(new RuleData(ruleId, ruleName.ToString(), output.Item3));
+//         SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId.Add(ruleId, output.Item2 ?? new Dictionary<int, List<EventData>>());
+//             
+//         SnowmanApp.Instance.EventTimelineDataContext.Redraw();
+//         //EventTimeline.InvalidateVisual();
+//     }
 
     public void ClearEventInfo()
     {
@@ -234,7 +229,7 @@ public class MainWindowDataContext : ServiceableDataContext
         SnowmanApp.Instance.Project.TempBoundingBoxes = null;
             
         //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
-        SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
+        //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
             
         //InfoBox.Text = string.Empty; // bindings TODO
     }

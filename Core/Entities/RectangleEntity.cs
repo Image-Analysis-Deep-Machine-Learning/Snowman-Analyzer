@@ -1,9 +1,6 @@
 using System;
-using System.Linq;
 using Avalonia;
 using Avalonia.Media;
-using Snowman.Data;
-using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
 
@@ -13,7 +10,8 @@ public class RectangleEntity : Entity
     private static readonly Brush TempFillBrush = new SolidColorBrush(Colors.Purple, 0.2);
     private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
     private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
-    public Rect Rectangle { get; set; }
+
+    private Rect _rectangle;
 
     public override bool Selected
     {
@@ -34,12 +32,13 @@ public class RectangleEntity : Entity
         var maxY = Math.Max(position1.Y, position2.Y);
         Position = new Point(minX, minY);
         
-        Rectangle = new Rect(Position, new Point(maxX, maxY));
+        _rectangle = new Rect(Position, new Point(maxX, maxY));
+        
         Children.AddRange([
             new PointEntity(Position, this), // top left
-            new PointEntity(Position.WithX(Position.X + Rectangle.Width), this), // top right
-            new PointEntity(Position.WithX(Position.X + Rectangle.Width).WithY(Position.Y + Rectangle.Height), this), // bottom right
-            new PointEntity(Position.WithY(Position.Y + Rectangle.Height), this) // bottom left
+            new PointEntity(Position.WithX(Position.X + _rectangle.Width), this), // top right
+            new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this), // bottom right
+            new PointEntity(Position.WithY(Position.Y + _rectangle.Height), this) // bottom left
         ]);
         
         for (var i = 0; i < 4; i++)
@@ -47,14 +46,14 @@ public class RectangleEntity : Entity
             var index = i;
             Children[i].PositionChanges += (sender, _) => UpdatePointsLocation(index);
         }
+
+        PositionChanges += OnPositionChanges;
     }
-    
-    public void BindMoveEvent() => PositionChanges += OnPositionChanges;
 
     private void OnPositionChanges(object? sender, Point oldPosition)
     {
         var vec =  Position - oldPosition;
-        Rectangle = Rectangle.Translate(vec);
+        _rectangle = _rectangle.Translate(vec);
 
         foreach (var child in Children)
         {
@@ -64,7 +63,7 @@ public class RectangleEntity : Entity
 
     public override bool EvaluateHit(Point cursorPosition)
     {
-        return Rectangle.Contains(cursorPosition);
+        return _rectangle.Contains(cursorPosition);
     }
 
     public override bool EvaluateHit(Rect selection)
@@ -77,15 +76,14 @@ public class RectangleEntity : Entity
         var fillBrush = FillBrush;
         var pen = Pen;
         
-        var tempVisuals = SnowmanApp.Instance.GetTempViewportVisuals();
-        if (tempVisuals != null && tempVisuals.CurrentEntities.Contains(this))
+        if (IsHighlighted)
         {
             fillBrush = TempFillBrush;
             pen = TempPen;
         }
         
-        context.FillRectangle(fillBrush, Rectangle);
-        context.DrawRectangle(pen, Rectangle);
+        context.FillRectangle(fillBrush, _rectangle);
+        context.DrawRectangle(pen, _rectangle);
         
         foreach (var child in Children)
         {
@@ -107,21 +105,16 @@ public class RectangleEntity : Entity
         var maxY = Math.Max(Children[otherPointIndex].Position.Y, Children[childIndex].Position.Y);
         
         SetPositionWithoutRaisingEvent(new Point(minX, minY));
-        Rectangle = new Rect(Position, new Point(maxX, maxY));
-    }
-    
-    public override EntityData ToEntityData()
-    {
-        return new EntityRectangleData { X = Position.X, Y = Position.Y, Width = Rectangle.Width, Height = Rectangle.Height };
+        _rectangle = new Rect(Position, new Point(maxX, maxY));
     }
 
     public override Entity Clone()
     {
         var copy = new RectangleEntity(Position,
-            Position.WithX(Position.X + Rectangle.Width).WithY(Position.Y + Rectangle.Height))
+            Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height))
         {
             Selected = Selected,
-            IsHit = IsHit,
+            IsHit = IsHit
         };
         return copy;
     }

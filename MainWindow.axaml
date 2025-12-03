@@ -51,11 +51,7 @@
                     
                     <!-- frame timeline -->
                     <Border Grid.Column="1" Margin="5, 0, 5, 0">
-                        <ctrl:FrameTimelineControl
-                            PrevFrameCommand="{Binding PrevFrame}"
-                            NextFrameCommand="{Binding NextFrame}"
-                            UpdateFrameCommand="{Binding UpdateFrame}"
-                            Name="FrameTimeline"/>
+                        <ctrl:FrameTimeline ServiceProvider="{Binding $parent[snowman:MainWindow].ServiceProvider}" Name="FrameTimeline"/>
                     </Border>
                     
                     <!-- next -->
@@ -69,7 +65,7 @@
                 
                 <!-- event timeline -->
                 <Border Name="EventTimelineBorder" IsVisible="False" Margin="10, 0, 10, 0">
-                    <ctrl:EventTimeline Name="EventTimeline"/>
+                    <ctrl:EventTimeline Name="EventTimeline" ServiceProvider="{Binding $parent[snowman:MainWindow].ServiceProvider}"/>
                 </Border>
                 
                 <!-- zoom -->
@@ -135,7 +131,7 @@
                     <Label Margin="10" VerticalAlignment="Center">ID:</Label>
                     <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox>
                 </DockPanel>
-                <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
+                <!-- <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button> -->
                 <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
             </DockPanel>
             <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10">

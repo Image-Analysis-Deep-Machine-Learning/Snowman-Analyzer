@@ -7,6 +7,9 @@ namespace Snowman.DataContexts;
 
 public class ToolBarDataContext : ServiceableDataContext
 {
+    public IEnumerable<Tool> Tools { get; set; }
+    public Tool ActiveTool { get; set; }
+    
     public ToolBarDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         Tools = ToolRegistry.GetTools(ServiceProvider);
@@ -19,9 +22,6 @@ public class ToolBarDataContext : ServiceableDataContext
         Tools = [];
         ActiveTool = null!;
     }
-
-    public IEnumerable<Tool> Tools { get; set; }
-    public Tool ActiveTool { get; set; }
 
     public void SetTool(Tool tool)
     {

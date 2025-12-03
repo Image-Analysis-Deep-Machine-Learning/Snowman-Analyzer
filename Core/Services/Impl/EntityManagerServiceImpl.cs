@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Snowman.Core.Entities;
@@ -7,17 +8,17 @@ namespace Snowman.Core.Services.Impl;
 
 public class EntityManagerServiceImpl : IEntityManagerService
 {
-    private readonly List<Entity> _sourceCollection;
+    private readonly List<Entity> _entitiesSource;
     private readonly List<EntityWrapper> _selectedEntities = [];
 
-    public EntityManagerServiceImpl(List<Entity> sourceCollection)
+    public EntityManagerServiceImpl(List<Entity> entitiesSource)
     {
-        _sourceCollection = sourceCollection;
+        _entitiesSource = entitiesSource;
     }
 
     public IEnumerable<Entity> GetAllEntities()
     {
-        return _sourceCollection.AsReadOnly();
+        return _entitiesSource.AsReadOnly();
     }
 
     public IEnumerable<Entity> GetSelectedEntities()
@@ -27,11 +28,11 @@ public class EntityManagerServiceImpl : IEntityManagerService
 
     public void CreateEntity(Entity entity)
     {
-        _sourceCollection.Add(entity);
+        _entitiesSource.Add(entity);
         
         foreach (var child in entity.Children)
         {
-            _sourceCollection.Add(child);
+            _entitiesSource.Add(child);
         }
     }
 
@@ -39,8 +40,8 @@ public class EntityManagerServiceImpl : IEntityManagerService
     {
         foreach (var entity in entities)
         {
-            _sourceCollection.Remove(entity);
-            entity.Children.ForEach(x => _sourceCollection.Remove(x));
+            _entitiesSource.Remove(entity);
+            entity.Children.ForEach(x => _entitiesSource.Remove(x));
         }
     }
 
@@ -71,35 +72,46 @@ public class EntityManagerServiceImpl : IEntityManagerService
 
     public void MoveSelectedEntities(Vector movementVector, bool absolute)
     {
-        _selectedEntities.ForEach(x => x.Entity.Position = x.OriginalPosition + movementVector);
+        if (absolute)
+        {
+            foreach (var entity in _selectedEntities)
+            {
+                entity.Entity.Position = entity.OriginalPosition + movementVector;
+            }
+        }
+
+        else
+        {
+            throw new NotImplementedException();
+        }
     }
     
     public IEnumerable<Entity> GetEntitiesHitByPoint(Point point)
     {
         List<Entity> hitEntities = [];
-        hitEntities.AddRange(_sourceCollection.Where(entity => entity.EvaluateHit(point)));
+        hitEntities.AddRange(_entitiesSource.Where(entity => entity.EvaluateHit(point)));
 
         return hitEntities;
     }
 
-    public IEnumerable<Entity> GetEntitiesHitBySelection(Rect point)
+    public IEnumerable<Entity> GetEntitiesHitBySelection(Rect selection)
     {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 
-    public void EvaluateHitsAt(Point point)
+    public void EvaluateHitsAt<T>(Point point)
     {
         Entity? last = null;
-        
-        _sourceCollection.ForEach(x =>
+
+        foreach (var entity in _entitiesSource.OfParentType<T>())
         {
-            if (x.EvaluateHit(point))
+            if (entity.EvaluateHit(point))
             {
-                last = x;
+                last = entity;
             }
             
-            x.IsHit = false;
-        });
+            entity.IsHit = false;
+        }
 
         if (last is not null)
         {

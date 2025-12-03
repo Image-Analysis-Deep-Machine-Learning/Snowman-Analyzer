@@ -8,12 +8,14 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Controls;
 using Snowman.Core;
-using Color = System.Drawing.Color;
+using Snowman.Core.Services;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
 public class EventTimelineDataContext : INotifyPropertyChanged
 {
+    private readonly IDatasetImagesService _datasetImagesService;
     public EventTimeline ParentRendererControl { get; set; }
 
     public event Action? ZoomScaleChanged;
@@ -35,7 +37,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
 
     private double Offset { get; set; } = 0.0;
     
-    private string _infoText;
+    private string _infoText = string.Empty;
     public string InfoText
     {
         get => _infoText;
@@ -55,6 +57,17 @@ public class EventTimelineDataContext : INotifyPropertyChanged
     private readonly Pen _penMajor = new(TickBrush, 1);
     private readonly Pen _penMinor = new(TickBrush, 0.5);
     private readonly Typeface _font = new("Arial");
+
+    public EventTimelineDataContext(IServiceProvider serviceProvider)
+    {
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+    }
+
+    public EventTimelineDataContext()
+    {
+        _datasetImagesService = null!;
+    }
+
     public static Dictionary<int, (Avalonia.Media.Color, Avalonia.Media.Color)> TimelineColors { get; } = [];
 
     public void Render(DrawingContext context)
@@ -84,8 +97,8 @@ public class EventTimelineDataContext : INotifyPropertyChanged
         
         var timelineCount = Math.Max(rules.Count, 1);
         var totalHeightTimelines = (timelineCount - 1) * BaseHeight + (timelineCount - 1) * GapHeight;
-        
-        var totalFrames = SnowmanApp.Instance.Project.FrameCount;
+
+        var totalFrames = _datasetImagesService.MaxFrameIndex() + 1;
         
         var (majorInterval, minorInterval) = GetTickIntervals(bounds.Width, totalFrames);
         var startFrame = Offset / (bounds.Width * ZoomScale) * totalFrames;

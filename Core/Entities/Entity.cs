@@ -1,45 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Core.Drawing;
-using Snowman.Core.Scripting;
 using Snowman.Data;
-using Snowman.DataContexts;
 using Snowman.Events;
 
 namespace Snowman.Core.Entities;
 
 public abstract class Entity : IDrawable
 {
+    // TODO: configurable
     protected const int Radius = 5;
     
     private Point _pos;
-    private bool _isHit;
-    private readonly Entity? _parent;
     protected internal bool _selected;
-
-    protected Entity(Entity? parent = null)
-    {
-        _parent = parent;
-    }
-
+    
     public event EventHandler<Entity, Point>? PositionChanges;
-    // TODO: maybe implement again if needed
-    // public int Id { get; set; }
-    // public string Name { get; set; }
-    public Entity? Parent => _parent;
+    public Entity? Parent { get; }
     public List<Entity> Children { get; } = [];
+    public bool IsHit { get; set; }
+    public bool IsHighlighted { get; set; }
 
     public virtual bool Selected
     {
-        get => Parent is not null ? Parent!.Selected : _selected;
+        get => Parent?.Selected ?? _selected;
         set
         {
             if (Parent is not null)
             {
-                Parent!.Selected = value;
+                Parent.Selected = value;
             }
 
             else
@@ -48,13 +37,7 @@ public abstract class Entity : IDrawable
             }
         }
     }
-
-    public bool IsHit
-    {
-        get => _isHit;
-        set => _isHit = value;
-    }
-
+    
     public Point Position
     {
         get => _pos;
@@ -65,17 +48,19 @@ public abstract class Entity : IDrawable
         }
     }
 
-    public abstract void Render(DrawingContext context);
-
-    public abstract bool EvaluateHit(Point cursorPosition);
-    public abstract bool EvaluateHit(Rect selection);
-    
-    public abstract EntityData ToEntityData();
-    
-    public abstract Entity Clone();
+    protected Entity(Entity? parent = null, Point position = default)
+    {
+        Parent = parent;
+        Position = position;
+    }
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)
     {
         _pos = newPosition;
     }
+    
+    public abstract void Render(DrawingContext context);
+    public abstract bool EvaluateHit(Point cursorPosition);
+    public abstract bool EvaluateHit(Rect selection);
+    public abstract Entity Clone();
 }

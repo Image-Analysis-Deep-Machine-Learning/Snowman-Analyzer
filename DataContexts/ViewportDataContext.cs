@@ -2,8 +2,8 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Snowman.Core;
-using Snowman.Core.Services.Impl;
+using Snowman.Core.Services;
+using Snowman.Events.Project;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -14,6 +14,8 @@ public class ViewportDataContext : ServiceableDataContext
     private const double MinZoom = 0.5;
     private const double MaxZoom = 10.0;
     
+    private readonly IDrawingService _drawingService;
+    private readonly IDatasetImagesService _datasetImagesService;
     private Rect _controlBounds;
     private double _additionalScale = 1.0;
     private Vector _additionalTranslation;
@@ -66,9 +68,23 @@ public class ViewportDataContext : ServiceableDataContext
 
     public ViewportDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
     {
+        _drawingService = serviceProvider.GetService<IDrawingService>();
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        
+        CachedImageSize = _datasetImagesService.GetImageSize();
+        serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
+        {
+            x.ProjectLoaded += () =>
+            {
+                CachedImageSize = _datasetImagesService.GetImageSize();
+            };
+        });
     }
 
-    public ViewportDataContext() : base(null!) { }
+    public ViewportDataContext() : base(null!)
+    {
+        _drawingService = null!;
+    }
     
     public void Zoom(double delta, Point atPosition)
     {
@@ -84,18 +100,22 @@ public class ViewportDataContext : ServiceableDataContext
         // background color - TODO: configurable?
         drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, ControlBounds.Width, ControlBounds.Height));
             
-        using (drawingContext.PushClip(ControlBounds.Translate(new Vector(-4, -4))))
+        // var visualsToRender = SnowmanApp.Instance.GetViewportVisuals();
+        // CachedImageSize = visualsToRender.CurrentImage.Size;
+        //
+        // var tempVisualsToRender = SnowmanApp.Instance.GetTempViewportVisuals();
+            
+        using (drawingContext.PushTransform(TransformationMatrix))
         {
-            var visualsToRender = SnowmanApp.Instance.GetViewportVisuals();
-            CachedImageSize = visualsToRender.CurrentImage.Size;
-            
-            var tempVisualsToRender = SnowmanApp.Instance.GetTempViewportVisuals();
-            
-            using (drawingContext.PushTransform(TransformationMatrix))
+            using var bicubic = drawingContext.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
+            foreach (var drawableSource in _drawingService.GetDrawableSources())
             {
-                using var bicubic = drawingContext.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
-                RenderObjects(drawingContext, visualsToRender, tempVisualsToRender);
+                foreach (var drawable in drawableSource.GetDrawables())
+                {
+                    drawable.Render(drawingContext);
+                }
             }
+            // RenderObjects(drawingContext, visualsToRender, tempVisualsToRender);
         }
     }
         
@@ -122,36 +142,36 @@ public class ViewportDataContext : ServiceableDataContext
         return fitScale.Append(centerTranslate).Append(additionalScale).Append(additionalTranslate);
     }
 
-    private void RenderObjects(DrawingContext context, ObjectsToRender objectsToRender, ObjectsToRender? tempObjectsToRender)
-    {
-        // render frame
-        context.DrawImage(objectsToRender.CurrentImage, new Rect(0, 0, objectsToRender.CurrentImage.Size.Width, objectsToRender.CurrentImage.Size.Height));
-
-        // render annotations
-        foreach (var annotation in objectsToRender.CurrentAnnotations)
-        {
-            annotation.Render(context);
-        }
-
-        // render entities
-        foreach (var entity in objectsToRender.CurrentEntities)
-        {
-            entity.Render(context);
-        }
-            
-        if (tempObjectsToRender != null)
-        {
-            // render temporary annotations   
-            foreach (var annotation in tempObjectsToRender.CurrentAnnotations)
-            {
-                annotation.Render(context);
-            }
-
-            // render temporary entities
-            foreach (var entity in tempObjectsToRender.CurrentEntities)
-            {
-                entity.Render(context);
-            }
-        }
-    }
+    // private void RenderObjects(DrawingContext context, ObjectsToRender objectsToRender, ObjectsToRender? tempObjectsToRender)
+    // {
+    //     // render frame
+    //     context.DrawImage(objectsToRender.CurrentImage, new Rect(0, 0, objectsToRender.CurrentImage.Size.Width, objectsToRender.CurrentImage.Size.Height));
+    //
+    //     // render annotations
+    //     foreach (var annotation in objectsToRender.CurrentAnnotations)
+    //     {
+    //         annotation.Render(context);
+    //     }
+    //
+    //     // render entities
+    //     foreach (var entity in objectsToRender.CurrentEntities)
+    //     {
+    //         entity.Render(context);
+    //     }
+    //     
+    //     if (tempObjectsToRender != null)
+    //     {
+    //         // render temporary annotations   
+    //         foreach (var annotation in tempObjectsToRender.CurrentAnnotations)
+    //         {
+    //             annotation.Render(context);
+    //         }
+    //
+    //         // render temporary entities
+    //         foreach (var entity in tempObjectsToRender.CurrentEntities)
+    //         {
+    //             entity.Render(context);
+    //         }
+    //     }
+    // }
 }

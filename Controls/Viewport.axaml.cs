@@ -4,14 +4,27 @@ using Avalonia.Media;
 using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events;
+using Snowman.Events.DatasetImages;
 using Snowman.Events.Viewport;
 
 namespace Snowman.Controls;
 
-public partial class Viewport : ServiceableUserControl<ViewportDataContext>, IViewportEventSupplier
+public partial class Viewport : ServiceableUserControl<ViewportDataContext>
 {
+    static Viewport()
+    {
+        ServiceProviderProperty.Changed.AddClassHandler<Viewport>((control, e) =>
+        {
+            if (e.NewValue is IServiceProvider provider)
+            {
+                control.DataContext = new ViewportDataContext(provider);
+                provider.GetService<IEventManagerService>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += control.InvalidateVisual);
+            }
+        });
+    }
+    
+    // TODO: I guess this can be moved to commands as there is nothing else expected to bind to these events except tools
     #region Events
-
     public new event EventHandler<ViewportDataContext, ViewportPointerPressedEventArgs>? PointerPressed;
     public new event EventHandler<ViewportDataContext, ViewportPointerReleasedEventArgs>? PointerReleased;
     public new event EventHandler<ViewportDataContext, ViewportPointerMovedEventArgs>? PointerMoved;
@@ -19,17 +32,6 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>, IVi
     public new event EventHandler<ViewportDataContext, ViewportKeyDownEventArgs>? KeyDown;
 
     #endregion
-    
-    static Viewport()
-    {
-        ServiceProviderProperty.Changed.AddClassHandler<Viewport>((toolBar, e) =>
-        {
-            if (e.NewValue is IServiceProvider provider)
-            {
-                toolBar.DataContext = new ViewportDataContext(provider);
-            }
-        });
-    }
     
     public Viewport()
     {
@@ -39,13 +41,11 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>, IVi
 
     public override void Render(DrawingContext drawingContext)
     {
-        drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, Bounds.Width, Bounds.Height));
         DataContext.Render(drawingContext);
             
         base.Render(drawingContext);
     }
 
-    // yes, this is a lot of duplicate code, however it is performance critical and any abstraction could have an impact
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         var args = new ViewportPointerPressedEventArgs(e, this, DataContext.TransformationMatrix);

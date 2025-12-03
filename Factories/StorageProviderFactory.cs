@@ -17,6 +17,5 @@ public static class StorageProviderFactory
     public static void InitializeStorageProvider(IStorageProvider storageProvider)
     {
         if (_storageProvider is null) _storageProvider = storageProvider;
-        else throw new InvalidOperationException("Cannot initialize storage provider more than once.");
     }
 }

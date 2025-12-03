@@ -1,46 +1,27 @@
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
 using Snowman.Core;
-using Snowman.Core.Entities;
 using Snowman.Core.Services;
 using Snowman.Core.Services.Impl;
-using Snowman.Core.Tools;
-using Ursa.Controls;
-using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Factories;
-using Snowman.Utilities;
-using Dispatcher = Avalonia.Threading.Dispatcher;
 
 namespace Snowman
 {
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
         public static readonly StyledProperty<IServiceProvider> ServiceProviderProperty =
 // this warning is a lie
 #pragma warning disable AVP1002
             AvaloniaProperty.Register<MainWindow, IServiceProvider>(nameof(ServiceProvider));
 #pragma warning restore AVP1002
-
-        /// <summary>
-        /// Service provider property that must be set if this UserControl needs access to it
-        /// </summary>
         public IServiceProvider ServiceProvider
         {
             get => GetValue(ServiceProviderProperty);
             set => SetValue(ServiceProviderProperty, value);
         }
-        public new event PropertyChangedEventHandler? PropertyChanged;
 
         public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
         private readonly IBrush _brush;
@@ -58,8 +39,9 @@ namespace Snowman
         
         public MainWindow()
         {
-            ServiceProvider = new ServiceProviderImpl();
-            SnowmanApp._instance = new SnowmanApp(ServiceProvider); // prasačina jak delo
+            var serviceProvider = new ServiceProviderImpl();
+            new SnowmanApp(serviceProvider); // prasačina jak delo TODO: REMOVE
+            ServiceProvider = serviceProvider; // set the property later to delay creation of MainWindowDataContext which needs initialized SnowmanApp
             InitializeComponent();
             StorageProviderFactory.InitializeStorageProvider(StorageProvider);
 
@@ -67,7 +49,6 @@ namespace Snowman
             {
                 dataContext.SetupZoomScaleChangedHandler();
             }
-            SnowmanApp.Instance.Project.SelectedEntityChanged += (s, e) => OnPropertyChanged("IsEntitySelected");
             
             var theme = Application.Current?.ActualThemeVariant;
             
@@ -78,15 +59,10 @@ namespace Snowman
 
             _brush = new SolidColorBrush(Colors.White);
             
-            UIEventBus.InfoRequested += msg =>
-            {
-                InfoBox.Text = msg;
-            };
-        }
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            // UIEventBus.InfoRequested += msg =>
+            // {
+            //     InfoBox.Text = msg;
+            // };
         }
 
         private void ToggleFrameTimelineButton_OnClick(object? sender, RoutedEventArgs e)

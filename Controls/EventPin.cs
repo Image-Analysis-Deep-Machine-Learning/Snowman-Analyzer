@@ -3,19 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Avalonia;
-using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Core;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
-public class EventPin : Control
+public class EventPin : ServiceableUserControl<EventPinDataContext>
 {
+    private readonly IDatasetImagesService _datasetImagesService;
     private List<EventData> Events { get; }
     public int FrameIndex { get; }
     private readonly int _frequency;
@@ -27,8 +29,9 @@ public class EventPin : Control
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
     
-    public EventPin(List<EventData> events, int frameIndex, RuleData rule, int frequency)
+    public EventPin(IServiceProvider serviceProvider, List<EventData> events, int frameIndex, RuleData rule, int frequency)
     {
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Events = events;
         FrameIndex = frameIndex;
         Rule = rule;
@@ -52,7 +55,7 @@ public class EventPin : Control
 
         PointerPressed += (s, e) =>
         {
-            SnowmanApp.Instance.Project.CurrentFrameIndex = FrameIndex;
+            _datasetImagesService.SkipToFrame(FrameIndex);
             
             var tempEntities = new HashSet<Entity>();
             var tempBoundingBoxes = new HashSet<IRenderedAnnotation>();
@@ -67,7 +70,7 @@ public class EventPin : Control
             SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
             
             //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
-            SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
+            //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
     }
 

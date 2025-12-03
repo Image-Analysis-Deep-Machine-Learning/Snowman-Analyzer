@@ -4,7 +4,7 @@ using Snowman.Core.Entities;
 
 namespace Snowman.Core.Services;
 
-public interface IEntityManagerService
+public interface IEntityManagerService : IService
 {
     public IEnumerable<Entity> GetAllEntities();
     public IEnumerable<Entity> GetSelectedEntities();
@@ -15,6 +15,6 @@ public interface IEntityManagerService
     public void DeselectAllEntities();
     public void MoveSelectedEntities(Vector movementVector, bool absolute);
     public IEnumerable<Entity> GetEntitiesHitByPoint(Point point);
-    public IEnumerable<Entity> GetEntitiesHitBySelection(Rect point);
-    public void EvaluateHitsAt(Point point);
+    public IEnumerable<Entity> GetEntitiesHitBySelection(Rect selection);
+    public void EvaluateHitsAt<T>(Point point);
 }

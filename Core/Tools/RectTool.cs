@@ -33,7 +33,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
                     EntityManagerService.CreateEntity(newRectangleEntity);
                     _bottomLeftCorner = (PointEntity)newRectangleEntity.Children[2]; // TODO: getter on the rectangle entity?
                     EntityManagerService.SelectEntities([_bottomLeftCorner]);
-                    newRectangleEntity.BindMoveEvent();
+                    //newRectangleEntity.BindMoveEvent();
                 }
             }
 

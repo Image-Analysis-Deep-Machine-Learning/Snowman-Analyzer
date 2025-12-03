@@ -6,8 +6,8 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Controls;
 
 /// <summary>
-/// UserControl wrapper that makes the life easier by adding a ServiceProvider property and the ability to strongly type
-/// the DataContext without casting and null-checking
+/// UserControl wrapper that makes life easier by adding a ServiceProvider property and the ability to strongly type the
+/// DataContext without casting and null-checking
 /// </summary>
 /// <typeparam name="T">Type of the DataContext</typeparam>
 public class ServiceableUserControl<T> : UserControl where T : class

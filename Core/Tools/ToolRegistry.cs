@@ -7,10 +7,10 @@ namespace Snowman.Core.Tools;
 
 public static class ToolRegistry
 {
-    private static readonly List<Tool> _tools = [];
+    private static readonly List<Tool> Tools = [];
 
     /// <summary>
-    /// Static contructor that registers all default tools
+    /// Static constructor that registers all default tools
     /// </summary>
     static ToolRegistry()
     {
@@ -22,11 +22,11 @@ public static class ToolRegistry
 
     public static void RegisterTool(Tool tool)
     {
-        _tools.Add(tool);
+        Tools.Add(tool);
     }
 
     public static IEnumerable<Tool> GetTools(IServiceProvider serviceProvider)
     {
-        return _tools.Select(x => x.Clone(serviceProvider));
+        return Tools.Select(x => x.Clone(serviceProvider));
     }
 }

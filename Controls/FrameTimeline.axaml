@@ -1,0 +1,29 @@
+﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:FrameTimelineDataContext"
+                             xmlns="https://github.com/avaloniaui"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                             x:Class="Snowman.Controls.FrameTimeline"
+                             xmlns:dataContext="using:Snowman.DataContexts"
+                             xmlns:ctrl="using:Snowman.Controls"
+                             x:DataType="dataContext:FrameTimelineDataContext"
+                             Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
+    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
+    <ctrl:ServiceableUserControl.DataContext><dataContext:FrameTimelineDataContext/></ctrl:ServiceableUserControl.DataContext>
+    <ItemsControl Name="FrameItems" ItemsSource="{Binding Frames}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Rows="1"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <Grid RowDefinitions="15,*" MaxWidth="100" VerticalAlignment="Center" Margin="5,5,5,5" IsVisible="{Binding !InVisible}">
+                    <Label Grid.Row="0" Content="{Binding Label}"/>
+                    <Image Grid.Row="1" Source="{Binding Image}"/>
+                </Grid>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</ctrl:ServiceableUserControl>

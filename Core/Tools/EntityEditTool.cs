@@ -15,10 +15,9 @@ namespace Snowman.Core.Tools;
 /// <typeparam name="TEntity">Filters entities that the tool can edit</typeparam>
 public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 {
-    protected IEntityManagerService EntityManagerService { get; set; } = null!;
-
-    protected bool Dragging;
     private Point _originalClickPosition;
+    protected bool Dragging;
+    protected IEntityManagerService EntityManagerService = null!;
     
     public EntityEditTool() : base("_Entity Edit", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
 
@@ -26,13 +25,12 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 
     public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
     {
-        // SetDraggedEntity(null);
         if (e.WrappedArgs.Properties.IsLeftButtonPressed)
         {
             EntityManagerService.DeselectAllEntities();
             var pointerPosition = e.GetTransformedPointerPosition();
             var filteredEntities = EntityManagerService.GetEntitiesHitByPoint(pointerPosition).OfParentType<TEntity>().ToList();
-            EntityManagerService.SelectEntities(filteredEntities.Count > 0 ? [filteredEntities.Last()] : []); // select only one entity
+            EntityManagerService.SelectEntities(filteredEntities.Count > 0 ? [filteredEntities.Last()] : []); // select only one entity TODO: multi-selection with shift?
             _originalClickPosition = e.GetTransformedPointerPosition();
 
             if (filteredEntities.Count > 0)
@@ -61,7 +59,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 
         else
         {
-            EntityManagerService.EvaluateHitsAt(cursorPositionLocal);
+            EntityManagerService.EvaluateHitsAt<TEntity>(cursorPositionLocal);
             base.PointerMovedAction(sender, e);
         }
     }
@@ -70,7 +68,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
     {
         base.KeyDownAction(sender, e);
 
-        if (e.WrappedArgs.Key == Key.Delete) // delete selected entity TODO: USE SERVICE
+        if (e.WrappedArgs.Key == Key.Delete)
         {
             var selectedEntities = EntityManagerService.GetSelectedEntities();
             EntityManagerService.DeleteEntities(selectedEntities);
