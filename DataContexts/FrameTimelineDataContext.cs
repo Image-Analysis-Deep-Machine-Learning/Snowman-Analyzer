@@ -39,88 +39,14 @@ public class FrameTimelineDataContext
     public FrameTimelineDataContext(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        Frames = new FrameCollection(serviceProvider, ControlBounds.Width);
         serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => ItemsSourceChanged?.Invoke());
         serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += () => ItemsSourceChanged?.Invoke());
-        Frames = new FrameCollection(serviceProvider, ControlBounds.Width);
     }
 
     public FrameTimelineDataContext()
     {
         _datasetImagesService = null!;
-    }
-
-    public void Render(DrawingContext context, Rect viewport)
-    {
-        //_timelineFrames = [];
-        
-        using var state = context.PushClip(viewport);
-        using var bicubic = context.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
-
-        const int borderThickness = 2;
-        const int frameWidth = 100;
-        var frameHeight = viewport.Height;
-        const int minSpace = 1;
-        var displayedFrameCount = Convert.ToInt32(Math.Floor(viewport.Width / (frameWidth + borderThickness + minSpace)));
-        
-        // to always have an odd number of displayed frames so that the active frame is always in the middle of the timeline
-        if (displayedFrameCount % 2 == 0)
-            displayedFrameCount -= 1;
-        
-        var space = (viewport.Width - displayedFrameCount * (frameWidth + borderThickness)) / (displayedFrameCount - 1);
-
-        var currentIndex = _datasetImagesService.CurrentFrameIndex();
-        var frameCount = _datasetImagesService.MaxFrameIndex() + 1;
-        var startFrameIndex = Math.Max(0, currentIndex - Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
-        var endFrameIndex = Math.Min(frameCount - 1, currentIndex + Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)));
-        
-        var displayIndex = Convert.ToInt32(Math.Floor(displayedFrameCount / 2f)) - (currentIndex - startFrameIndex);
-
-        for (var i = startFrameIndex; i <= endFrameIndex; i++, displayIndex++)
-        {
-            var frame = _datasetImagesService.ThumbnailAt(i);
-            
-            var rectX = displayIndex * (frameWidth + borderThickness + space) + borderThickness / 2f;
-            var rect = new Rect(rectX, 10, frameWidth, frameHeight - 10);
-            
-            var aspectRatio = frame.Size.Width / frame.Size.Height;
-            if (frameWidth / frameHeight > aspectRatio)
-            {
-                var adjustedWidth = frameHeight * aspectRatio;
-                var xOffset = (frameWidth - adjustedWidth) / 2;
-                rect = new Rect(rect.X + xOffset, rect.Y, adjustedWidth, frameHeight);
-            }
-            else
-            {
-                var adjustedHeight = frameWidth / aspectRatio;
-                var yOffset = (frameHeight - adjustedHeight) / 2;
-                rect = new Rect(rect.X, rect.Y + yOffset, frameWidth, adjustedHeight);
-            }
-            
-            context.DrawImage(frame, new Rect(0, 0, frame.Size.Width, frame.Size.Height), rect);
-            //_timelineFrames.Add(new TimelineFrame(rect, i));
-            
-            var coloredBrush = i == currentIndex
-                ? MainWindow.SystemColorBrush
-                : new SolidColorBrush(Color.Parse("#4b4c4e"));
-            
-            context.DrawRectangle(
-                new Pen(coloredBrush, borderThickness),
-                rect);
-
-            var textRect = new Rect(rect.X, rect.Y - 20, rect.Width, 20);
-            context.FillRectangle(coloredBrush, textRect);
-            context.DrawRectangle(new Pen(coloredBrush, borderThickness), textRect);
-            
-            var frameNumText = new FormattedText(
-                i + 1 + "/" + frameCount,
-                CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight,
-                new Typeface("Arial"),
-                12,
-                Brushes.White);
-
-            context.DrawText(frameNumText, new Point(rect.X + (rect.Width - frameNumText.Width) / 2, rect.Y - 15));
-        }
     }
 
     public void MousePressed(Point clickPosition)

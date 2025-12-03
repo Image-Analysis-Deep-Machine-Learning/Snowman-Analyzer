@@ -28,11 +28,12 @@ namespace Snowman
         
         static MainWindow()
         {
-            ServiceProviderProperty.Changed.AddClassHandler<MainWindow>((toolBar, e) =>
+            ServiceProviderProperty.Changed.AddClassHandler<MainWindow>((control, e) =>
             {
                 if (e.NewValue is IServiceProvider provider)
                 {
-                    toolBar.DataContext = new MainWindowDataContext(provider);
+                    ServiceProviderScope.SetProvider(control, provider);
+                    control.DataContext = new MainWindowDataContext(provider);
                 }
             });
         }

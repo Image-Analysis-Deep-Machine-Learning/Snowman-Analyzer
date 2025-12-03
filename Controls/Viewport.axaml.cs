@@ -5,6 +5,7 @@ using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events;
 using Snowman.Events.DatasetImages;
+using Snowman.Events.Project;
 using Snowman.Events.Viewport;
 
 namespace Snowman.Controls;
@@ -19,6 +20,7 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>
             {
                 control.DataContext = new ViewportDataContext(provider);
                 provider.GetService<IEventManagerService>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += control.InvalidateVisual);
+                provider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += control.InvalidateVisual);
             }
         });
     }

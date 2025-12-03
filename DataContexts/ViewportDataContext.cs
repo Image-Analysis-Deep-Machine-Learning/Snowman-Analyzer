@@ -74,9 +74,10 @@ public class ViewportDataContext : ServiceableDataContext
         CachedImageSize = _datasetImagesService.GetImageSize();
         serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
         {
-            x.ProjectLoaded += () =>
+            x.DatasetLoaded += () =>
             {
                 CachedImageSize = _datasetImagesService.GetImageSize();
+                ResetTransform();
             };
         });
     }
@@ -99,12 +100,7 @@ public class ViewportDataContext : ServiceableDataContext
     {
         // background color - TODO: configurable?
         drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, ControlBounds.Width, ControlBounds.Height));
-            
-        // var visualsToRender = SnowmanApp.Instance.GetViewportVisuals();
-        // CachedImageSize = visualsToRender.CurrentImage.Size;
-        //
-        // var tempVisualsToRender = SnowmanApp.Instance.GetTempViewportVisuals();
-            
+
         using (drawingContext.PushTransform(TransformationMatrix))
         {
             using var bicubic = drawingContext.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
@@ -115,8 +111,13 @@ public class ViewportDataContext : ServiceableDataContext
                     drawable.Render(drawingContext);
                 }
             }
-            // RenderObjects(drawingContext, visualsToRender, tempVisualsToRender);
         }
+    }
+    
+    public void ResetTransform()
+    {
+        AdditionalTranslation = Vector.Zero;
+        AdditionalScale = 1.0;
     }
         
     private Matrix GetTransformationMatrix()
@@ -141,37 +142,4 @@ public class ViewportDataContext : ServiceableDataContext
         // apply transforms
         return fitScale.Append(centerTranslate).Append(additionalScale).Append(additionalTranslate);
     }
-
-    // private void RenderObjects(DrawingContext context, ObjectsToRender objectsToRender, ObjectsToRender? tempObjectsToRender)
-    // {
-    //     // render frame
-    //     context.DrawImage(objectsToRender.CurrentImage, new Rect(0, 0, objectsToRender.CurrentImage.Size.Width, objectsToRender.CurrentImage.Size.Height));
-    //
-    //     // render annotations
-    //     foreach (var annotation in objectsToRender.CurrentAnnotations)
-    //     {
-    //         annotation.Render(context);
-    //     }
-    //
-    //     // render entities
-    //     foreach (var entity in objectsToRender.CurrentEntities)
-    //     {
-    //         entity.Render(context);
-    //     }
-    //     
-    //     if (tempObjectsToRender != null)
-    //     {
-    //         // render temporary annotations   
-    //         foreach (var annotation in tempObjectsToRender.CurrentAnnotations)
-    //         {
-    //             annotation.Render(context);
-    //         }
-    //
-    //         // render temporary entities
-    //         foreach (var entity in tempObjectsToRender.CurrentEntities)
-    //         {
-    //             entity.Render(context);
-    //         }
-    //     }
-    // }
 }
