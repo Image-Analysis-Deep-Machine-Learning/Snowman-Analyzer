@@ -8,80 +8,57 @@ using Snowman.Core.Services.Impl;
 using Snowman.DataContexts;
 using Snowman.Factories;
 
-namespace Snowman
+namespace Snowman;
+
+public partial class MainWindow : Window
 {
-    public partial class MainWindow : Window
+    private static IBrush SystemColorBrush { get; set; } = new SolidColorBrush(Color.Parse("#0078D4"));
+    private readonly IBrush _brush;
+    private SnowmanApp _app;
+
+    static MainWindow()
     {
-        public static readonly StyledProperty<IServiceProvider> ServiceProviderProperty =
-// this warning is a lie
-#pragma warning disable AVP1002
-            AvaloniaProperty.Register<MainWindow, IServiceProvider>(nameof(ServiceProvider));
-#pragma warning restore AVP1002
-        public IServiceProvider ServiceProvider
+        DataContextProperty.Changed.AddClassHandler<MainWindow>((window, args) =>
         {
-            get => GetValue(ServiceProviderProperty);
-            set => SetValue(ServiceProviderProperty, value);
-        }
+            if (args.NewValue is not MainWindowDataContext dataContext) return;
+            
+            dataContext.Constructor(ServiceProvider.GetProvider(window));
+            //dataContext.SetupZoomScaleChangedHandler();
+        });
+    }
 
-        public static IBrush SystemColorBrush { get; private set; } = new SolidColorBrush(Color.Parse("#0078D4"));
-        private readonly IBrush _brush;
+    public MainWindow()
+    {
+        ServiceProvider.SetProvider(this, new ServiceProviderImpl());
+        _app = new SnowmanApp(ServiceProvider.GetProvider(this));
+        StorageProviderFactory.InitializeStorageProvider(StorageProvider);
+        InitializeComponent();
         
-        static MainWindow()
-        {
-            ServiceProviderProperty.Changed.AddClassHandler<MainWindow>((control, e) =>
-            {
-                if (e.NewValue is IServiceProvider provider)
-                {
-                    ServiceProviderScope.SetProvider(control, provider);
-                    control.DataContext = new MainWindowDataContext(provider);
-                }
-            });
-        }
-        
-        public MainWindow()
-        {
-            var serviceProvider = new ServiceProviderImpl();
-            new SnowmanApp(serviceProvider); // prasačina jak delo TODO: REMOVE
-            ServiceProvider = serviceProvider; // set the property later to delay creation of MainWindowDataContext which needs initialized SnowmanApp
-            InitializeComponent();
-            StorageProviderFactory.InitializeStorageProvider(StorageProvider);
-
-            if (DataContext is MainWindowDataContext dataContext)
-            {
-                dataContext.SetupZoomScaleChangedHandler();
-            }
+        var theme = Application.Current?.ActualThemeVariant;
             
-            var theme = Application.Current?.ActualThemeVariant;
-            
-            if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
-            {
-                SystemColorBrush = new SolidColorBrush(accent);
-            }
-
-            _brush = new SolidColorBrush(Colors.White);
-            
-            // UIEventBus.InfoRequested += msg =>
-            // {
-            //     InfoBox.Text = msg;
-            // };
-        }
-
-        private void ToggleFrameTimelineButton_OnClick(object? sender, RoutedEventArgs e)
+        if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
         {
-            FrameTimelineGrid.IsVisible = true;
-            FrameTimelinePath.Fill = SystemColorBrush;
-            EventTimelineBorder.IsVisible = false;
-            EventTimelinePath.Fill = _brush;
-            ZoomComboBox.IsVisible = false;
+            SystemColorBrush = new SolidColorBrush(accent);
         }
 
-        private void ToggleEventTimelineButton_OnClick(object? sender, RoutedEventArgs e)
-        {
-            EventTimelineBorder.IsVisible = true;
-            EventTimelinePath.Fill = SystemColorBrush;
-            FrameTimelineGrid.IsVisible = false;
-            FrameTimelinePath.Fill = _brush;
-            ZoomComboBox.IsVisible = true;
-        }
+        _brush = new SolidColorBrush(Colors.White);
+    }
+
+    private void ToggleFrameTimelineButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FrameTimelineGrid.IsVisible = true;
+        FrameTimelinePath.Fill = SystemColorBrush;
+        EventTimelineBorder.IsVisible = false;
+        EventTimelinePath.Fill = _brush;
+        ZoomComboBox.IsVisible = false;
+    }
+
+    private void ToggleEventTimelineButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        EventTimelineBorder.IsVisible = true;
+        EventTimelinePath.Fill = SystemColorBrush;
+        FrameTimelineGrid.IsVisible = false;
+        FrameTimelinePath.Fill = _brush;
+        ZoomComboBox.IsVisible = true;
     }
 }

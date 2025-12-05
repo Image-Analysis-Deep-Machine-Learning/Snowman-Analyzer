@@ -6,12 +6,12 @@ using Snowman.Core.Entities;
 
 namespace Snowman.Core.Services.Impl;
 
-public class EntityManagerServiceImpl : IEntityManagerService
+public class EntityManagerImpl : IEntityManager
 {
     private readonly List<Entity> _entitiesSource;
     private readonly List<EntityWrapper> _selectedEntities = [];
 
-    public EntityManagerServiceImpl(List<Entity> entitiesSource)
+    public EntityManagerImpl(List<Entity> entitiesSource)
     {
         _entitiesSource = entitiesSource;
     }

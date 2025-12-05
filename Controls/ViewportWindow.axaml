@@ -1,4 +1,4 @@
-﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:ViewportWindowDataContext"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportWindowDataContext"
                              xmlns="https://github.com/avaloniaui"
                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,12 +9,11 @@
                              xmlns:ctrl="clr-namespace:Snowman.Controls"
                              x:DataType="dataContext:ViewportWindowDataContext"
                              x:Name="Root">
-    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
-    <ctrl:ServiceableUserControl.DataContext><dataContext:ViewportWindowDataContext/></ctrl:ServiceableUserControl.DataContext>
+    <ctrl:UserControlWrapper.DataContext><dataContext:ViewportWindowDataContext></dataContext:ViewportWindowDataContext></ctrl:UserControlWrapper.DataContext>
     <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
-        <ctrl:ToolBar ServiceProvider="{Binding #Root.ServiceProvider}" Grid.Row="0" Name="ToolBar"></ctrl:ToolBar>
+        <ctrl:ToolBar Grid.Row="0" Name="ToolBar"/>
         <Panel Grid.Row="1">
-            <ctrl:Viewport ServiceProvider="{Binding #Root.ServiceProvider}" Name="Viewport"></ctrl:Viewport>
+            <ctrl:Viewport Name="Viewport"/>
         </Panel>
     </Grid>
-</ctrl:ServiceableUserControl>
+</ctrl:UserControlWrapper>

@@ -27,12 +27,12 @@ public class RectTool : EntityEditTool<RectangleEntity>
         {
             if (_bottomLeftCorner is null) // first click
             {
-                if (!EntityManagerService.GetSelectedEntities().Any())
+                if (!EntityManager.GetSelectedEntities().Any())
                 {
                     var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
-                    EntityManagerService.CreateEntity(newRectangleEntity);
+                    EntityManager.CreateEntity(newRectangleEntity);
                     _bottomLeftCorner = (PointEntity)newRectangleEntity.Children[2]; // TODO: getter on the rectangle entity?
-                    EntityManagerService.SelectEntities([_bottomLeftCorner]);
+                    EntityManager.SelectEntities([_bottomLeftCorner]);
                     //newRectangleEntity.BindMoveEvent();
                 }
             }
@@ -55,7 +55,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
     {
         return new RectTool(Name, Cursor, Icon)
         {
-            EntityManagerService = serviceProvider.GetService<IEntityManagerService>()
+            EntityManager = serviceProvider.GetService<IEntityManager>()
         };
     }
 }

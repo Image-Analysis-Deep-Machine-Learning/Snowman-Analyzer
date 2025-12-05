@@ -2,55 +2,30 @@
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Snowman.Core;
 using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
-public partial class EventTimeline : ServiceableUserControl<EventTimelineDataContext>
+public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext>
 {
-    static EventTimeline()
-    {
-        ServiceProviderProperty.Changed.AddClassHandler<EventTimeline>((control, e) =>
-        {
-            if (e.NewValue is IServiceProvider provider)
-            {
-                control.DataContext = new EventTimelineDataContext(provider);
-                control._datasetImagesService = provider.GetService<IDatasetImagesService>();
-                control.DataContext.ParentRendererControl = control;
-            }
-        });
-    }
-    
-    private IDatasetImagesService _datasetImagesService;
-    
     public EventTimeline()
     {
         InitializeComponent();
-        
-
-        DataContext.ParentRendererControl = this;
-
-        PointerWheelChanged += DataContext.OnPointerWheelChanged;
-        PointerPressed += DataContext.OnPointerPressed;
-        PointerReleased += DataContext.OnPointerReleased;
-        PointerMoved += DataContext.OnPointerMoved;
-        
-        /*
-        PropertyChanged += (s, e) =>
-        {
-            if (IsVisible) UpdateEventPins(dataContext.Events, dataContext.ZoomScale, dataContext.Offset);
-        };*/
+        PointerWheelChanged += (sender, e) => DataContext.OnPointerWheelChanged(sender, e);
+        PointerPressed += (sender, e) => DataContext.OnPointerPressed(sender, e);
+        PointerReleased += (sender, e) => DataContext.OnPointerReleased(sender, e);
+        PointerMoved += (sender, e) => DataContext.OnPointerMoved(sender, e);
     }
     
     public void UpdateEventPins(Dictionary<int, Dictionary<int, List<EventData>>> eventsByFrameIndexByRuleId, double zoomScale, double offset)
     {
-        Canvas.Children.Clear();
+        /*Canvas.Children.Clear();
 
         var totalFrames = _datasetImagesService.MaxFrameIndex() + 1;
         var bounds = Bounds;
@@ -116,7 +91,7 @@ public partial class EventTimeline : ServiceableUserControl<EventTimelineDataCon
                 Canvas.Children.Add(pin);
             }
             i++;
-        }
+        }*/
     }
 
     public override void Render(DrawingContext context)
@@ -124,5 +99,12 @@ public partial class EventTimeline : ServiceableUserControl<EventTimelineDataCon
         context.FillRectangle(Brushes.Transparent, new Rect(0, 0, Bounds.Width, Bounds.Height));
         DataContext.Render(context);
         base.Render(context);
+    }
+
+    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
+    {
+        DataContext = new EventTimelineDataContext(ServiceProvider.GetProvider(this));
+        DataContext.ParentRendererControl = this;
+        base.OnAttachedToLogicalTree(e);
     }
 }

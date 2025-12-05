@@ -17,7 +17,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 {
     private Point _originalClickPosition;
     protected bool Dragging;
-    protected IEntityManagerService EntityManagerService = null!;
+    protected IEntityManager EntityManager = null!;
     
     public EntityEditTool() : base("_Entity Edit", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
 
@@ -27,10 +27,10 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
     {
         if (e.WrappedArgs.Properties.IsLeftButtonPressed)
         {
-            EntityManagerService.DeselectAllEntities();
+            EntityManager.DeselectAllEntities();
             var pointerPosition = e.GetTransformedPointerPosition();
-            var filteredEntities = EntityManagerService.GetEntitiesHitByPoint(pointerPosition).OfParentType<TEntity>().ToList();
-            EntityManagerService.SelectEntities(filteredEntities.Count > 0 ? [filteredEntities.Last()] : []); // select only one entity TODO: multi-selection with shift?
+            var filteredEntities = EntityManager.GetEntitiesHitByPoint(pointerPosition).OfParentType<TEntity>().ToList();
+            EntityManager.SelectEntities(filteredEntities.Count > 0 ? [filteredEntities.Last()] : []); // select only one entity TODO: multi-selection with shift?
             _originalClickPosition = e.GetTransformedPointerPosition();
 
             if (filteredEntities.Count > 0)
@@ -54,12 +54,12 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         
         if (Dragging)
         {
-            EntityManagerService.MoveSelectedEntities(cursorPositionLocal - _originalClickPosition, true);
+            EntityManager.MoveSelectedEntities(cursorPositionLocal - _originalClickPosition, true);
         }
 
         else
         {
-            EntityManagerService.EvaluateHitsAt<TEntity>(cursorPositionLocal);
+            EntityManager.EvaluateHitsAt<TEntity>(cursorPositionLocal);
             base.PointerMovedAction(sender, e);
         }
     }
@@ -70,8 +70,8 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 
         if (e.WrappedArgs.Key == Key.Delete)
         {
-            var selectedEntities = EntityManagerService.GetSelectedEntities();
-            EntityManagerService.DeleteEntities(selectedEntities);
+            var selectedEntities = EntityManager.GetSelectedEntities();
+            EntityManager.DeleteEntities(selectedEntities);
         }
     }
     
@@ -79,7 +79,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
     {
         return new EntityEditTool<TEntity>(Name, Cursor, Icon)
         {
-            EntityManagerService = serviceProvider.GetService<IEntityManagerService>()
+            EntityManager = serviceProvider.GetService<IEntityManager>()
         };
     }
 }

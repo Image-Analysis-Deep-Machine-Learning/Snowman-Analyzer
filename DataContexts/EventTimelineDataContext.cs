@@ -13,10 +13,10 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class EventTimelineDataContext : INotifyPropertyChanged
+public class EventTimelineDataContext() : INotifyPropertyChanged
 {
-    private readonly IDatasetImagesService _datasetImagesService;
-    public EventTimeline ParentRendererControl { get; set; }
+    private IDatasetImagesService _datasetImagesService = null!;
+    public EventTimeline ParentRendererControl { get; set; } = null!;
 
     public event Action? ZoomScaleChanged;
     private double _zoomScale = 1.0;
@@ -58,21 +58,16 @@ public class EventTimelineDataContext : INotifyPropertyChanged
     private readonly Pen _penMinor = new(TickBrush, 0.5);
     private readonly Typeface _font = new("Arial");
 
-    public EventTimelineDataContext(IServiceProvider serviceProvider)
+    public EventTimelineDataContext(IServiceProvider serviceProvider) : this()
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
-    }
-
-    public EventTimelineDataContext()
-    {
-        _datasetImagesService = null!;
     }
 
     public static Dictionary<int, (Avalonia.Media.Color, Avalonia.Media.Color)> TimelineColors { get; } = [];
 
     public void Render(DrawingContext context)
     {
-        var bounds = ParentRendererControl.Bounds;
+        /*var bounds = ParentRendererControl.Bounds;
         
         var rules = SnowmanApp.Instance.Project.Rules;
         var timelineCount = Math.Max(rules.Count, 1);
@@ -86,12 +81,12 @@ public class EventTimelineDataContext : INotifyPropertyChanged
             // draw base lines
             var lineY = startY + i * (BaseHeight + GapHeight);
             context.DrawLine(new Pen(new SolidColorBrush(rules.Count > 0 ? TimelineColors[i].Item2 : Colors.Gray), BaseHeight), new Point(0, lineY), new Point(bounds.Width, lineY));
-        }
+        }*/
     }
 
     private void DrawTicks(DrawingContext context)
     {
-        var bounds = ParentRendererControl.Bounds;
+        /*var bounds = ParentRendererControl.Bounds;
         var lineY = (int)(bounds.Height / 2);
         var rules = SnowmanApp.Instance.Project.Rules;
         
@@ -139,7 +134,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
             );
             
             context.DrawText(label, new Point(x, lineY + totalHeightTimelines / 2 + BaseHeight * 3 + 5));
-        }
+        }*/
     }
     
     private (int majorInterval, int minorInterval) GetTickIntervals(double timelineWidthPixels, int totalFrames)
@@ -227,7 +222,7 @@ public class EventTimelineDataContext : INotifyPropertyChanged
 
     public void Redraw()
     {
-        ParentRendererControl.UpdateEventPins(SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId, ZoomScale, Offset);
+        //ParentRendererControl.UpdateEventPins(SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId, ZoomScale, Offset);
         ParentRendererControl.InvalidateVisual();
     }
     

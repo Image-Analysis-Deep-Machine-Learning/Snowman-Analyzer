@@ -1,5 +1,5 @@
-﻿using Avalonia;
-using Avalonia.Input;
+﻿using Avalonia.Input;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Snowman.Core.Services;
 using Snowman.DataContexts;
@@ -10,21 +10,8 @@ using Snowman.Events.Viewport;
 
 namespace Snowman.Controls;
 
-public partial class Viewport : ServiceableUserControl<ViewportDataContext>
+public partial class Viewport : UserControlWrapper<ViewportDataContext>
 {
-    static Viewport()
-    {
-        ServiceProviderProperty.Changed.AddClassHandler<Viewport>((control, e) =>
-        {
-            if (e.NewValue is IServiceProvider provider)
-            {
-                control.DataContext = new ViewportDataContext(provider);
-                provider.GetService<IEventManagerService>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += control.InvalidateVisual);
-                provider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += control.InvalidateVisual);
-            }
-        });
-    }
-    
     // TODO: I guess this can be moved to commands as there is nothing else expected to bind to these events except tools
     #region Events
     public new event EventHandler<ViewportDataContext, ViewportPointerPressedEventArgs>? PointerPressed;
@@ -44,7 +31,6 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>
     public override void Render(DrawingContext drawingContext)
     {
         DataContext.Render(drawingContext);
-            
         base.Render(drawingContext);
     }
 
@@ -81,5 +67,14 @@ public partial class Viewport : ServiceableUserControl<ViewportDataContext>
         var args = new ViewportKeyDownEventArgs(e);
         KeyDown?.Invoke(DataContext, args);
         InvalidateVisual();
+    }
+
+    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
+    {
+        var serviceProvider = ServiceProvider.GetProvider(this);
+        DataContext = new ViewportDataContext(serviceProvider);
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += InvalidateVisual);
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += InvalidateVisual);
+        base.OnAttachedToLogicalTree(e);
     }
 }

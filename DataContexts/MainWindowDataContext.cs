@@ -1,40 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using Snowman.Controls;
 using Snowman.Core;
 using Snowman.Core.Services;
-using Snowman.Core.Tools;
-using Snowman.Data;
 using Snowman.Factories;
-using Snowman.Utilities;
 using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class MainWindowDataContext : ServiceableDataContext
+public class MainWindowDataContext
 {
-    private readonly IDatasetImagesService _datasetImagesService;
-    private string? _lastCustomZoom;
-    
+    private IDatasetImagesService _datasetImagesService = null!;
+
     public bool IsEntitySelected => false;
 
-    public MainWindowDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
+    public void Constructor(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
     }
     
-    public void NewProject()
-    {
-            
-    }
+    public void NewProject() { } // TODO
     
     public async Task OpenProject()
     {
@@ -138,9 +126,10 @@ public class MainWindowDataContext : ServiceableDataContext
 
     public ObservableCollection<string> ZoomScaleOptions { get; } = ["1x", "2x", "5x", "10x", "20x"];
     private static string FormatZoomScale(double value) => $"{value:0.#}x";
+
     public string ZoomScaleString
     {
-        get;// => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
+        get; // => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
         set;
         /*{
             if (value.EndsWith('x') && double.TryParse(value.TrimEnd('x'), out var parsed))
@@ -151,9 +140,7 @@ public class MainWindowDataContext : ServiceableDataContext
                 EventTimeline.InvalidateVisual();
             }
         }*/
-    }
-
-    public IEnumerable<Tool> Tools => ToolRegistry.GetTools(ServiceProvider);
+    } = null!;
 
     public void PrevFrame()
     {
@@ -225,8 +212,8 @@ public class MainWindowDataContext : ServiceableDataContext
 
     public void ClearEventInfo()
     {
-        SnowmanApp.Instance.Project.TempEntities = null;
-        SnowmanApp.Instance.Project.TempBoundingBoxes = null;
+        //SnowmanApp.Instance.Project.TempEntities = null;
+        //SnowmanApp.Instance.Project.TempBoundingBoxes = null;
             
         //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
         //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();

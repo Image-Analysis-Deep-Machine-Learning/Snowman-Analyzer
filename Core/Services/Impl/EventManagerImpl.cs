@@ -9,7 +9,7 @@ namespace Snowman.Core.Services.Impl;
 /// has been considered, but ultimately not used as it can have too much overhead from reflection with each event broadcast
 /// and the application should avoid using singletons to allow multiple instances of MainWindow to coexist.
 /// </summary>
-public class EventManagerServiceImpl : IEventManagerService
+public class EventManagerImpl : IEventManager
 {
     private readonly Dictionary<Type, List<IEventSupplier>> _eventSuppliers = [];
     // The implementation MUST use List (or other ordered container) to make sure the order in which the actions are

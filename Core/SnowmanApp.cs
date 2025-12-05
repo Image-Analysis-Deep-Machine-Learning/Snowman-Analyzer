@@ -39,7 +39,7 @@ public class SnowmanApp
     private void InitializeBasicServices()
     {
         // order is important - first services with no dependant services
-        _serviceProvider.RegisterService<IEventManagerService>(new EventManagerServiceImpl());
+        _serviceProvider.RegisterService<IEventManager>(new EventManagerImpl());
         _serviceProvider.RegisterService<IDrawingService>(new DrawingServiceImpl());
         _serviceProvider.RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(_serviceProvider));
     }

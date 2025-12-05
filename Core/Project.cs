@@ -35,13 +35,13 @@ public class Project : IDrawableSource, IProjectEventSupplier
     private XmlData XmlData { get; set; }
 
     public HashSet<Entity>? TempEntities { get; set; }
-    public HashSet<IRenderedAnnotation>? TempBoundingBoxes { get; set; }
+    public HashSet<IDrawable>? TempBoundingBoxes { get; set; }
     public Project(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
         _datasetImagesService = _serviceProvider.GetService<IDatasetImagesService>();
         _serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
-        _serviceProvider.GetService<IEventManagerService>().RegisterEventSupplier<IProjectEventSupplier>(this);
+        _serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
         XmlData = new XmlData();
         _currentXmlPath =  string.Empty;
         CreateServices();
@@ -50,7 +50,7 @@ public class Project : IDrawableSource, IProjectEventSupplier
 
     private void CreateServices()
     {
-        _serviceProvider.RegisterService<IEntityManagerService>(new EntityManagerServiceImpl(_entities));
+        _serviceProvider.RegisterService<IEntityManager>(new EntityManagerImpl(_entities));
     }
     
     

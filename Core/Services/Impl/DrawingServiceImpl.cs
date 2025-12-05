@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Avalonia.Media.Imaging;
 using Snowman.Core.Drawing;
 
 namespace Snowman.Core.Services.Impl;
@@ -17,4 +16,5 @@ public class DrawingServiceImpl : IDrawingService
     {
         return _drawableSources.AsReadOnly();
     }
+    
 }

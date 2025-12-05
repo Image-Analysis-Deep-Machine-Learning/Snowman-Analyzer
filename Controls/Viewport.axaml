@@ -1,4 +1,4 @@
-﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:ViewportDataContext"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportDataContext"
                              xmlns="https://github.com/avaloniaui"
                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,6 +9,5 @@
                              xmlns:ctrl="using:Snowman.Controls"
                              x:DataType="dataContext:ViewportDataContext"
                              Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
-    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
-    <ctrl:ServiceableUserControl.DataContext><dataContext:ViewportDataContext/></ctrl:ServiceableUserControl.DataContext>
-</ctrl:ServiceableUserControl>
+    <ctrl:UserControlWrapper.DataContext><dataContext:ViewportDataContext></dataContext:ViewportDataContext></ctrl:UserControlWrapper.DataContext>
+</ctrl:UserControlWrapper>

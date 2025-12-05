@@ -4,7 +4,7 @@ using Snowman.Core.Entities;
 
 namespace Snowman.Core.Services;
 
-public interface IEntityManagerService : IService
+public interface IEntityManager : IService
 {
     public IEnumerable<Entity> GetAllEntities();
     public IEnumerable<Entity> GetSelectedEntities();

@@ -24,12 +24,12 @@ public class PointTool : EntityEditTool<PointEntity>
         if (
             CurrentMouseMovement.NearlyEquals(Vector.Zero) && // to prevent creating of entities when moving the viewport
             e.WrappedArgs.InitialPressMouseButton == MouseButton.Left && // only left button creates new entities
-            !EntityManagerService.GetSelectedEntities().Any()) // only if no entities are selected
+            !EntityManager.GetSelectedEntities().Any()) // only if no entities are selected
         {
             var pointerPosition = e.GetTransformedPointerPosition();
             var newEntity = new PointEntity(pointerPosition);
-            EntityManagerService.CreateEntity(newEntity);
-            EntityManagerService.SelectEntities([newEntity]);
+            EntityManager.CreateEntity(newEntity);
+            EntityManager.SelectEntities([newEntity]);
         }
         
         base.PointerReleasedAction(sender, e);
@@ -39,7 +39,7 @@ public class PointTool : EntityEditTool<PointEntity>
     {
         return new PointTool(Name, Cursor, Icon)
         {
-            EntityManagerService = serviceProvider.GetService<IEntityManagerService>()
+            EntityManager = serviceProvider.GetService<IEntityManager>()
         };
     }
 }

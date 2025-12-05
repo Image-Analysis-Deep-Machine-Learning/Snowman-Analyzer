@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Avalonia.Media.Imaging;
+﻿using System.Collections.Generic;
 using Snowman.Core.Drawing;
 
 namespace Snowman.Core.Services;

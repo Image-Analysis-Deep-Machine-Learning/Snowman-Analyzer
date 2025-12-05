@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Core;
+using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
 using Snowman.Core.Services;
 using Snowman.Data;
@@ -15,7 +16,7 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
-public class EventPin : ServiceableUserControl<EventPinDataContext>
+public class EventPin : UserControlWrapper<EventPinDataContext>
 {
     private readonly IDatasetImagesService _datasetImagesService;
     private List<EventData> Events { get; }
@@ -58,7 +59,7 @@ public class EventPin : ServiceableUserControl<EventPinDataContext>
             _datasetImagesService.SkipToFrame(FrameIndex);
             
             var tempEntities = new HashSet<Entity>();
-            var tempBoundingBoxes = new HashSet<IRenderedAnnotation>();
+            var tempBoundingBoxes = new HashSet<IDrawable>();
             
             foreach (var eventData in Events)
             {
@@ -66,8 +67,8 @@ public class EventPin : ServiceableUserControl<EventPinDataContext>
                 tempBoundingBoxes.Add(eventData.ObjectBbox);
             }
             
-            SnowmanApp.Instance.Project.TempEntities = tempEntities;
-            SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
+            //SnowmanApp.Instance.Project.TempEntities = tempEntities;
+            //SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
             
             //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
             //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();

@@ -1,13 +1,7 @@
-﻿
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using Avalonia;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Snowman.Controls;
 using Snowman.Core.Services;
 using Snowman.Events;
 using Snowman.Events.DatasetImages;
@@ -16,14 +10,13 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class FrameTimelineDataContext
+public class FrameTimelineDataContext()
 {
-    private readonly IDatasetImagesService _datasetImagesService;
     private Rect _controlBounds;
-    
+
     public event SignalEventHandler? ItemsSourceChanged;
-    
-    public FrameCollection Frames { get; set; }
+
+    public FrameCollection Frames { get; set; } = null!;
     
     public Rect ControlBounds
     {
@@ -36,24 +29,19 @@ public class FrameTimelineDataContext
         }
     }
 
-    public FrameTimelineDataContext(IServiceProvider serviceProvider)
+    public FrameTimelineDataContext(IServiceProvider serviceProvider) : this()
     {
-        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Frames = new FrameCollection(serviceProvider, ControlBounds.Width);
-        serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => ItemsSourceChanged?.Invoke());
-        serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += () => ItemsSourceChanged?.Invoke());
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => ItemsSourceChanged?.Invoke());
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += () => ItemsSourceChanged?.Invoke());
     }
 
-    public FrameTimelineDataContext()
+    public void PointerPressed(Point clickPosition)
     {
-        _datasetImagesService = null!;
-    }
-
-    public void MousePressed(Point clickPosition)
-    {
+        var a = 11;
         /*if (_timelineFrames == null)
             return;
-        
+
         if (!(clickPosition.Y >= _timelineFrames[0].Rect.Y) ||
             !(clickPosition.Y <= _timelineFrames[0].Rect.Y + _timelineFrames[0].Rect.Height)) return;
 
@@ -89,7 +77,7 @@ public class FrameTimelineDataContext
             _invisibleFrame = new TimelineFrame(0, _datasetImagesService) { InVisible = true };
             TimelineWidth = timelineWidth;
             ReloadFrames();
-            serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
+            serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
             {
                 x.DatasetLoaded += ReloadFrames;
             });
@@ -127,20 +115,18 @@ public class FrameTimelineDataContext
         
         public class TimelineFrame(int index, IDatasetImagesService datasetImagesService)
         {
-            private readonly IDatasetImagesService _datasetImagesService = datasetImagesService;
-            public int FrameIndex { get; } = index;
-            public string Label => $"{FrameIndex + 1}/{_datasetImagesService.MaxFrameIndex() + 1}";
-            public Bitmap Image => _datasetImagesService.ThumbnailAt(FrameIndex);
-            public bool Selected => FrameIndex == _datasetImagesService.CurrentFrameIndex();
-            public bool InVisible { get; set; }
+            public string Label => $"{index + 1}/{datasetImagesService.MaxFrameIndex() + 1}";
+            public Bitmap Image => datasetImagesService.ThumbnailAt(index);
+            public bool Selected => index == datasetImagesService.CurrentFrameIndex();
+            public bool InVisible { get; init; }
         }
         
         private class FrameCollectionEnumerator : IEnumerator<TimelineFrame>
         {
             private readonly int _min;
             private readonly int _max;
+            private readonly FrameCollection _collection;
             private int _current;
-            private FrameCollection _collection;
 
             public FrameCollectionEnumerator(int indexMin, int indexMax, FrameCollection collection)
             {
@@ -158,17 +144,14 @@ public class FrameTimelineDataContext
 
             public void Reset()
             {
-                _current = _min;
+                _current = _min - 1;
             }
 
             public TimelineFrame Current => _collection.GetFrameAt(_current);
 
             object IEnumerator.Current => Current;
 
-            public void Dispose()
-            {
-                
-            }
+            public void Dispose() { }
         }
     }
 }

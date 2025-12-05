@@ -14,12 +14,11 @@ using Snowman.Events.DatasetImages;
 
 namespace Snowman.Core.Services.Impl;
 
-public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
+public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, IDatasetImagesEventSupplier
 {
     private const int CachePurgeInterval = 2;
     private static readonly ImageFrame PlaceHolderFrame = new() { Src = "placeholder.png" };
     
-    private readonly DatasetImagesEventSupplierImpl _eventSupplier;
     private readonly List<ImageFrame> _imageList;
     private int _currentFrameIndex;
     private Bitmap?[] _cachedFrames;
@@ -27,11 +26,12 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
     private string _baseFolder;
     private DateTime _lastCachePurgeTime;
     
+    public event SignalEventHandler? SelectedFrameChanged;
+    
     public DatasetImagesServiceImpl(IServiceProvider serviceProvider)
     {
         serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
-        _eventSupplier = new DatasetImagesEventSupplierImpl();
-        serviceProvider.GetService<IEventManagerService>().RegisterEventSupplier<IDatasetImagesEventSupplier>(_eventSupplier);
+        serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IDatasetImagesEventSupplier>(this);
         _baseFolder = string.Empty;
         _imageList = [PlaceHolderFrame];
         _currentFrameIndex = 0;
@@ -48,13 +48,13 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
     public void NextFrame()
     {
         _currentFrameIndex = Math.Min(_currentFrameIndex + 1, MaxFrameIndex());
-        _eventSupplier.FrameChanged();
+        SelectedFrameChanged?.Invoke();
     }
 
     public void PrevFrame()
     {
         _currentFrameIndex = Math.Max(_currentFrameIndex - 1, 0);
-        _eventSupplier.FrameChanged();
+        SelectedFrameChanged?.Invoke();
     }
 
     public int CurrentFrameIndex()
@@ -70,7 +70,7 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
     public void SkipToFrame(int index)
     {
         _currentFrameIndex = Math.Clamp(index, 0, MaxFrameIndex());
-        _eventSupplier.FrameChanged();
+        SelectedFrameChanged?.Invoke();
     }
 
     public Bitmap ThumbnailAt(int index)
@@ -107,14 +107,14 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
     /// </summary>
     private Bitmap FrameAt(int index)
     {
-        ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization
+        ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization and I'm too lazy
         var cachedFrame = _cachedFrames[index];
         
         if (cachedFrame is not null) return cachedFrame;
         
         var imageFrame = _imageList[index];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
-        var ext = fileName[fileName.IndexOf('.')..];
+        var ext = fileName[fileName.LastIndexOf('.')..];
         
         switch (ext)
         {
@@ -122,7 +122,6 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
             {
                 using var tiff = Tiff.Open(fileName, "r");
                 var tiffRgbaImage = TiffRgbaImage.Create(tiff, false, out _);
-                //var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
                 var raster = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
                 tiff.ReadRGBAImageOriented(tiffRgbaImage.Width, tiffRgbaImage.Height, raster, Orientation.TOPLEFT);
                 
@@ -180,11 +179,5 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource
         {
             context.DrawImage(image, new Rect(0, 0, image.Size.Width, image.Size.Height));
         }
-    }
-
-    private class DatasetImagesEventSupplierImpl : IDatasetImagesEventSupplier
-    {
-        public event SignalEventHandler? SelectedFrameChanged;
-        public void FrameChanged() => SelectedFrameChanged?.Invoke();
     }
 }

@@ -1,4 +1,4 @@
-﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:EventTimelineDataContext" xmlns="https://github.com/avaloniaui"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:EventTimelineDataContext" xmlns="https://github.com/avaloniaui"
                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,7 +7,6 @@
                              xmlns:dataContext="using:Snowman.DataContexts"
                              xmlns:ctrl="using:Snowman.Controls"
                              x:DataType="dataContext:EventTimelineDataContext">
-    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
-    <ctrl:ServiceableUserControl.DataContext><dataContext:EventTimelineDataContext/></ctrl:ServiceableUserControl.DataContext>
+    <ctrl:UserControlWrapper.DataContext><dataContext:EventTimelineDataContext></dataContext:EventTimelineDataContext></ctrl:UserControlWrapper.DataContext>
     <Canvas x:Name="Canvas"/>
-</ctrl:ServiceableUserControl>
+</ctrl:UserControlWrapper>

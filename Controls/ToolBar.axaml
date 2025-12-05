@@ -1,4 +1,4 @@
-﻿<ctrl:ServiceableUserControl x:TypeArguments="dataContext:ToolBarDataContext"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ToolBarDataContext"
                              xmlns="https://github.com/avaloniaui"
                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,8 +9,7 @@
                              xmlns:ctrl="using:Snowman.Controls"
                              x:DataType="dataContext:ToolBarDataContext"
                              x:Name="Root">
-    <!-- This line is to prevent the Binding compiler to mess with the DataContext types and throw exceptions for no reason -->
-    <ctrl:ServiceableUserControl.DataContext><dataContext:ToolBarDataContext/></ctrl:ServiceableUserControl.DataContext>
+    <ctrl:UserControlWrapper.DataContext><dataContext:ToolBarDataContext></dataContext:ToolBarDataContext></ctrl:UserControlWrapper.DataContext>
     <ItemsControl ItemsSource="{Binding Tools}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -25,4 +24,4 @@
             </DataTemplate>
         </ItemsControl.ItemTemplate>
     </ItemsControl>
-</ctrl:ServiceableUserControl>
+</ctrl:UserControlWrapper>

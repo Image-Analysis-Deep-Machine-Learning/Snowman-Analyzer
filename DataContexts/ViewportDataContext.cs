@@ -8,18 +8,34 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class ViewportDataContext : ServiceableDataContext
+public class ViewportDataContext()
 {
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.5;
     private const double MaxZoom = 10.0;
     
-    private readonly IDrawingService _drawingService;
-    private readonly IDatasetImagesService _datasetImagesService;
+    private readonly IDrawingService _drawingService = null!;
+    private readonly IDatasetImagesService _datasetImagesService = null!;
     private Rect _controlBounds;
     private double _additionalScale = 1.0;
     private Vector _additionalTranslation;
     private Size _cachedImageSize;
+
+    public ViewportDataContext(IServiceProvider serviceProvider) : this()
+    {
+        _drawingService = serviceProvider.GetService<IDrawingService>();
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        
+        CachedImageSize = _datasetImagesService.GetImageSize();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
+        {
+            x.DatasetLoaded += () =>
+            {
+                CachedImageSize = _datasetImagesService.GetImageSize();
+                ResetTransform();
+            };
+        });
+    }
 
     // TODO: set once the image size is known and then change only when the size changes - project load?
     private Size CachedImageSize
@@ -66,27 +82,6 @@ public class ViewportDataContext : ServiceableDataContext
 
     public Matrix TransformationMatrix { get; private set; }
 
-    public ViewportDataContext(IServiceProvider serviceProvider) : base(serviceProvider)
-    {
-        _drawingService = serviceProvider.GetService<IDrawingService>();
-        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
-        
-        CachedImageSize = _datasetImagesService.GetImageSize();
-        serviceProvider.GetService<IEventManagerService>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
-        {
-            x.DatasetLoaded += () =>
-            {
-                CachedImageSize = _datasetImagesService.GetImageSize();
-                ResetTransform();
-            };
-        });
-    }
-
-    public ViewportDataContext() : base(null!)
-    {
-        _drawingService = null!;
-    }
-    
     public void Zoom(double delta, Point atPosition)
     {
         var oldZoom = AdditionalScale;

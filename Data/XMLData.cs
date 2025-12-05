@@ -3,6 +3,7 @@ using System.IO;
 using System.Xml.Serialization;
 using Avalonia.Media;
 using Snowman.Core;
+using Snowman.Core.Drawing;
 
 namespace Snowman.Data;
 
@@ -77,7 +78,7 @@ public class BoundingBoxes
 }
 
 [XmlRoot(ElementName="boundingbox")]
-public class BoundingBox : IRenderedAnnotation
+public class BoundingBox : IDrawable
 {
 	[XmlElement(ElementName="x_left_top")] public int XLeftTop { get; set; }
 
