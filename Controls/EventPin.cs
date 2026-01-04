@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Avalonia;
-using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Core;
+using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
-public class EventPinControl : Control
+public class EventPin : UserControlWrapper<EventPinDataContext>
 {
+    private readonly IDatasetImagesService _datasetImagesService;
     private List<EventData> Events { get; }
     public int FrameIndex { get; }
     private readonly int _frequency;
@@ -27,8 +30,9 @@ public class EventPinControl : Control
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
     
-    public EventPinControl(List<EventData> events, int frameIndex, RuleData rule, int frequency)
+    public EventPin(IServiceProvider serviceProvider, List<EventData> events, int frameIndex, RuleData rule, int frequency)
     {
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Events = events;
         FrameIndex = frameIndex;
         Rule = rule;
@@ -52,10 +56,10 @@ public class EventPinControl : Control
 
         PointerPressed += (s, e) =>
         {
-            SnowmanApp.Instance.Project.CurrentFrameIndex = FrameIndex;
+            _datasetImagesService.SkipToFrame(FrameIndex);
             
             var tempEntities = new HashSet<Entity>();
-            var tempBoundingBoxes = new HashSet<IRenderedAnnotation>();
+            var tempBoundingBoxes = new HashSet<IDrawable>();
             
             foreach (var eventData in Events)
             {
@@ -63,11 +67,11 @@ public class EventPinControl : Control
                 tempBoundingBoxes.Add(eventData.ObjectBbox);
             }
             
-            SnowmanApp.Instance.Project.TempEntities = tempEntities;
-            SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
+            //SnowmanApp.Instance.Project.TempEntities = tempEntities;
+            //SnowmanApp.Instance.Project.TempBoundingBoxes = tempBoundingBoxes;
             
-            SnowmanApp.Instance.CanvasDataContext.ParentRendererControl.InvalidateVisual();
-            SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
+            //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
+            //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
         };
     }
 

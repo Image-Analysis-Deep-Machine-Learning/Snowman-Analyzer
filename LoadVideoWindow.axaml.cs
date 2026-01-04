@@ -14,6 +14,11 @@ namespace Snowman
         public new event PropertyChangedEventHandler? PropertyChanged;
         private double _selectedFps;
         private string _selectedFrameFormat = "jpeg";
+
+        public LoadVideoWindow()
+        {
+            
+        }
         
         public LoadVideoWindow(VideoSequenceMetadata metadata)
         {

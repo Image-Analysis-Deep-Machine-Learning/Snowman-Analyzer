@@ -1,8 +1,8 @@
 ﻿using Avalonia.Media;
 
-namespace Snowman.Core;
+namespace Snowman.Core.Drawing;
 
-public interface IRenderedAnnotation
+public interface IDrawable
 {
     public void Render(DrawingContext context);
 }

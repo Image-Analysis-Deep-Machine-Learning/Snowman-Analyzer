@@ -1,0 +1,19 @@
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportWindowDataContext"
+                             xmlns="https://github.com/avaloniaui"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                             x:Class="Snowman.Controls.ViewportWindow"
+                             xmlns:dataContext="clr-namespace:Snowman.DataContexts"
+                             xmlns:ctrl="clr-namespace:Snowman.Controls"
+                             x:DataType="dataContext:ViewportWindowDataContext"
+                             x:Name="Root">
+    <ctrl:UserControlWrapper.DataContext><dataContext:ViewportWindowDataContext></dataContext:ViewportWindowDataContext></ctrl:UserControlWrapper.DataContext>
+    <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
+        <ctrl:ToolBar Grid.Row="0" Name="ToolBar"/>
+        <Panel Grid.Row="1">
+            <ctrl:Viewport Name="Viewport"/>
+        </Panel>
+    </Grid>
+</ctrl:UserControlWrapper>

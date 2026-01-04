@@ -6,105 +6,78 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Python.Runtime;
 using Snowman.Core.Scripting;
-using Snowman.Core.Tools;
-using Snowman.DataContexts;
+using Snowman.Core.Services;
+using Snowman.Core.Services.Impl;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
-namespace Snowman.Core
+namespace Snowman.Core;
+
+public class SnowmanApp
 {
-    public class SnowmanApp
+    // it was 74 before
+    public static SnowmanApp Instance { get; private set; } = null!;
+
+    // it was 54 before
+    public Project Project { get; }
+        
+    private const string ScriptsDirectory = "Scripts";
+
+    public List<Script> Scripts  { get; } = [];
+
+    private readonly IServiceProvider _serviceProvider;
+
+    public SnowmanApp(IServiceProvider serviceProvider)
     {
-        private const string ScriptsDirectory = "Scripts";
-        private static SnowmanApp? _instance;
-        
-        private Tool _activeTool = null!;
-        
-        public static SnowmanApp Instance => _instance ??= new SnowmanApp();
-        public CanvasDataContext CanvasDataContext { get; }
-        public FrameTimelineDataContext FrameTimelineDataContext { get; }
-        public EventTimelineDataContext EventTimelineDataContext { get; }
-        public Project Project { get; private set; }
-        public List<Script> Scripts  { get; } = [];
+        Instance = this;
+        _serviceProvider = serviceProvider;
+        InitializeBasicServices();
+        Project = new Project(_serviceProvider); // TODO: this will need a factory that will rewire all existing services
+        LoadScripts();
+        InitializePythonExecutionEnvironment();
+    }
 
-        public Tool ActiveTool
-        {
-            get => _activeTool;
-            set
-            {
-                _activeTool = value;
-                CanvasDataContext.ParentRendererControl.Cursor = value.Cursor;
-            }
-        }
+    private void InitializeBasicServices()
+    {
+        // order is important - first services with no dependant services
+        _serviceProvider.RegisterService<IEventManager>(new EventManagerImpl());
+        _serviceProvider.RegisterService<IDrawingService>(new DrawingServiceImpl());
+        _serviceProvider.RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(_serviceProvider));
+    }
 
-        private SnowmanApp()
+    // TODO: dynamically load scripts from the directory while the app is running when the user opens combobox for script selection
+    private void LoadScripts()
+    {
+        foreach (var file in Directory.EnumerateFiles(ScriptsDirectory))
         {
-            CanvasDataContext = new CanvasDataContext();
-            FrameTimelineDataContext = new FrameTimelineDataContext();
-            EventTimelineDataContext = new EventTimelineDataContext();
-            Project = new Project();
-            LoadScripts();
-            InitializePythonExecutionEnvironment();
+            Scripts.Add(new Script(file));
         }
+    }
 
-        // TODO: dynamically load scripts from the directory while the app is running when the user opens combobox for script selection
-        private void LoadScripts()
-        {
-            foreach (var file in Directory.EnumerateFiles(ScriptsDirectory))
-            {
-                Scripts.Add(new Script(file));
-            }
-        }
-
-        public ObjectsToRender GetViewportVisuals()
-        {
-            return new ObjectsToRender
-            {
-                CurrentImage = Project.CurrentFrame,
-                CurrentEntities = Project.Entities,
-                CurrentAnnotations = Project.GetCurrentBoundingBoxes()
-            };
-        }
-        
-        public ObjectsToRender? GetTempViewportVisuals()
-        {
-            if (Project is { TempEntities: not null, TempBoundingBoxes: not null })
-            {
-                return new ObjectsToRender
-                {
-                    CurrentImage = Project.CurrentFrame,
-                    CurrentEntities = Project.TempEntities,
-                    CurrentAnnotations = Project.TempBoundingBoxes
-                };
-            }
+    private static void InitializePythonExecutionEnvironment()
+    {
+        if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
             
-            return null;
-        }
-
-        private static void InitializePythonExecutionEnvironment()
-        {
-            if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
+        // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
+        var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
+        Runtime.PythonDLL = Path.Combine(pythonDir, "python312.dll"); 
+        PythonEngine.PythonHome = pythonDir;
+        PythonEngine.Initialize();
+        PythonEngine.BeginAllowThreads();
             
-            // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
-            var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
-            Runtime.PythonDLL = Path.Combine(pythonDir, "python312.dll"); 
-            PythonEngine.PythonHome = pythonDir;
-            PythonEngine.Initialize();
-            PythonEngine.BeginAllowThreads();
-            
-            // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
-            // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
-            // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
-            var p = new Process();
-            var exe = Path.Combine(pythonDir, "python.exe");
-            p.StartInfo.FileName = exe;
-            //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
-            p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
-            p.Start();
-        }
+        // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
+        // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
+        // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
+        // TODO: DEBUGGER
+        var p = new Process();
+        var exe = Path.Combine(pythonDir, "python.exe");
+        p.StartInfo.FileName = exe;
+        //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
+        p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
+        //p.Start();
+    }
 
-        public async Task OpenProject(IStorageFile file)
-        {
-            Project =  new Project();
-            await Project.OpenProject(file);
-        }
+    public async Task OpenProject(IStorageFile file)
+    {
+        await Project.OpenProject(file);
     }
 }

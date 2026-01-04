@@ -2,16 +2,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:u="https://irihi.tech/ursa"
-        xmlns:snowman="using:Snowman"
-        xmlns:control="using:Snowman.Controls"
-        xmlns:core="clr-namespace:Snowman.Core"
         mc:Ignorable="d" Width="1920" Height="1080"
+        xmlns:dataContext="using:Snowman.DataContexts"
+        xmlns:ctrl="using:Snowman.Controls"
+        xmlns:snowman="using:Snowman"
         x:Class="Snowman.MainWindow"
-        x:DataType="snowman:MainWindow"
+        x:DataType="dataContext:MainWindowDataContext"
         Title="Snowman"
         WindowState="Maximized"
         Background="#1e1f22">
+    <Window.DataContext><dataContext:MainWindowDataContext></dataContext:MainWindowDataContext></Window.DataContext>
     <Window.Resources>
         <StreamGeometry x:Key="ArrowLeftRegular">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
         <StreamGeometry x:Key="ArrowRightRegular">M15.2685,4.20949 C14.97,3.92233 14.4952,3.93153 14.208,4.23005 C13.9209,4.52857 13.9301,5.00335 14.2286,5.29051 L22.5028,13.25 L3.75,13.25 C3.33579,13.25 3,13.5858 3,13.9999982 C3,14.4142 3.33579,14.75 3.75,14.75 L22.5018,14.75 L14.2286,22.7085 C13.9301,22.9957 13.9209,23.4705 14.208,23.769 C14.4952,24.0675 14.97,24.0767 15.2685,23.7896 L24.6965,14.7202 C25.1054,14.3268 25.1054,13.6723 24.6965,13.2788 L15.2685,4.20949 Z</StreamGeometry>
@@ -28,21 +28,15 @@
                 <Separator/>
                 <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
                 <Separator/>
-                <MenuItem Header="_Exit" Command="{Binding Close}"/>
-            </MenuItem>
-            <MenuItem Header="_Tool">
-                <MenuItem Header="_Move" Command="{Binding SetTool}" CommandParameter="{Binding MoveTool}"/>
-                <MenuItem Header="_Entity Edit" Command="{Binding SetTool}" CommandParameter="{Binding EntityEditTool}"/>
-                <MenuItem Header="_Point Create" Command="{Binding SetTool}" CommandParameter="{Binding PointTool}"/>
-                <MenuItem Header="_Rect Create" Command="{Binding SetTool}" CommandParameter="{Binding RectTool}"/>
+                <MenuItem Header="_Exit" Command="{Binding $parent[snowman:MainWindow].Close}"/>
             </MenuItem>
         </Menu>
         
         <!-- main display window -->
-        <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5">
-            <!-- canvas -->
-            <Border Grid.Row="0" Grid.Column="0" Background="Azure" BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
-                <control:CanvasControl Name="Canvas"/>
+        <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5" HorizontalAlignment="Stretch">
+            <!-- viewport -->
+            <Border Grid.Row="0" Grid.Column="0"  BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
+                <ctrl:ViewportWindow HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Border>
             
             <!-- timeline container -->
@@ -58,11 +52,7 @@
                     
                     <!-- frame timeline -->
                     <Border Grid.Column="1" Margin="5, 0, 5, 0">
-                        <control:FrameTimelineControl
-                            PrevFrameCommand="{Binding PrevFrame}"
-                            NextFrameCommand="{Binding NextFrame}"
-                            UpdateFrameCommand="{Binding UpdateFrame}"
-                            Name="FrameTimeline"/>
+                        <ctrl:FrameTimeline Name="FrameTimeline"/>
                     </Border>
                     
                     <!-- next -->
@@ -76,7 +66,7 @@
                 
                 <!-- event timeline -->
                 <Border Name="EventTimelineBorder" IsVisible="False" Margin="10, 0, 10, 0">
-                    <control:EventTimelineControl Name="EventTimeline"/>
+                    <ctrl:EventTimeline/>
                 </Border>
                 
                 <!-- zoom -->
@@ -134,16 +124,15 @@
             </Grid>
             
             <!-- run script -->
-            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch">
-                <Label DockPanel.Dock="Top" Content="Scripts to run:" Margin="10"></Label>
-                <u:MultiComboBox
-                    DockPanel.Dock="Top"
-                    Margin="10"
-                    ItemsSource="{Binding AvailableScripts}"
-                    SelectedItems="{Binding CurrentSelectedScripts}"
-                    HorizontalAlignment="Stretch">
-                </u:MultiComboBox>
-                <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button>
+            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding IsEntitySelected}">
+                <DockPanel DockPanel.Dock="Top">
+                    <Label Content="Scripts to run:" Margin="10" VerticalAlignment="Center"></Label>
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top">
+                    <Label Margin="10" VerticalAlignment="Center">ID:</Label>
+                    <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox>
+                </DockPanel>
+                <!-- <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button> -->
                 <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
             </DockPanel>
             <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10">

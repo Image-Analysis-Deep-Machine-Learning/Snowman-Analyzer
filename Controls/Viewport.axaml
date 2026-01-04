@@ -1,0 +1,13 @@
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportDataContext"
+                             xmlns="https://github.com/avaloniaui"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                             x:Class="Snowman.Controls.Viewport"
+                             xmlns:dataContext="using:Snowman.DataContexts"
+                             xmlns:ctrl="using:Snowman.Controls"
+                             x:DataType="dataContext:ViewportDataContext"
+                             Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
+    <ctrl:UserControlWrapper.DataContext><dataContext:ViewportDataContext></dataContext:ViewportDataContext></ctrl:UserControlWrapper.DataContext>
+</ctrl:UserControlWrapper>

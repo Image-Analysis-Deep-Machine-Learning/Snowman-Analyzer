@@ -1,25 +1,42 @@
-﻿using System;
-using Avalonia;
-using Avalonia.Input;
+﻿using Avalonia.Input;
+using Avalonia.Media;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
-using Point = System.Drawing.Point;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
 public abstract class Tool
 {
-    public Cursor Cursor { get; set; }
+    public string Name { get; }
+    public Cursor Cursor { get; }
+    public ImageBrush Icon { get; }
 
-    public CanvasDataContext CanvasDataContext => SnowmanApp.Instance.CanvasDataContext;
-
-    public Tool()
+    public Tool(string name, Cursor cursor, ImageBrush icon)
     {
-        Cursor = new Cursor(StandardCursorType.Arrow);
+        Name = name;
+        Cursor = cursor;
+        Icon = icon;
     }
+
+    /// <summary>
+    /// The only reason for this extra step to exist is this incompetent framework
+    /// TODO: add the ToolbarContext (or an event) to the tool when cloned to avoid sending the context in parameter?
+    /// </summary>
+    public void MakeActive(ToolBarDataContext context)
+    {
+        context.SetTool(this);
+    }
+
+    /// <summary>
+    /// Clones this tool and injects services
+    /// </summary>
+    public abstract Tool Clone(IServiceProvider serviceProvider);
     
-    public abstract void PointerPressedAction(object? sender, PointerPressedEventArgs e);
-    public abstract void PointerReleasedAction(object? sender, PointerReleasedEventArgs e);
-    public abstract void PointerWheelChangedAction(object? sender, PointerWheelEventArgs e);
-    public abstract void PointerMovedAction(object? sender, PointerEventArgs e);
-    public abstract void KeyPressed(object? sender, KeyEventArgs keyEventArgs);
+    // TODO: avoid using ViewportDataContext directly and instead create an interface for it?
+    public abstract void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e);
+    public abstract void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e);
+    public abstract void PointerWheelChangedAction(ViewportDataContext sender, ViewportPointerWheelChangedEventArgs e);
+    public abstract void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e);
+    public abstract void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e);
 }

@@ -1,41 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using BitMiracle.LibTiff.Classic;
-using Python.Runtime;
+using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
-using Snowman.Core.Scripting;
+using Snowman.Core.Services;
+using Snowman.Core.Services.Impl;
 using Snowman.Data;
+using Snowman.Events;
+using Snowman.Events.Suppliers;
 using Snowman.VideoLoading;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core;
 
-public class Project {
-    
-    public static readonly Bitmap PlaceHolderBitmap = new("../../../placeholder.png");
-    // clear image cache every X seconds to free memory
-    private const int CachePurgeInterval = 2;
-    
-    private int _currentFrameIndex;
-    public Bitmap? CurrentFrame;
-    private string _baseFolder;
-    private Entity? _selectedEntity;
-    private Bitmap?[] _cachedFrames;
-    private Bitmap?[] _cachedThumbnails;
-    private DateTime _lastCachePurgeTime;
+public class Project : IDrawableSource, IProjectEventSupplier
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IDatasetImagesService _datasetImagesService;
+    private readonly List<Entity> _entities = [];
     private string _currentXmlPath;
-    public event EventHandler? SelectedEntityChanged;
     
-    public List<Entity> Entities { get; }
+    public event SignalEventHandler? ProjectLoaded;
+    public event SignalEventHandler? DatasetLoaded;
+
     public List<RuleData> Rules { get; } = [];
     /**
      * EventsByFrameIndexByRuleId Dictionary<int ruleId, Dictionary<int frameIndex, List<EventData>>>
@@ -43,174 +33,62 @@ public class Project {
     public Dictionary<int, Dictionary<int, List<EventData>>> EventsByFrameIndexByRuleId { get; } = [];
 
     private XmlData XmlData { get; set; }
-    public int FrameCount { get; private set; }
 
-    public int CurrentFrameIndex
+    public HashSet<Entity>? TempEntities { get; set; }
+    public HashSet<IDrawable>? TempBoundingBoxes { get; set; }
+    public Project(IServiceProvider serviceProvider)
     {
-        get => _currentFrameIndex;
-        set
-        {
-            var reload = _currentFrameIndex != value;
-            
-            _currentFrameIndex = Math.Clamp(value, 0, FrameCount - 1);
-
-            if (reload) LoadCurrentFrame();
-        }
-    }
-    
-    public Entity? SelectedEntity
-    {
-        get => _selectedEntity;
-        
-        private set
-        {
-            _selectedEntity = value;
-            SelectedEntityChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    public HashSet<Entity>? TempEntities { get; set; } = null;
-    public HashSet<IRenderedAnnotation>? TempBoundingBoxes { get; set; } = null;
-
-    public Project()
-    {
+        _serviceProvider = serviceProvider;
+        _datasetImagesService = _serviceProvider.GetService<IDatasetImagesService>();
+        _serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
+        _serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
         XmlData = new XmlData();
-        Entities = [];
-        _cachedFrames = new  Bitmap[1];
-        _cachedThumbnails = new  Bitmap[1];
-        _lastCachePurgeTime = DateTime.Now;
         _currentXmlPath =  string.Empty;
-        _baseFolder = string.Empty;
-        LoadCurrentFrame();
-        FrameCount = 1;
+        CreateServices();
+        ProjectLoaded?.Invoke();
     }
 
-    public Project(IStorageFile file) : this()
+    private void CreateServices()
     {
-        
-    }
-
-    private void LoadCurrentFrame()
-    {
-        CurrentFrame = FrameAtIndex(_currentFrameIndex);
-    }
-
-    public Bitmap ThumbnailAtIndex(int index)
-    {
-        var cachedThumbnail = _cachedThumbnails[index];
-        
-        if (cachedThumbnail is not null) return cachedThumbnail;
-
-        var frame = FrameAtIndex(index);
-        var thumbnail = frame.CreateScaledBitmap(new PixelSize(100, (int)(100 / frame.Size.AspectRatio)), BitmapInterpolationMode.LowQuality);
-        _cachedThumbnails[index] = thumbnail;
-        return thumbnail;
+        _serviceProvider.RegisterService<IEntityManager>(new EntityManagerImpl(_entities));
     }
     
-    /// <summary>
-    /// Returns current frame at given index. Either from cache if it's cached or loads the corresponding frame, caches it and returns.
-    /// The cache is regularly cleared to avoid large images taking up precious space in RAM
-    /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory after regular cache clearing. 
-    /// </summary>
-    /// <param name="index"></param>
-    /// <returns>Current frame at given index</returns>
-    private Bitmap FrameAtIndex(int index)
-    {
-        ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization
-        if (XmlData.Images.ImageList.Count == 0)
-            return PlaceHolderBitmap;
-
-        // do no return null, rather throw an exception as this should be checked by other methods, and they should not rely on null values
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, XmlData.Images.ImageList.Count);
-        var cachedFrame = _cachedFrames[index];
-        
-        if (cachedFrame is not null) return cachedFrame;
-        
-        var imageFrame = XmlData.Images.ImageList[index];
-        var fileName = Path.Combine(_baseFolder, imageFrame.Src);
-
-        switch (imageFrame.Src.Substring(imageFrame.Src.IndexOf('.')))
-        {
-            case ".tiff":
-            {
-                using var tiff = Tiff.Open(fileName, "r");
-                var tiffRgbaImage = TiffRgbaImage.Create(tiff, false, out _);
-                //var data = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
-                var raster = new int[tiffRgbaImage.Width * tiffRgbaImage.Height];
-                tiff.ReadRGBAImageOriented(tiffRgbaImage.Width, tiffRgbaImage.Height, raster, Orientation.TOPLEFT);
-                
-                // Pin the array in memory
-                var handle = GCHandle.Alloc(raster, GCHandleType.Pinned);
-                try
-                {
-                    var ptr = handle.AddrOfPinnedObject();
-                    var stride = tiffRgbaImage.Width * sizeof(int); // 4 bytes per pixel (RGBA8888)
-
-                    var immutableBitmap = new Bitmap(
-                        PixelFormats.Rgba8888,
-                        AlphaFormat.Unpremul,
-                        ptr,
-                        new PixelSize(tiffRgbaImage.Width, tiffRgbaImage.Height),
-                        new Vector(96, 96), // typical DPI
-                        stride
-                    );
-
-                    _cachedFrames[index] = immutableBitmap;
-                    return immutableBitmap;
-                }
-                finally
-                {
-                    handle.Free();
-                }
-            }
-            default:
-                var bitmap = new Bitmap($"{_baseFolder}/{XmlData.Images.ImageList[index].Src}");
-                _cachedFrames[index] = bitmap;
-                return bitmap;
-        }
-    }
-
-    private void ClearCache()
-    {
-        if (_lastCachePurgeTime.AddSeconds(CachePurgeInterval) > DateTime.Now) return;
-        
-        _lastCachePurgeTime = DateTime.Now;
-        ResetFrameCache();
-    }
-
-    public List<BoundingBox> GetCurrentBoundingBoxes() => XmlData.Images.ImageList.Count == 0 ? [] : XmlData.Images.ImageList[CurrentFrameIndex].BoundingBoxes.BoundingBoxList;
     
-    public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)
+    public IEnumerable<IDrawable> GetDrawables()
     {
-        // TODO: when loading another video file, save current contents of output folder and then clear it
-        const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
-        var videoMetadata = await VideoFileLoader.GetVideoMetadataAsync(file, outputFolderPath);
-        var loadVideoWindow = new LoadVideoWindow(videoMetadata);
-        
-        var dialogSubmitted = await loadVideoWindow.ShowDialog<bool>(ownerWindow);
-
-        if (dialogSubmitted)
-        {
-            videoMetadata.StartTime = loadVideoWindow.StartSelectedTime;
-            videoMetadata.EndTime = loadVideoWindow.EndSelectedTime;
-            videoMetadata.FrameRate = loadVideoWindow.SelectedFps;
-            videoMetadata.FrameFormat = loadVideoWindow.SelectedFrameFormat;
-            videoMetadata.FrameCount =
-                Convert.ToInt32(Math.Round(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
-
-            var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar, progressBarText);
-            XmlData.Images = videoFileSequence.ImageList;
-            _currentFrameIndex = 0;
-            _baseFolder = videoFileSequence.Metadata.FrameFolderPath;
-            FrameCount = XmlData.Images.ImageList.Count;
-            LoadCurrentFrame();
-        }
+        return _entities;
     }
+    
+    // public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)
+    // {
+    //     // TODO: when loading another video file, save current contents of output folder and then clear it
+    //     const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
+    //     var videoMetadata = await VideoFileLoader.GetVideoMetadataAsync(file, outputFolderPath);
+    //     var loadVideoWindow = new LoadVideoWindow(videoMetadata);
+    //     
+    //     var dialogSubmitted = await loadVideoWindow.ShowDialog<bool>(ownerWindow);
+    //
+    //     if (dialogSubmitted)
+    //     {
+    //         videoMetadata.StartTime = loadVideoWindow.StartSelectedTime;
+    //         videoMetadata.EndTime = loadVideoWindow.EndSelectedTime;
+    //         videoMetadata.FrameRate = loadVideoWindow.SelectedFps;
+    //         videoMetadata.FrameFormat = loadVideoWindow.SelectedFrameFormat;
+    //         videoMetadata.FrameCount =
+    //             Convert.ToInt32(Math.Round(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
+    //
+    //         var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar, progressBarText);
+    //         XmlData.Images = videoFileSequence.ImageList;
+    //         _datasetImagesService.LoadNewImageList(XmlData.Images.ImageList.AsReadOnly(), videoFileSequence.Metadata.FrameFolderPath);
+    //     }
+    // }
 
     public async Task OpenXml(IStorageFile file)
     {
         _currentXmlPath = file.Path.LocalPath; // TODO: the user should have an option to open XML files (datasets) as a relative path
+        _entities.Clear();
         await OpenXmlInternal();
+        DatasetLoaded?.Invoke();
     }
 
     // I love 7 levels of abstraction. I eat it for breakfast
@@ -222,26 +100,11 @@ public class Project {
         var fileContent = await reader.ReadToEndAsync();
         
         XmlData = XmlData.Deserialize(fileContent) ?? XmlData;
-        _currentFrameIndex = 0;
-        _baseFolder = Path.GetDirectoryName(_currentXmlPath) ?? string.Empty;
-        FrameCount = XmlData.Images.ImageList.Count;
-        _lastCachePurgeTime = DateTime.Now;
-        ResetFrameCache();
-        LoadCurrentFrame();
+        _datasetImagesService.LoadNewImageList(XmlData.Images.ImageList.AsReadOnly(), Path.GetDirectoryName(_currentXmlPath) ?? string.Empty);
     }
-
-    private void ResetFrameCache()
-    {
-        _cachedFrames = new Bitmap[FrameCount];
-        _cachedThumbnails = new Bitmap[FrameCount];
-    }
-
-    public void NextFrame() => CurrentFrameIndex++;
-    
-    public void PreviousFrame() => CurrentFrameIndex--;
 
     // TODO: make async so the GUI won't get locked
-    private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
+    /*private (string, Dictionary<int, List<EventData>>?, int) RunScript(Entity entity, Dictionary<int, List<EventData>> events, int maxFrequency)
     {
         if (entity.Scripts.Count == 0) return ("1 entity ignored - no scripts set", null, 0); // make it better
         var output = "Running script...\n";
@@ -297,7 +160,7 @@ public class Project {
         }
         
         return (output, events, maxFrequency);
-    }
+    }*/
 
     /**
      * output events after applying a rule = a dictionary mapping frame indices (int) to event data lists
@@ -305,70 +168,24 @@ public class Project {
      * the corresponding values are lists of events which occurred at the given frame indices
      * (e.g. only 1 event occurred at frame 5: the value at key 5 will be a list containing 1 event data object)
      */
-    public (string, Dictionary<int, List<EventData>>?, int) Demo()
-    {
-        var output = new StringBuilder();
-        Dictionary<int, List<EventData>> events = new();
-        var maxFrequency = 0;
-        
-        foreach (var entity in Entities.Where(e => e.Parent is null))
-        {
-            var entityCopy = entity.Clone();
-            var outputRun = RunScript(entityCopy, events, maxFrequency);
-            output.AppendLine(outputRun.Item1);
-            output.AppendLine();
-            events = outputRun.Item2 ?? events;
-            maxFrequency = outputRun.Item3;
-        }
-        
-        return (output.ToString(), events, maxFrequency);
-    }
-
-    public void AddEntity(Entity entity)
-    {
-        Entities.Add(entity);
-
-        foreach (var child in entity.Children)
-        {
-            AddEntity(child);
-        }
-    }
-
-    public void RemoveEntity(Entity? entity)
-    {
-        if (entity is null) return;
-        
-        Entities.Remove(entity);
-        
-        foreach (var child in entity.Children)
-        {
-            Entities.Remove(child);
-        }
-    }
-
-    public void DeselectAllEntities()
-    {
-        foreach (var entity in Entities)
-        {
-            entity.Selected = false;
-        }
-
-        SelectedEntity = null; // create dummy entity
-    }
-
-    public void ResetIsHitOnAllEntities()
-    {
-        foreach (var entity in Entities)
-        {
-            entity.IsHit = false;
-        }
-    }
-
-    public void SelectEntity(Entity selectedEntity)
-    {
-        selectedEntity.Selected = true;
-        SelectedEntity = selectedEntity;
-    }
+    // public (string, Dictionary<int, List<EventData>>?, int) Demo()
+    // {
+    //     var output = new StringBuilder();
+    //     Dictionary<int, List<EventData>> events = new();
+    //     var maxFrequency = 0;
+    //     
+    //     foreach (var entity in Entities.Where(e => e.Parent is null))
+    //     {
+    //         var entityCopy = entity.Clone();
+    //         /*var outputRun = RunScript(entityCopy, events, maxFrequency);
+    //         output.AppendLine(outputRun.Item1);
+    //         output.AppendLine();
+    //         events = outputRun.Item2 ?? events;
+    //         maxFrequency = outputRun.Item3;*/
+    //     }
+    //     
+    //     return (output.ToString(), events, maxFrequency);
+    // }
 
     public async Task OpenProject(IStorageFile file)
     {
@@ -380,11 +197,6 @@ public class Project {
         var projectData = ProjectData.Deserialize(fileContent);
         
         if (projectData == null) throw new Exception("Project data could not be deserialized");
-
-        foreach (var entity in projectData.Entities)
-        {
-            AddEntity(entity.ToEntity());
-        }
         
         // TODO: project using dataset loaded from a video does not reopen with the video frames
 
@@ -393,16 +205,18 @@ public class Project {
             _currentXmlPath = projectData.LoadedDatasetPath;
             await OpenXmlInternal();
         }
+        ProjectLoaded?.Invoke();
     }
 
+    // TODO ADADSDASDSA
     public async Task SaveProject(IStorageFile file)
     {
         var projectData = new ProjectData {LoadedDatasetPath = _currentXmlPath};
         
-        foreach (var entity in Entities.Where(e => e.Parent is null))
-        {
-            projectData.Entities.Add(entity.ToEntityData());
-        }
+        // foreach (var entity in Entities.Where(e => e.Parent is null))
+        // {
+        //     projectData.Entities.Add(entity.ToEntityData());
+        // }
 
         var fileStream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(fileStream);

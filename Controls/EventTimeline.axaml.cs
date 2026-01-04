@@ -2,45 +2,32 @@
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using Snowman.Core;
+using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
 using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
-public class EventTimelineControl : UserControl
+public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext>
 {
-    private readonly Canvas _canvas;
-    
-    public EventTimelineControl()
+    public EventTimeline()
     {
-        _canvas = new Canvas();
-        Content = _canvas;
-        
-        var dataContext = SnowmanApp.Instance.EventTimelineDataContext;
-
-        dataContext.ParentRendererControl = this;
-
-        PointerWheelChanged += dataContext.OnPointerWheelChanged;
-        PointerPressed += dataContext.OnPointerPressed;
-        PointerReleased += dataContext.OnPointerReleased;
-        PointerMoved += dataContext.OnPointerMoved;
-        
-        /*
-        PropertyChanged += (s, e) =>
-        {
-            if (IsVisible) UpdateEventPins(dataContext.Events, dataContext.ZoomScale, dataContext.Offset);
-        };*/
+        InitializeComponent();
+        PointerWheelChanged += (sender, e) => DataContext.OnPointerWheelChanged(sender, e);
+        PointerPressed += (sender, e) => DataContext.OnPointerPressed(sender, e);
+        PointerReleased += (sender, e) => DataContext.OnPointerReleased(sender, e);
+        PointerMoved += (sender, e) => DataContext.OnPointerMoved(sender, e);
     }
     
     public void UpdateEventPins(Dictionary<int, Dictionary<int, List<EventData>>> eventsByFrameIndexByRuleId, double zoomScale, double offset)
     {
-        _canvas.Children.Clear();
+        /*Canvas.Children.Clear();
 
-        var totalFrames = SnowmanApp.Instance.Project.FrameCount;
+        var totalFrames = _datasetImagesService.MaxFrameIndex() + 1;
         var bounds = Bounds;
         var canvasWidth = bounds.Width;
         var rules = SnowmanApp.Instance.Project.Rules;
@@ -79,7 +66,7 @@ public class EventTimelineControl : UserControl
                     leftX = Math.Min(x, xNext);
                 }
 
-                var pin = new EventPinControl(events, frameIndex, rule, frequency)
+                var pin = new EventPin(ServiceProvider, events, frameIndex, rule, frequency)
                 {
                     Width = width,
                     Height = 28
@@ -101,17 +88,23 @@ public class EventTimelineControl : UserControl
                 Canvas.SetLeft(pin, leftX);
                 Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
 
-                _canvas.Children.Add(pin);
+                Canvas.Children.Add(pin);
             }
             i++;
-        }
+        }*/
     }
-
 
     public override void Render(DrawingContext context)
     {
         context.FillRectangle(Brushes.Transparent, new Rect(0, 0, Bounds.Width, Bounds.Height));
-        SnowmanApp.Instance.EventTimelineDataContext.Render(context);
+        DataContext.Render(context);
         base.Render(context);
+    }
+
+    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
+    {
+        DataContext = new EventTimelineDataContext(ServiceProviderAttachedProperty.GetProvider(this));
+        DataContext.ParentRendererControl = this;
+        base.OnAttachedToLogicalTree(e);
     }
 }

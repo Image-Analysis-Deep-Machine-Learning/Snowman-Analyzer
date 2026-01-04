@@ -1,61 +1,61 @@
-﻿using Avalonia;
+﻿using System.Linq;
+using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media;
 using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
 public class RectTool : EntityEditTool<RectangleEntity>
 {
-    private PointEntity? _initialDraggedPoint;
-    public RectTool()
-    {
-        Cursor = new Cursor(StandardCursorType.Arrow);
-    }
+    private PointEntity? _bottomLeftCorner;
     
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public RectTool() : base("_Rect Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
+    
+    protected RectTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+    
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
-        var pointerPosition = e.GetPosition((Visual?)sender).Transform(CanvasDataContext.GetTransformationMatrix().Invert());
+        var pointerPosition = e.GetTransformedPointerPosition();
         
-        if (CurrentMouseMovement.NearlyEquals(Vector.Zero))
+        if (
+            CurrentMouseMovement.NearlyEquals(Vector.Zero) &&
+            e.WrappedArgs.InitialPressMouseButton == MouseButton.Left)
         {
-            SnowmanApp.Instance.Project.DeselectAllEntities();
-            
-            if (e.InitialPressMouseButton == MouseButton.Left)
+            if (_bottomLeftCorner is null) // first click
             {
-                if (_initialDraggedPoint is null)
+                if (!EntityManager.GetSelectedEntities().Any())
                 {
-                    Entity? selectedEntity = null;
-                    
-                    foreach (var entity in SnowmanApp.Instance.Project.Entities.OfParentType<RectangleEntity>())
-                    {
-                        if (entity.EvaluateHit(pointerPosition)) selectedEntity = entity;
-                    }
-
-                    if (selectedEntity == null)
-                    {
-                        if (_initialDraggedPoint is null)
-                        {
-                            var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
-                            SnowmanApp.Instance.Project.AddEntity(newRectangleEntity);
-                            _initialDraggedPoint = newRectangleEntity.Children[2] as PointEntity;
-                            SnowmanApp.Instance.Project.SelectEntity(_initialDraggedPoint);
-                            newRectangleEntity.BindMoveEvent();
-                        }
-                    }
-                }
-
-                else
-                {
-                    _initialDraggedPoint = null;
+                    var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
+                    EntityManager.CreateEntity(newRectangleEntity);
+                    _bottomLeftCorner = (PointEntity)newRectangleEntity.Children[2]; // TODO: getter on the rectangle entity?
+                    EntityManager.SelectEntities([_bottomLeftCorner]);
+                    //newRectangleEntity.BindMoveEvent();
                 }
             }
+
+            else
+            {
+                _bottomLeftCorner = null;
+            }
         }
-        
+
         base.PointerReleasedAction(sender, e);
         
-        if (_initialDraggedPoint is not null)
+        if (_bottomLeftCorner is not null)
         {
-            SetDraggedEntity(_initialDraggedPoint, pointerPosition);
+            Dragging = true;
         }
+    }
+    
+    public override Tool Clone(IServiceProvider serviceProvider)
+    {
+        return new RectTool(Name, Cursor, Icon)
+        {
+            EntityManager = serviceProvider.GetService<IEntityManager>()
+        };
     }
 }

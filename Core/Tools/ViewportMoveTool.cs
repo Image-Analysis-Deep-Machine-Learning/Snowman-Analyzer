@@ -1,7 +1,9 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
+using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
@@ -10,64 +12,56 @@ namespace Snowman.Core.Tools;
 /// </summary>
 public class ViewportMoveTool : Tool
 {
-    private const double ZoomStep = 0.1;
-    private const double MinZoom = 0.5;
-    private const double MaxZoom = 10.0;
-    private double _zoom = 1;
     private Vector _originalMovement;
+    private Point _clickOrigin;
     private bool _pressed;
+    protected Vector CurrentMouseMovement { get; private set; }
     
-    protected Point ClickOrigin;
-    
-    public Vector CurrentMouseMovement { get; set; }
+    /// <summary>
+    /// Tool for moving and zooming of the viewport. It does not allow any manipulation with the entities.
+    /// </summary>
+    public ViewportMoveTool() : base("_Move", new Cursor(StandardCursorType.SizeAll), new ImageBrush()) { }
 
-    private double Zoom
-    {
-        get => _zoom;
-        set => _zoom = Math.Clamp(value, MinZoom, MaxZoom);
-    }
-    
-    public ViewportMoveTool()
-    {
-        Zoom = CanvasDataContext.AdditionalScale;
-        Cursor = new Cursor(StandardCursorType.SizeAll);
-    }
+    protected ViewportMoveTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
-    public override void PointerPressedAction(object? sender, PointerPressedEventArgs e)
+
+    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
     {
-        ClickOrigin = e.GetCurrentPoint((Visual?)sender).Position;
-        _originalMovement = CanvasDataContext.AdditionalTranslation; 
+        _clickOrigin = e.GetPointerPosition();
         _pressed = true;
+        _originalMovement = sender.AdditionalTranslation;
     }
 
-    public override void PointerReleasedAction(object? sender, PointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {
-        CanvasDataContext.AdditionalTranslation = _originalMovement + CurrentMouseMovement;
         _pressed = false;
-        ClickOrigin = default;
+        // next three lines are important, viewport does not work properly without them, I don't know why
+        _clickOrigin = default;
         _originalMovement = default;
         CurrentMouseMovement = Vector.Zero;
     }
 
-    public override void PointerWheelChangedAction(object? sender, PointerWheelEventArgs e)
-    {
-        var zoomOld = Zoom;
-        
-        if (e.Delta.Y < 0) Zoom *= 1 - ZoomStep;
-        else if (e.Delta.Y > 0) Zoom *= 1 + ZoomStep;
-        
-        CanvasDataContext.AdditionalScale = Zoom;
-        var pos = e.GetCurrentPoint((Visual?)sender).Position;
-        CanvasDataContext.AdditionalTranslation += (zoomOld - Zoom) * (pos - CanvasDataContext.AdditionalTranslation) / zoomOld;
-    }
-
-    public override void PointerMovedAction(object? sender, PointerEventArgs e)
+    public override void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e)
     {
         if (!_pressed) return;
         
-        CurrentMouseMovement = e.GetPosition((Visual?)sender) - ClickOrigin;
-        CanvasDataContext.AdditionalTranslation = CurrentMouseMovement + _originalMovement;
+        CurrentMouseMovement = e.GetPointerPosition() - _clickOrigin;
+        sender.AdditionalTranslation = _originalMovement + CurrentMouseMovement; // TODO: use service for this or is callback ok?
     }
 
-    public override void KeyPressed(object? sender, KeyEventArgs keyEventArgs) {} // no keybindings at the moment
+    public override void PointerWheelChangedAction(ViewportDataContext sender, ViewportPointerWheelChangedEventArgs e)
+    {
+        var pos = e.GetPointerPosition();
+        sender.Zoom(e.WrappedArgs.Delta.Y, pos);
+    }
+
+    public override void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e)
+    {
+        // no keybindings
+    }
+
+    public override Tool Clone(IServiceProvider serviceProvider)
+    {
+        return new ViewportMoveTool(Name, Cursor, Icon);
+    }
 }

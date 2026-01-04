@@ -46,18 +46,13 @@ public abstract class EntityData
     [XmlElement(ElementName="script_paths")] public List<string> ScriptPaths { get; set; } = [];
 
     public abstract Entity ToEntity();
-
-    public ObservableCollection<Script> FromSavedScriptPaths()
-    {
-        return new ObservableCollection<Script>(SnowmanApp.Instance.Scripts.Where(script => ScriptPaths.Contains(script.PathToScript)));
-    }
 }
 
 public class EntityPointData : EntityData
 {
     public override Entity ToEntity()
     {
-        return new PointEntity(new Point(X, Y)) {Scripts = FromSavedScriptPaths()};
+        return new PointEntity(new Point(X, Y));
     }
 }
 
@@ -70,8 +65,7 @@ public class EntityRectangleData : EntityData
 
     public override Entity ToEntity()
     {
-        var newRectangleEntity = new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height)) {Scripts = FromSavedScriptPaths() };
-        newRectangleEntity.BindMoveEvent();
+        var newRectangleEntity = new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height));
         return newRectangleEntity;
     }
 }

@@ -1,9 +1,5 @@
-using System.Linq;
 using Avalonia;
 using Avalonia.Media;
-using Snowman.Core;
-using Snowman.Data;
-using Snowman.DataContexts;
 
 namespace Snowman.Core.Entities;
 
@@ -21,22 +17,21 @@ public class PointEntity : Entity
         return cursorPosition.DistanceTo(Position) <= Radius;
     }
 
-    public override void Render(DrawingContext context, CanvasDataContext canvasDataContext)
+    public override bool EvaluateHit(Rect selection)
     {
-        var brush = IsHit ? Brushes.Lime : Selected ? Brushes.DeepSkyBlue : Brushes.Red;
-        
-        var tempVisuals = SnowmanApp.Instance.GetTempViewportVisuals();
-        if (tempVisuals != null && tempVisuals.CurrentEntities.Contains(this))
-        {
-            brush = Brushes.Purple;
-        }
-        
-        context.DrawEllipse(brush, Pen, Position, Radius, Radius);
+        throw new System.NotImplementedException();
     }
 
-    public override EntityData ToEntityData()
+    public override void Render(DrawingContext context)
     {
-        return new EntityPointData { X = Position.X, Y = Position.Y, ScriptPaths = Scripts.Select(x => x.PathToScript).ToList() };
+        IBrush? brush = null;
+
+        if      (IsHit)         brush = Brushes.Lime;
+        else if (Selected)      brush = Brushes.DeepSkyBlue;
+        else if (IsHighlighted) brush = Brushes.Purple;
+        else                    brush = Brushes.Red;
+        
+        context.DrawEllipse(brush, Pen, Position, Radius, Radius);
     }
 
     public override Entity Clone()
@@ -45,8 +40,8 @@ public class PointEntity : Entity
         {
             Selected = Selected,
             IsHit = IsHit,
-            Scripts = Scripts
         };
+        
         return copy;
     }
 }
