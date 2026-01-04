@@ -22,15 +22,15 @@ public partial class MainWindow : Window
         {
             if (args.NewValue is not MainWindowDataContext dataContext) return;
             
-            dataContext.Constructor(ServiceProvider.GetProvider(window));
+            dataContext.Constructor(ServiceProviderAttachedProperty.GetProvider(window));
             //dataContext.SetupZoomScaleChangedHandler();
         });
     }
 
     public MainWindow()
     {
-        ServiceProvider.SetProvider(this, new ServiceProviderImpl());
-        _app = new SnowmanApp(ServiceProvider.GetProvider(this));
+        ServiceProviderAttachedProperty.SetProvider(this, new ServiceProviderImpl());
+        _app = new SnowmanApp(ServiceProviderAttachedProperty.GetProvider(this));
         StorageProviderFactory.InitializeStorageProvider(StorageProvider);
         InitializeComponent();
         

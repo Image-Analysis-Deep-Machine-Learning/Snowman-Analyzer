@@ -1,6 +1,6 @@
 ﻿namespace Snowman.Core.Services;
 
-public interface IStorageProvider
+public interface IStorageProviderService
 {
     
 }

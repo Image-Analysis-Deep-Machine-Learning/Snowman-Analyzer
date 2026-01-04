@@ -4,8 +4,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Snowman.Core.Services;
 using Snowman.Events;
-using Snowman.Events.DatasetImages;
-using Snowman.Events.Project;
+using Snowman.Events.Suppliers;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -74,7 +73,7 @@ public class FrameTimelineDataContext()
         public FrameCollection(IServiceProvider serviceProvider, double timelineWidth)
         {
             _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
-            _invisibleFrame = new TimelineFrame(0, _datasetImagesService) { InVisible = true };
+            _invisibleFrame = new TimelineFrame(0, _datasetImagesService) { Invisible = true };
             TimelineWidth = timelineWidth;
             ReloadFrames();
             serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
@@ -118,7 +117,7 @@ public class FrameTimelineDataContext()
             public string Label => $"{index + 1}/{datasetImagesService.MaxFrameIndex() + 1}";
             public Bitmap Image => datasetImagesService.ThumbnailAt(index);
             public bool Selected => index == datasetImagesService.CurrentFrameIndex();
-            public bool InVisible { get; init; }
+            public bool Invisible { get; init; }
         }
         
         private class FrameCollectionEnumerator : IEnumerator<TimelineFrame>

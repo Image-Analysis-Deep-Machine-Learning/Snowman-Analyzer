@@ -10,7 +10,7 @@ using BitMiracle.LibTiff.Classic;
 using Snowman.Core.Drawing;
 using Snowman.Data;
 using Snowman.Events;
-using Snowman.Events.DatasetImages;
+using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
 

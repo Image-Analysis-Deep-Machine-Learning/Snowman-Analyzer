@@ -103,7 +103,7 @@ public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext
 
     protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
     {
-        DataContext = new EventTimelineDataContext(ServiceProvider.GetProvider(this));
+        DataContext = new EventTimelineDataContext(ServiceProviderAttachedProperty.GetProvider(this));
         DataContext.ParentRendererControl = this;
         base.OnAttachedToLogicalTree(e);
     }

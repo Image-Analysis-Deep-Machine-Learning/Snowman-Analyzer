@@ -10,7 +10,7 @@ using Snowman.Core.Services;
 using Snowman.Core.Services.Impl;
 using Snowman.Data;
 using Snowman.Events;
-using Snowman.Events.Project;
+using Snowman.Events.Suppliers;
 using Snowman.VideoLoading;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 

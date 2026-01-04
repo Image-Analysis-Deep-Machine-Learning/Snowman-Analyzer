@@ -84,11 +84,6 @@ public class RectangleEntity : Entity
         
         context.FillRectangle(fillBrush, _rectangle);
         context.DrawRectangle(pen, _rectangle);
-        
-        foreach (var child in Children)
-        {
-            child.Render(context);
-        }
     }
 
     private void UpdatePointsLocation(int childIndex)

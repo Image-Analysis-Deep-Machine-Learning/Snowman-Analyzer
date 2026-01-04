@@ -1,4 +1,4 @@
-﻿namespace Snowman.Events.Project;
+﻿namespace Snowman.Events.Suppliers;
 
 public interface IProjectEventSupplier : IEventSupplier
 {

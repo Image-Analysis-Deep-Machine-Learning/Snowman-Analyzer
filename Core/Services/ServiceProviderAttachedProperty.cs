@@ -2,10 +2,10 @@
 
 namespace Snowman.Core.Services;
 
-public class ServiceProvider
+public class ServiceProviderAttachedProperty
 {
     public static readonly AttachedProperty<IServiceProvider> ProviderProperty =
-        AvaloniaProperty.RegisterAttached<ServiceProvider, AvaloniaObject, IServiceProvider>(
+        AvaloniaProperty.RegisterAttached<ServiceProviderAttachedProperty, AvaloniaObject, IServiceProvider>(
             "Provider",
             inherits: true);
 

@@ -20,7 +20,7 @@ public partial class FrameTimeline : UserControlWrapper<FrameTimelineDataContext
 
     protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
     {
-        DataContext = new FrameTimelineDataContext(ServiceProvider.GetProvider(this));
+        DataContext = new FrameTimelineDataContext(ServiceProviderAttachedProperty.GetProvider(this));
         DataContext.ItemsSourceChanged += UpdateTimelineItemsSource;
         base.OnAttachedToLogicalTree(e);
     }

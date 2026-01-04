@@ -13,7 +13,8 @@ public partial class ToolBar : UserControlWrapper<ToolBarDataContext>
 
     protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
     {
-        DataContext = new ToolBarDataContext(ServiceProvider.GetProvider(this));
+        var a = Content;
+        DataContext = new ToolBarDataContext(ServiceProviderAttachedProperty.GetProvider(this));
         base.OnAttachedToLogicalTree(e);
     }
 }

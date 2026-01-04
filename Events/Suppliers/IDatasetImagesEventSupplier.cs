@@ -1,4 +1,4 @@
-﻿namespace Snowman.Events.DatasetImages;
+﻿namespace Snowman.Events.Suppliers;
 
 public interface IDatasetImagesEventSupplier : IEventSupplier
 {
