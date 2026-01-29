@@ -2,7 +2,7 @@
 
 namespace Snowman.Core.Scripting.Variables.Controls;
 
-public partial class NumberVariableControl : UserControl
+public partial class NumberVariableControl : VariableControl<NumberVariable>
 {
     public NumberVariableControl()
     {

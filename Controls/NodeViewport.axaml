@@ -1,0 +1,41 @@
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:NodeViewportDataContext" xmlns="https://github.com/avaloniaui"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                          xmlns:u="https://irihi.tech/ursa"
+                          mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                          x:Class="Snowman.Controls.NodeViewport"
+                          xmlns:dataContext="using:Snowman.DataContexts"
+                          xmlns:ctrl="clr-namespace:Snowman.Controls"
+                          xmlns:paz="using:Avalonia.Controls.PanAndZoom"
+                          x:DataType="dataContext:NodeViewportDataContext">
+    <ctrl:UserControlWrapper.DataContext><dataContext:NodeViewportDataContext/></ctrl:UserControlWrapper.DataContext>
+    <ctrl:UserControlWrapper.Styles>
+        <Style Selector="ctrl|NodeControl" x:DataType="dataContext:NodeControlDataContext">
+            <Setter Property="(Canvas.Left)" Value="{Binding X, Mode=TwoWay}" />
+            <Setter Property="(Canvas.Top)" Value="{Binding Y, Mode=TwoWay}" />
+    
+            <Setter Property="UseLayoutRounding" Value="False" />
+        </Style>
+    </ctrl:UserControlWrapper.Styles>
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <u:MultiComboBox
+                DockPanel.Dock="Top"
+                Margin="10"
+                ItemsSource="{Binding AvailableScripts}"
+                SelectedItem="{Binding SelectedScript}"
+                HorizontalAlignment="Stretch"/>
+            <Button Content="Add Node" Command="{Binding AddNode}" />
+        </StackPanel>
+        <paz:ZoomBorder Grid.Row="1" ZoomSpeed="1.1">
+            <Canvas UseLayoutRounding="False" Name="ViewportCanvas">
+                <Ellipse Name="DebugMarker" 
+                         Width="8" Height="8" 
+                         Fill="Red" 
+                         ZIndex="1000" 
+                         IsHitTestVisible="False" />
+            </Canvas>
+        </paz:ZoomBorder>
+    </Grid>
+</ctrl:UserControlWrapper>

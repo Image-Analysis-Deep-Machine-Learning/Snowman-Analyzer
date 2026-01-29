@@ -124,21 +124,24 @@
             </Grid>
             
             <!-- run script -->
-            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding IsEntitySelected}">
-                <DockPanel DockPanel.Dock="Top">
-                    <Label Content="Scripts to run:" Margin="10" VerticalAlignment="Center"></Label>
-                </DockPanel>
-                <DockPanel DockPanel.Dock="Top">
-                    <Label Margin="10" VerticalAlignment="Center">ID:</Label>
-                    <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox>
-                </DockPanel>
-                <!-- <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button> -->
-                <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
-            </DockPanel>
-            <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10">
-                <Button DockPanel.Dock="Bottom" VerticalAlignment="Top" Margin="10, 10, 10, 0" Content="Clear Event Info" Command="{Binding ClearEventInfo}"></Button>
-                <TextBox DockPanel.Dock="Top" Name="InfoBox" TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch"></TextBox>
-            </DockPanel>
+            <ctrl:NodeViewport Grid.Row="0" Grid.Column="1">
+                
+            </ctrl:NodeViewport>
+            <!-- <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding IsEntitySelected}"> -->
+            <!--     <DockPanel DockPanel.Dock="Top"> -->
+            <!--         <Label Content="Scripts to run:" Margin="10" VerticalAlignment="Center"></Label> -->
+            <!--     </DockPanel> -->
+            <!--     <DockPanel DockPanel.Dock="Top"> -->
+            <!--         <Label Margin="10" VerticalAlignment="Center">ID:</Label> -->
+            <!--         <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox> -->
+            <!--     </DockPanel> -->
+            <!--     ~1~ <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button> @1@ -->
+            <!--     <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox> -->
+            <!-- </DockPanel> -->
+            <!-- <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10"> -->
+            <!--     <Button DockPanel.Dock="Bottom" VerticalAlignment="Top" Margin="10, 10, 10, 0" Content="Clear Event Info" Command="{Binding ClearEventInfo}"></Button> -->
+            <!--     <TextBox DockPanel.Dock="Top" Name="InfoBox" TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch"></TextBox> -->
+            <!-- </DockPanel> -->
         </Grid>
         
         <!-- bottom bar -->

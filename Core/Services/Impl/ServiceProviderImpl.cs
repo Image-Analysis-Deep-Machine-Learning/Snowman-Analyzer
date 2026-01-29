@@ -9,7 +9,12 @@ namespace Snowman.Core.Services.Impl;
 internal class ServiceProviderImpl : IServiceProvider
 {
     private readonly Dictionary<Type, IService> _services = [];
-    
+
+    public ServiceProviderImpl()
+    {
+        RegisterDefaultServices();
+    }
+
     // TODO: let the service provider create the instances?
     public void RegisterService<T>(T service) where T : IService
     {
@@ -19,5 +24,14 @@ internal class ServiceProviderImpl : IServiceProvider
     public T GetService<T>() where T : IService
     {
         return (T)_services[typeof(T)];
+    }
+
+    private void RegisterDefaultServices()
+    {
+        // order is important - first services with no dependant services
+        RegisterService<ILoggerService>(new LoggerServiceImpl());
+        RegisterService<IEventManager>(new EventManagerImpl());
+        RegisterService<IDrawingService>(new DrawingServiceImpl());
+        RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(this));
     }
 }

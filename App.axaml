@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:fluent="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
              xmlns:semi="https://irihi.tech/semi"
-             xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
+             xmlns:u-Semi="https://irihi.tech/ursa/themes/semi"
              x:Class="Snowman.App"
              RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
@@ -11,7 +11,111 @@
                 <FluentTheme/>
                 <fluent:RangeSliderTheme />
                 <semi:SemiTheme Locale="en-US" />
-                <u-semi:SemiTheme Locale="en-US"/>
+                <u-Semi:SemiTheme Locale="en-US"/>
+                <!-- Borrowed from SemiTheme code for Expander. A bit hacky but does the work -->
+                <Styles>
+                    <Style Selector="Expander.MainNodeExpander">
+                        <Setter Property="Template">
+                            <ControlTemplate TargetType="Expander">
+                                <DockPanel>
+                                    <LayoutTransformControl Name="ExpanderHeaderLayoutContainer" Margin="8, 4">
+                                        <Grid Background="Transparent"
+                                              ColumnDefinitions="*, Auto"
+                                              TextElement.FontWeight="{DynamicResource ExpanderHeaderFontWeight}"
+                                              TextElement.Foreground="{DynamicResource ExpanderHeaderForeground}"
+                                              HorizontalAlignment="Left">
+                                            <ToggleButton Grid.Column="0"
+                                                          Name="ExpanderHeader"
+                                                          Padding="{DynamicResource ExpanderHeaderPadding}"
+                                                          HorizontalAlignment="Left"
+                                                          Background="{DynamicResource ExpanderHeaderDefaultBackground}"
+                                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                                          BorderThickness="{TemplateBinding BorderThickness}"
+                                                          IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+                                                          IsEnabled="{TemplateBinding IsEnabled}"
+                                                          Theme="{StaticResource ExpanderHeaderToggleButtonTheme}">
+                                                <ToggleButton.Styles>
+                                                    <Style Selector="ToggleButton:pointerover">
+                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                    </Style>
+                                                    <Style Selector="ToggleButton:pressed">
+                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                    </Style>
+                                                </ToggleButton.Styles>
+                                                <PathIcon Name="PART_PathIcon"
+                                                          Theme="{DynamicResource InnerPathIcon}"
+                                                          Margin="{DynamicResource ExpanderIconMargin}"
+                                                          Data="{DynamicResource ExpanderIcon}">
+                                                    <PathIcon.Transitions>
+                                                        <Transitions>
+                                                            <TransformOperationsTransition Property="RenderTransform" Duration="0.1" />
+                                                        </Transitions>
+                                                    </PathIcon.Transitions>
+                                                </PathIcon>
+                                            </ToggleButton>
+                                            <ContentPresenter Padding="{DynamicResource ExpanderHeaderPadding}"
+                                                              HorizontalContentAlignment="Left"
+                                                              Grid.Column="1"
+                                                              Content="{TemplateBinding Header}"
+                                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                              Margin="0, 0, 10, 0"/>
+                                        </Grid>
+                                    </LayoutTransformControl>
+                                    <LayoutTransformControl Name="ExpanderContentLayoutContainer" MinHeight="1">
+                                        <Border
+                                            Name="ExpanderContent"
+                                            MinHeight="2"
+                                            BorderBrush="{DynamicResource ExpanderSeparatorBorderBrush}"
+                                            BorderThickness="0,0,0,1">
+                                            <ContentPresenter
+                                                Name="PART_ContentPresenter"
+                                                Margin="{DynamicResource ExpanderContentMargin}"
+                                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                Content="{TemplateBinding Content}"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                Foreground="{DynamicResource ExpanderContentForeground}"
+                                                IsVisible="{TemplateBinding IsExpanded, Mode=TwoWay}" />
+                                        </Border>
+                                    </LayoutTransformControl>
+                                </DockPanel>
+                            </ControlTemplate>
+                        </Setter>
+                    </Style>
+                    <Style Selector="Expander /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Transitions">
+                            <Transitions>
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Setter>
+                    </Style>
+
+                    <Style Selector="Expander:not(:expanded) /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="scaleY(0) translateY(-200px)" />
+                    </Style>
+
+                    <Style Selector="Expander:expanded /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="scaleY(1) translateY(0)" />
+                    </Style>
+                    
+                    <Style Selector="Expander.InnerExpander /template/ ToggleButton#ExpanderHeader > Grid">
+                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                    </Style>
+                    
+                    <Style Selector="Expander.InnerExpander /template/ ToggleButton#ExpanderHeader > Grid > PathIcon">
+                        <Setter Property="Grid.Column" Value="0" />
+                    </Style>
+                    
+                    <Style Selector="Expander.InnerExpander /template/ ToggleButton#ExpanderHeader > Grid > ContentPresenter">
+                        <Setter Property="Grid.Column" Value="1" />
+                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                        <Setter Property="Margin" Value="0, 0, 10, 0"/>
+                    </Style>
+                </Styles>
             </Application.Styles>
              
              <Application.Resources>
@@ -19,5 +123,12 @@
                  <PathGeometry x:Key="EventTimelineIcon" Figures="m23 11h-4v-3.142c1.72-.447 3-1.999 3-3.858 0-2.206-1.794-4-4-4s-4 1.794-4 4c0 1.859 1.28 3.411 3 3.858v3.142h-10v-3.142c1.72-.447 3-1.999 3-3.858 0-2.206-1.794-4-4-4s-4 1.794-4 4c0 1.859 1.28 3.411 3 3.858v3.142h-4c-.552 0-1 .447-1 1s.448 1 1 1h10v3.142c-1.72.447-3 1.999-3 3.858 0 2.206 1.794 4 4 4s4-1.794 4-4c0-1.859-1.28-3.411-3-3.858v-3.142h10c.552 0 1-.447 1-1s-.448-1-1-1zm-7-7c0-1.103.897-2 2-2s2 .897 2 2-.897 2-2 2-2-.897-2-2zm-12 0c0-1.103.897-2 2-2s2 .897 2 2-.897 2-2 2-2-.897-2-2zm10 16c0 1.103-.897 2-2 2s-2-.897-2-2 .897-2 2-2 2 .897 2 2z"/>
                  <PathGeometry x:Key="EventPinIcon" Figures="M18,6c0-3.309-2.691-6-6-6S6,2.691,6,6c0,2.968,2.166,5.439,5,5.916v11.084c0,.552,.448,1,1,1s1-.448,1-1V11.916c2.834-.477,5-2.948,5-5.916Zm-6,4c-2.206,0-4-1.794-4-4s1.794-4,4-4,4,1.794,4,4-1.794,4-4,4Z"/>
                  <PathGeometry x:Key="MultipleEventPinIcon" Figures="M18,6c0-3.309-2.691-6-6-6S6,2.691,6,6c0,2.968,2.166,5.439,5,5.916v11.084c0,.552,.448,1,1,1s1-.448,1-1V11.916c2.834-.477,5-2.948,5-5.916Z"/>
+                 <!-- Get rid of a phantom line below expanders -->
+                 <SolidColorBrush x:Key="ExpanderSeparatorBorderBrush">Transparent</SolidColorBrush>
+                 <!-- Make expanders a bit less fat -->
+                 <Thickness x:Key="ExpanderHeaderPadding">2</Thickness>
+                 <Thickness x:Key="ExpanderHeaderMargin">8, 0</Thickness>
+                 <Thickness x:Key="ExpanderContentMargin">16, 0, 16, 0</Thickness>
+                 <Thickness x:Key="ExpanderIconMargin">4, 0, 0, 0</Thickness>
              </Application.Resources>
 </Application>

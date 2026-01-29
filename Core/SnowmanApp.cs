@@ -19,10 +19,6 @@ public class SnowmanApp
 
     // it was 54 before
     public Project Project { get; }
-        
-    private const string ScriptsDirectory = "Scripts";
-
-    public List<Script> Scripts  { get; } = [];
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -30,27 +26,8 @@ public class SnowmanApp
     {
         Instance = this;
         _serviceProvider = serviceProvider;
-        InitializeBasicServices();
         Project = new Project(_serviceProvider); // TODO: this will need a factory that will rewire all existing services
-        LoadScripts();
         InitializePythonExecutionEnvironment();
-    }
-
-    private void InitializeBasicServices()
-    {
-        // order is important - first services with no dependant services
-        _serviceProvider.RegisterService<IEventManager>(new EventManagerImpl());
-        _serviceProvider.RegisterService<IDrawingService>(new DrawingServiceImpl());
-        _serviceProvider.RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(_serviceProvider));
-    }
-
-    // TODO: dynamically load scripts from the directory while the app is running when the user opens combobox for script selection
-    private void LoadScripts()
-    {
-        foreach (var file in Directory.EnumerateFiles(ScriptsDirectory))
-        {
-            Scripts.Add(new Script(file));
-        }
     }
 
     private static void InitializePythonExecutionEnvironment()

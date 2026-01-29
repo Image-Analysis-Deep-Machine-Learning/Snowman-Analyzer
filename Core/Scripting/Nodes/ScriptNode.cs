@@ -1,9 +1,5 @@
 ﻿using System;
-using System.IO;
-using Python.Runtime;
-using Snowman.Core.Scripting.Nodes.Ports;
-using Snowman.Core.Scripting.Variables;
-using Snowman.Utilities;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 
@@ -13,52 +9,27 @@ namespace Snowman.Core.Scripting.Nodes;
 /// </summary>
 public class ScriptNode : Node
 {
-    public string SourcePath { get; private set; }
+    public string PythonScriptContent { get; set; } = null!; // this will never be null when exiting the constructor, but intellisense is not mature enough to figure it out on its own
     /// <summary>
-    /// Timestamp of last change to the source file. If a newer version is found, the script is reloaded
-    /// </summary>
-    public DateTime LastChanged { get; private set; }
-    public string PythonScriptContent { get; private set; } = null!; // this will never be null when exiting the constructor, but intellisense is not mature enough to figure it out on its own
-    /// <summary>
-    /// If the script node is invalid, all changes will be locked until the invalid 
+    /// If the script node is invalid, all changes will be locked
     /// </summary>
     public bool Invalid { get; private set; }
 
-    public ScriptNode(string sourcePath)
+    public ScriptNode()
     {
-        SourcePath = sourcePath;
-        LoadScriptContent();
-    }
-
-    public bool ReloadIfNewer()
-    {
-        var newer = File.GetLastWriteTime(SourcePath) > LastChanged;
-            
-        if (newer)
-        {
-            LoadScriptContent();
-        }
         
-        return newer;
     }
 
-    private void LoadScriptContent()
+    public override void Execute()
     {
-        try
-        {
-            LastChanged = File.GetLastWriteTime(SourcePath);
-            PythonScriptContent = File.ReadAllText(SourcePath);
-            LoadNode();
-            Invalid = false;
-        }
-            
-        catch (Exception)
-        {
-            Invalid = true;
-            // log exception somewhere so the user can see it, a log of some sort?
-        }
+        
     }
 
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        throw new NotImplementedException();
+    }
+    
     private void LoadNode()
     {
         /*using (Py.GIL())

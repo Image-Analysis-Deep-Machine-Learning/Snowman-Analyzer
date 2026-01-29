@@ -7,21 +7,47 @@ namespace Snowman.Core.Scripting.Nodes;
 /// </summary>
 public class Group
 {
-    public static readonly Group Default = new() { Name = null, Parent = null };
+    public const char GroupDelimiter = '/';
+    public static readonly Group Default = new() { Name = string.Empty, Parent = null };
     
-    public string? Name { get; private set; }
+    public string Name { get; private set; }
     public Group? Parent { get; private set; }
+
+    public string Path
+    {
+        get
+        {
+            return field ??= ToPath();
+        }
+    }
 
     /// <summary>
     /// Private constructor to prevent creating groups with null name and parent. This is specific to the Default group.
     /// </summary>
-    private Group() { }
+    private Group()
+    {
+        Name = string.Empty;
+    }
     
-    public Group(string name) : this(Default, name) { }
+    public Group(string name) : this(name, Default) { }
 
-    public Group(Group parent, string name)
+    public Group(string name, Group parent)
     {
         Parent = parent ?? throw new ArgumentNullException(nameof(parent), "Parent group cannot be null. Use Group(string name) constructor instead.");
-        Name = name ?? throw new ArgumentNullException(nameof(name), "Name of group cannot be null. Use parent group instead.");
+        Name = name;
+    }
+
+    private string ToPath()
+    {
+        var parent = Parent;
+        var str = Name;
+
+        while (parent is not null)
+        {
+            str = $"{parent.Name}{GroupDelimiter}{str}";
+            parent = parent.Parent;
+        }
+        
+        return str;
     }
 }
