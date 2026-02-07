@@ -6,7 +6,7 @@ namespace Snowman.Core.Services;
 
 public interface IEntityManager : IService
 {
-    public IEnumerable<Entity> GetAllEntities();
+    public IEnumerable<Entity> GetMainEntities();
     public IEnumerable<Entity> GetSelectedEntities();
     public void CreateEntity(Entity entity);
     public void DeleteEntities(IEnumerable<Entity> entities);

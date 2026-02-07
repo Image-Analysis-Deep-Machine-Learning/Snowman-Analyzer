@@ -16,10 +16,6 @@ public class ViewportDataContext()
     
     private readonly IDrawingService _drawingService = null!;
     private readonly IDatasetImagesService _datasetImagesService = null!;
-    private Rect _controlBounds;
-    private double _additionalScale = 1.0;
-    private Vector _additionalTranslation;
-    private Size _cachedImageSize;
 
     public ViewportDataContext(IServiceProvider serviceProvider) : this()
     {
@@ -40,42 +36,42 @@ public class ViewportDataContext()
     // TODO: set once the image size is known and then change only when the size changes - project load?
     private Size CachedImageSize
     {
-        get => _cachedImageSize;
+        get;
         set
         {
-            if (value == _cachedImageSize) return;
-            
-            _cachedImageSize = value;
+            if (value == field) return;
+
+            field = value;
             TransformationMatrix = GetTransformationMatrix();
         }
     }
 
     public Rect ControlBounds
     {
-        get => _controlBounds;
+        get;
         set
         {
-            _controlBounds = value;
+            field = value;
             TransformationMatrix = GetTransformationMatrix();
         }
     }
 
     public double AdditionalScale
     {
-        get => _additionalScale;
+        get;
         set
         {
-            _additionalScale = value;
+            field = value;
             TransformationMatrix = GetTransformationMatrix();
         }
-    }
+    } = 1.0;
 
     public Vector AdditionalTranslation
     {
-        get => _additionalTranslation;
+        get;
         set
         {
-            _additionalTranslation = value;
+            field = value;
             TransformationMatrix = GetTransformationMatrix();
         }
     }
@@ -94,7 +90,7 @@ public class ViewportDataContext()
     public void Render(DrawingContext drawingContext)
     {
         // background color - TODO: configurable?
-        drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, ControlBounds.Width, ControlBounds.Height));
+        //drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, ControlBounds.Width, ControlBounds.Height));
 
         using (drawingContext.PushTransform(TransformationMatrix))
         {

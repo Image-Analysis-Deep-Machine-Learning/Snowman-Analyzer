@@ -1,6 +1,7 @@
 ﻿using System;
-using Snowman.Core.Scripting.Nodes;
+using System.Xml;
 using Snowman.Events;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource;
 
@@ -33,12 +34,20 @@ public abstract class Variable : IDataSource
     public event SignalEventHandler? TypeChanged;
     public event SignalEventHandler? ValueChanged;
     
-    public Variable(string name, Type type, Group group, string friendlyName, object? value)
+    protected Variable(string name, Type type, Group group, string friendlyName)
     {
         Type = type;
-        Value = value;
         Name = name;
         Group = group;
         FriendlyName = friendlyName;
     }
+
+    IDataSource IDataSource.Copy(IServiceProvider serviceProvider)
+    {
+        return Copy(serviceProvider);
+    }
+    
+    public abstract Variable Copy(IServiceProvider serviceProvider);
+    public abstract void ParseValueFromXml(XmlElement xml);
+    public abstract XmlElement ParseValueToXml();
 }

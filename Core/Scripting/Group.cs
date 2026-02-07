@@ -1,10 +1,7 @@
 ﻿using System;
 
-namespace Snowman.Core.Scripting.Nodes;
+namespace Snowman.Core.Scripting;
 
-/// <summary>
-/// Defines a group of elements (Inputs, Outputs, Variables) in a node.
-/// </summary>
 public class Group
 {
     public const char GroupDelimiter = '/';
@@ -21,15 +18,10 @@ public class Group
         }
     }
 
-    /// <summary>
-    /// Private constructor to prevent creating groups with null name and parent. This is specific to the Default group.
-    /// </summary>
     private Group()
     {
         Name = string.Empty;
     }
-    
-    public Group(string name) : this(name, Default) { }
 
     public Group(string name, Group parent)
     {

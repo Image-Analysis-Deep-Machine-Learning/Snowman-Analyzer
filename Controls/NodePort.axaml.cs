@@ -1,52 +1,40 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using Avalonia.LogicalTree;
-using Avalonia.VisualTree;
 using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
+using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 
-public partial class NodePort : UserControl
+public partial class NodePort : UserControlWrapper<NodePortDataContext>
 {
+    private INodeService _nodeService = null!;
     public required Port Port { get; init; }
-    
+
     public NodePort()
     {
         InitializeComponent();
+        PointerPressed += OnPointerPressed;
+        PointerReleased += OnPointerReleased;
+    }
+
+    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _nodeService.EndConnection(e);
+    }
+
+    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        
+        _nodeService.StartConnection(Port);
     }
 
     protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
     {
+        _nodeService = ServiceProviderAttachedProperty.GetProvider(this).GetService<INodeService>();
+        _nodeService.RegisterNodePort(this);
+        DataContext = new NodePortDataContext();
         base.OnAttachedToLogicalTree(e);
-    }
-    
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-        {
-            var canvas = this.FindAncestorOfType<Canvas>();
-
-            if (canvas is null) return;
-            
-            var transform = this.TransformToVisual(canvas);
-            
-            if (transform is null) return;
-            
-            var point = new Point(Bounds.Width / 2, Bounds.Height / 2).Transform(transform.Value);
-            
-            var marker = canvas.FindControl<Ellipse>("DebugMarker");
-            if (marker != null)
-            {
-                // Subtract half marker size to center the dot on the point
-                Canvas.SetLeft(marker, point.X - (marker.Width) / 2);
-                Canvas.SetTop(marker, point.Y - (marker.Height) / 2);
-            }
-            
-            // TODO: add service call start handle connection: either start a new one or detach current one
-            // this is to prevent dragging the node when trying to drag the connection
-            e.Handled = true;
-        }
     }
 }

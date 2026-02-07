@@ -6,7 +6,6 @@
                          x:Class="Snowman.Controls.NodePort"
                          xmlns:dataContext="using:Snowman.DataContexts"
                          xmlns:ctrl="clr-namespace:Snowman.Controls">
-    <ctrl:UserControlWrapper.DataContext><dataContext:NodePortDataContext/></ctrl:UserControlWrapper.DataContext>
     <Panel Width="11" Height="11">
         <Ellipse Fill="Aquamarine" Stroke="Black" StrokeThickness="1" Width="10" Height="10"/>
     </Panel>

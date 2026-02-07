@@ -5,6 +5,10 @@
 /// </summary>
 public delegate void EventHandler<in TSender, in TEventArgs>(TSender sender, TEventArgs e);
 /// <summary>
+/// EventHandler that only contains one parameter
+/// </summary>
+public delegate void EventHandler<in TEventArgs>(TEventArgs e);
+/// <summary>
 /// Event used just as a signal that something happened
 /// </summary>
 public delegate void SignalEventHandler();

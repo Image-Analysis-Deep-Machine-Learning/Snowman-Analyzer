@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.Variables;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting;
 
@@ -18,15 +20,15 @@ public class ScriptParser
         _groups = [];
     }
 
-    public static ScriptNode Parse(Script script)
+    public static ScriptNode Parse(Script script, IServiceProvider serviceProvider)
     {
         var parser = new ScriptParser(script);
-        parser.ParseInternal();
+        parser.ParseInternal(serviceProvider);
         return parser.GetResult();
     }
 
     // TODO: catch exceptions meaningfully
-    private void ParseInternal()
+    private void ParseInternal(IServiceProvider serviceProvider)
     {
         _groups[string.Empty] = Group.Default;
         
@@ -38,7 +40,7 @@ public class ScriptParser
             
             while (true)
             {
-                var currentPath = path[..nextDelimiterIndex]; // treat -1 as the last character
+                var currentPath = path[..nextDelimiterIndex];
 
                 if (!_groups.ContainsKey(currentPath))
                 {
@@ -61,7 +63,7 @@ public class ScriptParser
         {
             var newInput = new Input(
                 input.Name,
-                Type.GetType(input.Type),
+                Type.GetType(input.Type) ?? throw new FormatException($"Cannot construct input {input.FriendlyName} with '{input.Type}' type in script {_script.Definition.Name}"),
                 _groups[input.Group],
                 input.FriendlyName ?? input.Name);
             
@@ -72,7 +74,7 @@ public class ScriptParser
         {
             var newOutput = new Output(
                 output.Name,
-                Type.GetType(output.Type),
+                Type.GetType(output.Type) ?? throw new FormatException($"Cannot construct output {output.FriendlyName} with '{output.Type}' type in script {_script.Definition.Name}"),
                 _groups[output.Group],
                 output.FriendlyName ?? output.Name);
             
@@ -80,15 +82,15 @@ public class ScriptParser
         }
         
         // TODO: variables
-        /*foreach (var variable in _script.Definition.Variables)
+        foreach (var variable in _script.Definition.Variables)
         {
-            var newOutput = new (
-                output.Name,
-                Type.GetType(output.Type),
-                _groups[output.Group]);
-            
-            _output.Outputs.Add(newOutput);
-        }*/
+            var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.Definition.Name}");
+            var variableInstance = VariablePrototypeRegistry.GetVariableCopy(variableType, serviceProvider);
+            variableInstance.Name = variable.Name;
+            variableInstance.Type = variableType;
+            variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
+            _result.Variables.Add(variableInstance);
+        }
 
         _result.PythonScriptContent = _script.Code;
         _result.Name = _script.Definition.Name;

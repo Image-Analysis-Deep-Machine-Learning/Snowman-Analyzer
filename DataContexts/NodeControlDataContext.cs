@@ -15,23 +15,23 @@ public class NodeControlDataContext() : INotifyPropertyChanged
     
     public double X
     {
-        get;
+        get => _node.X;
         set
         {
-            if (!(Math.Abs(field - value) > 0.01)) return;
+            if (!(Math.Abs(_node.X - value) > 0.01)) return;
             
-            field = value;
+            _node.X = value;
             OnPropertyChanged();
         }
     }
 
     public double Y
     {
-        get;
+        get => _node.Y;
         set
         {
             if (!(Math.Abs(_node.Y - value) > 0.01)) return;
-            field = value;
+            _node.Y = value;
             OnPropertyChanged();
         }
     }

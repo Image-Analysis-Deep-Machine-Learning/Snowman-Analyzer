@@ -1,26 +1,72 @@
-﻿using Avalonia.LogicalTree;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 
-public partial class NodeControl : DraggableControlWrapper<NodeControlDataContext>
+public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
 {
-    //private readonly Node _node = null!;
+    private readonly INodeService _nodeService;
+    private Point _dragStartPoint;
+    private bool _isDragging;
+    private static int _topZIndex; // does not matter that it's static, there's no way someone's clicking over 2 billion times
     
-    public NodeControl()
+    
+    public NodeControl(Node node, IServiceProvider serviceProvider)
     {
+        _nodeService = serviceProvider.GetService<INodeService>();
+        DataContext = new NodeControlDataContext(node);
         InitializeComponent();
     }
 
-    /*public NodeControl(Node node) : this()
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        _node = node;
-    }*/
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || _nodeService.IsNewConnectionActive() || (e.Source is Visual visual && IsInteractiveElement(visual))) return;
+        
+        ZIndex = ++_topZIndex; // move the clicked node to the front
+        _isDragging = true;
+        _dragStartPoint = e.GetPosition(Parent as Control);
+        e.Pointer.Capture(this);
+        e.Handled = true;
+    }
 
-    /*protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
+    protected override void OnPointerMoved(PointerEventArgs e)
     {
-        base.OnAttachedToLogicalTree(e);
-        DataContext = new NodeControlDataContext(_node);
-    }*/
+        if (!_isDragging || Parent is not Canvas canvas || DataContext is not NodeControlDataContext dataContext) return;
+
+        var pos = e.GetPosition(canvas);
+        var delta = pos - _dragStartPoint;
+        
+        dataContext.X += delta.X;
+        dataContext.Y += delta.Y;
+
+        _dragStartPoint = pos;
+        e.Handled = true;
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        if (!_isDragging) return; // prevents mouse capture issues
+
+        _isDragging = false;
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+    
+    private bool IsInteractiveElement(Visual? visual)
+    {
+        while (visual != null && visual != this)
+        {
+            if (visual is ComboBox or Button or TextBox or NumericUpDown or Popup) // TODO: add all controls that are clickable and interactable because this retarded framework DOES NOT FUCKING CAPTURE THE POINTER WHEN CLICKING ON SUCH CONTORL
+                return true;
+        
+            visual = visual.Parent as Visual;
+        }
+        
+        return false;
+    }
 }

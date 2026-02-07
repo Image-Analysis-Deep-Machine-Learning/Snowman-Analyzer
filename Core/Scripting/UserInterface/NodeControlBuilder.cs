@@ -2,24 +2,23 @@
 using Avalonia;
 using Avalonia.Controls;
 using Snowman.Controls;
-using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
-using Snowman.DataContexts;
+using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Services;
 
-namespace Snowman.Core.Scripting.Variables.Controls;
+namespace Snowman.Core.Scripting.UserInterface;
 
 public class NodeControlBuilder
 {
     private readonly NodeControl _result;
     private readonly Stack<Panel> _controlStack;
+    private readonly INodeService _nodeService;
 
-    public NodeControlBuilder(Node node)
+    public NodeControlBuilder(Node node, IServiceProvider serviceProvider)
     {
-        _result = new NodeControl
-        {
-            DataContext = new NodeControlDataContext(node)
-        };
+        _result = new NodeControl(node, serviceProvider);
         _controlStack = new Stack<Panel>([_result.MainGroup]);
+        _nodeService = serviceProvider.GetService<INodeService>();
     }
 
     public void StartGroup(Group group)
@@ -28,7 +27,8 @@ public class NodeControlBuilder
         {
             Classes = { "InnerExpander" },
             Margin = new Thickness(-16, 0),
-            Header = group.Name
+            Header = group.Name,
+            IsExpanded = true
         };
 
         var stackPanel = new StackPanel();
@@ -45,25 +45,23 @@ public class NodeControlBuilder
 
     public void AddInput(Input input)
     {
-        _controlStack.Peek().Children.Add(DataSourceControlFactory.CreateControl(input));
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(input));
     }
 
     public void AddOutput(Output output)
     {
-        _controlStack.Peek().Children.Add(DataSourceControlFactory.CreateControl(output));
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(output));
     }
 
     public void AddVariable(Variable variable)
     {
-        _controlStack.Peek().Children.Add(DataSourceControlFactory.CreateControl(variable));
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(variable));
     }
 
-    public NodeControl GetResult() => _result;
-    
-    private enum NodeType
+    public NodeControl GetResult()
     {
-        Script,
-        Variable,
-        Output
+        _result.DataContext.PropertyChanged += _nodeService.NodeChangedPosition;
+        
+        return _result;
     }
 }

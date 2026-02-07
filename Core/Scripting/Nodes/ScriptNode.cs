@@ -1,64 +1,63 @@
-﻿using System;
+﻿using Python.Runtime;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 
-/// <summary>
-/// A script node is a representation of a python script. It is created by loading a python script and reading the input
-/// output, variables, name, and other information
-/// </summary>
 public class ScriptNode : Node
 {
-    public string PythonScriptContent { get; set; } = null!; // this will never be null when exiting the constructor, but intellisense is not mature enough to figure it out on its own
-    /// <summary>
-    /// If the script node is invalid, all changes will be locked
-    /// </summary>
-    public bool Invalid { get; private set; }
+    public string PythonScriptContent { get; set; } = null!;
 
     public ScriptNode()
     {
         
     }
 
-    public override void Execute()
+    protected ScriptNode(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         
     }
 
+    public override void Execute()
+    {
+        base.Execute();
+        RunPythonScript();
+        IsReady = true;
+    }
+
     public override Node Copy(IServiceProvider serviceProvider)
     {
-        throw new NotImplementedException();
+        var copy =  new ScriptNode(serviceProvider);
+
+        CopyBasicInfo(copy, serviceProvider);
+        
+        copy.PythonScriptContent = PythonScriptContent;
+
+        return copy;
     }
-    
-    private void LoadNode()
+
+    private void RunPythonScript()
     {
-        /*using (Py.GIL())
+        using (Py.GIL())
         {
             using (var scope = Py.CreateScope())
             {
+                foreach (var input in Inputs)
+                {
+                    scope.Set(input.Name, input.Value);
+                }
+
+                foreach (var variable in Variables)
+                {
+                    scope.Set(variable.Name, variable.Value);
+                }
+                
                 scope.Exec(PythonScriptContent);
 
-                if (!scope.TryGet<PyList>("script_inputs", out var scriptInputs))
+                foreach (var output in Outputs)
                 {
-                    // script has no inputs defined - this is a valid state
+                    output.Value = scope.Get(output.Name).AsManagedObject(output.Type);
                 }
-                
-                if (!scope.TryGet<PyList>("script_outputs", out var scriptOutputs))
-                {
-                    // script has no outputs defined - this is a valid state
-                }
-                
-                if (!scope.TryGet<PyList>("script_vars", out var scriptVars))
-                {
-                    // script has no inputs defined - this is a valid state
-                }
-
-                var castInputs = Helpers.PyListToPolymorphicList<Input>(scriptInputs, "script_inputs");
-                var castOutputs = Helpers.PyListToPolymorphicList<Output>(scriptInputs, "script_outputs");
-                var castVariables = Helpers.PyListToPolymorphicList<Variable>(scriptInputs, "script_vars");
-                
-                var a = 00;
             }
-        }*/
+        }
     }
 }

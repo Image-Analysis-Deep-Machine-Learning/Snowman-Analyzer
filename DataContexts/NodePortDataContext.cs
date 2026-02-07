@@ -1,6 +1,3 @@
 ﻿namespace Snowman.DataContexts;
 
-public class NodePortDataContext
-{
-    
-}
+public class NodePortDataContext;

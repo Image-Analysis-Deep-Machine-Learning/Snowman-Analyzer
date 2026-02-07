@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Snowman.Controls;
 using Snowman.Core.Scripting.Nodes;
-using Snowman.Core.Scripting.DataSource;
 
-namespace Snowman.Core.Scripting.Variables.Controls;
+namespace Snowman.Core.Scripting.UserInterface;
 
 public class NodeControlBuilderDirector
 {
@@ -57,10 +53,6 @@ public class NodeControlBuilderDirector
             {
                 stack.Push(group);
             }
-            
-            /*PushChildGroups(_node.Outputs, current);
-            PushChildGroups(_node.Variables, current);
-            PushChildGroups(_node.Inputs, current);*/
 
             if (current == Group.Default) continue;
             
@@ -78,21 +70,10 @@ public class NodeControlBuilderDirector
                 endGroupCount++;
             }
         }
-        
-        return;
-
-        void PushChildGroups<T>(IEnumerable<T> dataSources, Group group) where T : IDataSource
-        {
-            foreach (var _ in dataSources.Where(dataSource => dataSource.Group.Parent == group))
-            {
-                stack.Push(group);
-            }
-        }
     }
 
     private List<Group> CollectGroups()
     {
-        //var groupQueue = new PriorityQueue<Group, Group>(new GroupParentCountComparer());
         var collectedGroups = new HashSet<Group>();
         
         var groups = _node.Outputs.Select(output => output.Group);
@@ -106,40 +87,12 @@ public class NodeControlBuilderDirector
             
             do
             {
-                parent = currentGroup.Parent;
+                parent = currentGroup!.Parent;
                 collectedGroups.Add(currentGroup);
-                // if ()
-                // {
-                //     groupQueue.Enqueue(group, group);
-                // }
                 currentGroup = parent;
             } while (parent is not null);
         }
 
         return  collectedGroups.ToList();
-        /*var retList = collectedGroups.ToList();
-        
-        retList.Sort((g1, g2) =>
-        {
-            var xParentCount = g1.Path.Count(x => x == '/');
-            var yParentCount = g2.Path.Count(x => x == '/');
-            return xParentCount - yParentCount;
-        });
-        
-        return retList;*/
-    }
-
-    private class GroupParentCountComparer : IComparer<Group>
-    {
-        public int Compare(Group? x, Group? y)
-        {
-            if (ReferenceEquals(x, y)) return 0;
-            if (y is null) return 1;
-            if (x is null) return -1;
-
-            var xParentCount = x.Path.Count(x => x == '/');
-            var yParentCount = y.Path.Count(x => x == '/');
-            return xParentCount - yParentCount;
-        }
     }
 }

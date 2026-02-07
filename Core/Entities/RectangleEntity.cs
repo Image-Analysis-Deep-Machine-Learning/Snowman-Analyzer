@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 
@@ -84,6 +85,11 @@ public class RectangleEntity : Entity
         
         context.FillRectangle(fillBrush, _rectangle);
         context.DrawRectangle(pen, _rectangle);
+        
+        if (Parent is null)
+        {
+            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, Brushes.DarkOrange), Position + new Vector(-7, -17));
+        }
     }
 
     private void UpdatePointsLocation(int childIndex)

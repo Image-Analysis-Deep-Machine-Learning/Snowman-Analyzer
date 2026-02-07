@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
@@ -11,7 +10,7 @@ using Snowman.Core.Services.Impl;
 using Snowman.Data;
 using Snowman.Events;
 using Snowman.Events.Suppliers;
-using Snowman.VideoLoading;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core;
@@ -33,9 +32,7 @@ public class Project : IDrawableSource, IProjectEventSupplier
     public Dictionary<int, Dictionary<int, List<EventData>>> EventsByFrameIndexByRuleId { get; } = [];
 
     private XmlData XmlData { get; set; }
-
-    public HashSet<Entity>? TempEntities { get; set; }
-    public HashSet<IDrawable>? TempBoundingBoxes { get; set; }
+    
     public Project(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
@@ -50,13 +47,17 @@ public class Project : IDrawableSource, IProjectEventSupplier
 
     private void CreateServices()
     {
-        _serviceProvider.RegisterService<IEntityManager>(new EntityManagerImpl(_entities));
+        _serviceProvider.RegisterService<IEntityManager>(new EntityManagerImpl(_entities, _serviceProvider));
     }
     
     
     public IEnumerable<IDrawable> GetDrawables()
     {
-        return _entities;
+        var ret =  new List<IDrawable>();
+        ret.AddRange(_entities);
+        
+        ret.AddRange(XmlData.Images.ImageList.Count > _datasetImagesService.CurrentFrameIndex() ? XmlData.Images.ImageList[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes.BoundingBoxList : []);
+        return ret;
     }
     
     // public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)

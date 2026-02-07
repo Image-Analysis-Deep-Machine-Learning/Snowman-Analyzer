@@ -4,17 +4,19 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Snowman.Controls;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.DataSource.Variables;
+using Snowman.Core.Scripting.UserInterface.Controls;
+using NumberVariableControl = Snowman.Core.Scripting.UserInterface.Controls.NumberVariableControl;
 
-namespace Snowman.Core.Scripting.DataSource;
+namespace Snowman.Core.Scripting.UserInterface;
 
-/// <summary>
-/// Registry for factories which construct controls for variables and ports
-/// </summary>
-public class DataSourceControlFactory
+public static class DataSourceControlRegistry
 {
-    static DataSourceControlFactory()
+    static DataSourceControlRegistry()
     {
         RegisterPortFactories();
+        RegisterVariableFactories();
     }
 
     private static readonly Dictionary<Type, Func<IDataSource, Control>> FactoryRegistry = [];
@@ -87,5 +89,11 @@ public class DataSourceControlFactory
 
             return grid;
         });
+    }
+    
+    private static void RegisterVariableFactories()
+    {
+        RegisterDataSourceControlFactory<NumberVariable>(numberVariable => new NumberVariableControl(numberVariable));
+        RegisterDataSourceControlFactory<EntitySelector>(entitySelector => new EntitySelectorControl(entitySelector));
     }
 }

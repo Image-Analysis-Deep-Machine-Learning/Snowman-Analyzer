@@ -1,4 +1,4 @@
-﻿<ctrl:DraggableControlWrapper x:TypeArguments="dataContext:NodeControlDataContext" xmlns="https://github.com/avaloniaui"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:NodeControlDataContext" xmlns="https://github.com/avaloniaui"
                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,8 +8,7 @@
                          xmlns:ctrl="clr-namespace:Snowman.Controls"
                          ClipToBounds="False"
                          x:DataType="dataContext:NodeControlDataContext">
-    <!-- <ctrl:DraggableControlWrapper.DataContext><dataContext:NodeControlDataContext/></ctrl:DraggableControlWrapper.DataContext> -->
-    <Border Background="DimGray"
+    <Border Background="#333333"
             CornerRadius="5"
             BoxShadow="5 5 25 0 Black"
             BorderBrush="Black"
@@ -19,40 +18,11 @@
                       Header="{Binding NodeName}"
                       Background="Transparent"
                       BorderBrush="Transparent"
-                      Classes="MainNodeExpander">
+                      Classes="MainNodeExpander"
+                      IsExpanded="True">
                 <StackPanel Name="MainGroup">
-                    <!-- <Grid RowDefinitions="*" Margin="-10, 0"> -->
-                    <!--     <Label Margin="20, 5" Content="Property 1:"/> -->
-                    <!--     <ctrl:NodePort HorizontalAlignment="Right" Margin="-20"/> -->
-                    <!-- </Grid> -->
-                    <!-- <Label Margin="10, 5" Content="Property 1:"/> -->
-                    <!-- <TextBox Margin="10, 5" Text="text"/> -->
-                    <!-- <Grid RowDefinitions="*" Margin="-10, 0"> -->
-                    <!--     <CheckBox Margin="20, 5" Content="Enable Advanced Mode"/> -->
-                    <!--     <ctrl:NodePort HorizontalAlignment="Right" Margin="-20"/> -->
-                    <!-- </Grid> -->
-                    <!-- <Expander Classes="InnerExpander" Header="Inner Groupssssssssssssssss" Margin="-17.5, 0"> -->
-                    <!--     <StackPanel> -->
-                    <!--         <TextBlock Margin="10, 5" Text="Property 1:"/> -->
-                    <!--         <TextBox Margin="10, 5" Text="text"/> -->
-                    <!--         <Grid RowDefinitions="*" Margin="-10, 0"> -->
-                    <!--             <CheckBox Margin="20, 5" Content="Enable Advanced Mode Mode Mode Mode"/> -->
-                    <!--             <ctrl:NodePort HorizontalAlignment="Right" Margin="-4"/> -->
-                    <!--         </Grid> -->
-                    <!--         <Expander Classes="InnerExpander" Header="Inner Groupssssssssssssssss" Margin="-17.5, 0"> -->
-                    <!--             <StackPanel> -->
-                    <!--                 <TextBlock Margin="10, 5" Text="Property 1:"/> -->
-                    <!--                 <TextBox Margin="10, 5" Text="text"/> -->
-                    <!--                 <Grid RowDefinitions="*" Margin="-10, 0"> -->
-                    <!--                     <CheckBox Margin="20, 5" Content="Enable Advanced Mode Mode Mode Mode"/> -->
-                    <!--                     <ctrl:NodePort HorizontalAlignment="Right" Margin="-4"/> -->
-                    <!--                 </Grid> -->
-                    <!--             </StackPanel> -->
-                    <!--         </Expander> -->
-                    <!--     </StackPanel> -->
-                    <!-- </Expander> -->
                 </StackPanel>
             </Expander>
         </StackPanel>
     </Border>
-</ctrl:DraggableControlWrapper>
+</ctrl:UserControlWrapper>

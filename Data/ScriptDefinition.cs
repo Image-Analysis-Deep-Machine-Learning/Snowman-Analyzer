@@ -61,9 +61,10 @@ public class PortDefinition
 
 public class VariableDefinition
 {
-    public string VariableType { get; set; } = null!;
     public string Name { get; set; } = null!;
+    public string? FriendlyName { get; set; }
     public string Group { get; set; } = null!;
+    public string VariableType { get; set; } = null!;
 
     [XmlAnyElement("Value")]
     public XmlElement Value { get; set; } = null!;

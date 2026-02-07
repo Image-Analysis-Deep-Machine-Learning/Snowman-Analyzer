@@ -4,13 +4,12 @@
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                       mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                      x:Class="Snowman.Core.Scripting.Variables.Controls.NumberVariableControl"
-                      xmlns:dataContext="using:Snowman.Core.Scripting.Variables"
-                      xmlns:ctrl="using:Snowman.Core.Scripting.Variables.Controls"
+                      x:Class="Snowman.Core.Scripting.UserInterface.Controls.NumberVariableControl"
+                      xmlns:dataContext="using:Snowman.Core.Scripting.DataSource.Variables"
+                      xmlns:ctrl="using:Snowman.Core.Scripting.UserInterface"
                       x:DataType="dataContext:NumberVariable">
-    <ctrl:VariableControl.DataContext><dataContext:NumberVariable/></ctrl:VariableControl.DataContext>
     <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding FriendlyName}" Margin="10"/>
-        <NumericUpDown HorizontalAlignment="Stretch" Value="{Binding Value, Mode=TwoWay}"/>
+        <NumericUpDown HorizontalAlignment="Stretch" Value="{Binding TypedValue, Mode=TwoWay}"/>
     </StackPanel>
 </ctrl:VariableControl>

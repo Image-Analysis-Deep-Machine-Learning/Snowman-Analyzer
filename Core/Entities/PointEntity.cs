@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 
@@ -24,7 +25,7 @@ public class PointEntity : Entity
 
     public override void Render(DrawingContext context)
     {
-        IBrush? brush = null;
+        IBrush brush;
 
         if      (IsHit)         brush = Brushes.Lime;
         else if (Selected)      brush = Brushes.DeepSkyBlue;
@@ -32,6 +33,11 @@ public class PointEntity : Entity
         else                    brush = Brushes.Red;
         
         context.DrawEllipse(brush, Pen, Position, Radius, Radius);
+
+        if (Parent is null)
+        {
+            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, Brushes.DarkOrange), Position + new Vector(-7, -17));
+        }
     }
 
     public override Entity Clone()

@@ -11,6 +11,10 @@ public class VariableNode : Node
 
     public override Node Copy(IServiceProvider serviceProvider)
     {
-        return this;
+        var copy = new VariableNode();
+        
+        CopyBasicInfo(copy, serviceProvider);
+        
+        return copy;
     }
 }
