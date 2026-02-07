@@ -6,7 +6,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugType>full</DebugType>
@@ -17,21 +17,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.2" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageReference Include="Avalonia" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Controls.PanAndZoom" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.2" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.11" />
     <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
-    <PackageReference Include="Irihi.Ursa" Version="1.11.1" />
-    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.11.1" />
+    <PackageReference Include="Irihi.Ursa" Version="1.14.1" />
+    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.14.1" />
     <PackageReference Include="python" Version="3.12.10" />
     <PackageReference Include="pythonnet" Version="3.1.0-preview2024-09-06" />
     <PackageReference Include="RangeSlider.Avalonia" Version="2.1.0" />
-    <PackageReference Include="Semi.Avalonia" Version="11.2.1.8" />
+    <PackageReference Include="Semi.Avalonia" Version="11.3.7.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="$(Pkgpython)\tools\**\*" LinkBase="python_win64" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
@@ -52,5 +57,20 @@
       <DependentUpon>ToolBar.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Controls\NodeViewport.axaml.cs">
+      <DependentUpon>NodeViewport.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\NodePort.axaml.cs">
+      <DependentUpon>NodePort.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Core\Scripting\UserInterface\Controls\NumberVariableControl.axaml.cs">
+      <DependentUpon>NumberVariableControl.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assets\" />
   </ItemGroup>
 </Project>

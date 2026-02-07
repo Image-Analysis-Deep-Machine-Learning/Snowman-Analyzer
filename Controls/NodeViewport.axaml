@@ -1,0 +1,44 @@
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:NodeViewportDataContext" xmlns="https://github.com/avaloniaui"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                          mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                          x:Class="Snowman.Controls.NodeViewport"
+                          xmlns:dataContext="using:Snowman.DataContexts"
+                          xmlns:ctrl="clr-namespace:Snowman.Controls"
+                          xmlns:paz="using:Avalonia.Controls.PanAndZoom"
+                          x:DataType="dataContext:NodeViewportDataContext">
+    <ctrl:UserControlWrapper.DataContext><dataContext:NodeViewportDataContext/></ctrl:UserControlWrapper.DataContext>
+    <ctrl:UserControlWrapper.Styles>
+        <Style Selector="ctrl|NodeControl" x:DataType="dataContext:NodeControlDataContext">
+            <Setter Property="(Canvas.Left)" Value="{Binding X, Mode=TwoWay}" />
+            <Setter Property="(Canvas.Top)" Value="{Binding Y, Mode=TwoWay}" />
+    
+            <Setter Property="UseLayoutRounding" Value="False" />
+        </Style>
+    </ctrl:UserControlWrapper.Styles>
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <ComboBox ItemsSource="{Binding AvailableScripts}"
+                      SelectedItem="{Binding SelectedNode}"/>
+            <Button Content="Add Node" Command="{Binding AddNode}"/>
+            <Button Content="Run Graph" Command="{Binding RunGraph}"/>
+        </StackPanel>
+        <paz:ZoomBorder Grid.Row="1" ZoomSpeed="1.1" ClipToBounds="True">
+            <Canvas UseLayoutRounding="False" Name="ViewportCanvas">
+                <ctrl:GraphOverlay ZIndex="-1"
+                                   Width="{Binding #ViewportCanvas.Bounds.Width}"
+                                   Height="{Binding #ViewportCanvas.Bounds.Height}"
+                                   ClipToBounds="False"
+                                   Name="BackgroundOverlay"
+                                   BackgroundOverlay="True"/>
+                <ctrl:GraphOverlay ZIndex="2147483647"
+                                   Width="{Binding #ViewportCanvas.Bounds.Width}"
+                                   Height="{Binding #ViewportCanvas.Bounds.Height}"
+                                   ClipToBounds="False"
+                                   Name="ForegroundOverlay"
+                                   BackgroundOverlay="False"/>
+            </Canvas>
+        </paz:ZoomBorder>
+    </Grid>
+</ctrl:UserControlWrapper>

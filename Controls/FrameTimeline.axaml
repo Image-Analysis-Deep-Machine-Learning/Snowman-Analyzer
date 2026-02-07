@@ -19,7 +19,7 @@
         <ItemsControl.ItemTemplate>
             <DataTemplate>
                 <Grid RowDefinitions="15,*" MaxWidth="100" VerticalAlignment="Center" Margin="5,5,5,5" IsVisible="{Binding !Invisible}">
-                    <Label Grid.Row="0" Content="{Binding Label}"/>
+                    <TextBlock Grid.Row="0" Text="{Binding Label}"/>
                     <Image Grid.Row="1" Source="{Binding Image}" PointerPressed="OnPointerPressed"/>
                 </Grid>
             </DataTemplate>

@@ -37,7 +37,6 @@ public class FrameTimelineDataContext()
 
     public void PointerPressed(Point clickPosition)
     {
-        var a = 11;
         /*if (_timelineFrames == null)
             return;
 

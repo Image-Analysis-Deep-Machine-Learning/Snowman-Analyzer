@@ -1,47 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using Snowman.Data;
 
 namespace Snowman.Core.Scripting;
 
 public class Script
 {
-    public InputType InputType { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public string PathToScript { get; set; }
-    public string ScriptContent { get; set; }
-    // TODO: unused ATM, all scripts are run in the same scope, maybe this won't be necessary in the future
-    // TODO: in case of a script graph: all "leaves" will have their own scope 
-    public Dictionary<string, Type?> InputVariables { get; set; }
-    public Dictionary<string, Type?> OutputVariables { get; set; }
+    private const string ScriptDefinitionFileName = "definition.xml";
+    private const string ScriptCodeFileName = "code.py";
+    
+    public ScriptDefinition Definition { get; }
+    public string Code { get; }
 
-    public Script(string path)
+    private Script(ScriptDefinition scriptDefinition, string code)
     {
-        PathToScript = path;
-        InputVariables = [];
-        OutputVariables = [];
+        Definition = scriptDefinition;
+        Code = code;
+    }
 
-        // TODO: properties should be preferably separate from the .py scripts (json/xml)
-        var scriptLines = File.ReadAllLines(PathToScript);
-        ScriptContent = string.Join(Environment.NewLine, scriptLines);
-        ProcessScriptProperties(scriptLines);
+    public static Script Load(string path)
+    {
+        using var zipFile = ZipFile.OpenRead(path);
+        var entries = zipFile.Entries;
+        var scriptDefinitionEntry = entries.Where(e => e.Name == ScriptDefinitionFileName).ToList();
+            
+        if (scriptDefinitionEntry.Count == 0) throw new FileNotFoundException($"No script definition file found in '{path}'");
+            
+        var scriptCodeEntry = entries.Where(e => e.Name == ScriptCodeFileName).ToList();
+            
+        if (scriptCodeEntry.Count == 0) throw new FileNotFoundException($"No script code file found in '{path}'");
+
+        using var scriptDefinitionReader = new StreamReader(scriptDefinitionEntry.First().Open());
+        var scriptDefinitionString = scriptDefinitionReader.ReadToEnd();
+        var scriptDefinition = ScriptDefinition.Deserialize(scriptDefinitionString);
         
-        Name ??= Path.GetFileName(path);
-        Description ??= "no description";
+        using var scriptCodeReader = new StreamReader(scriptCodeEntry.First().Open());
+        var scriptCode = scriptCodeReader.ReadToEnd();
+        
+        return new Script(scriptDefinition, scriptCode);
     }
-
-    private void ProcessScriptProperties(string[] lines)
-    { }
-
-    public override string ToString()
-    {
-        return Name;
-    }
-}
-
-public enum InputType
-{
-    EntityPoint, EntityRectangle, Script
 }

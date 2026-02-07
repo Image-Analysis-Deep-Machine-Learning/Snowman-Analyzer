@@ -3,22 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Snowman.Core.Entities;
+using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
 
-public class EntityManagerImpl : IEntityManager
+public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 {
     private readonly List<Entity> _entitiesSource;
     private readonly List<EntityWrapper> _selectedEntities = [];
+    
+    public event Events.EventHandler<Entity>? EntityAdded;
+    public event Events.EventHandler<Entity>? EntityRemoved;
 
-    public EntityManagerImpl(List<Entity> entitiesSource)
+    public EntityManagerImpl(List<Entity> entitiesSource, IServiceProvider serviceProvider)
     {
         _entitiesSource = entitiesSource;
+        serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IEntityEventSupplier>(this);
     }
 
-    public IEnumerable<Entity> GetAllEntities()
+    public IEnumerable<Entity> GetMainEntities()
     {
-        return _entitiesSource.AsReadOnly();
+        return _entitiesSource.Where(x => x.Parent is null);
     }
 
     public IEnumerable<Entity> GetSelectedEntities()
@@ -34,6 +39,8 @@ public class EntityManagerImpl : IEntityManager
         {
             _entitiesSource.Add(child);
         }
+        
+        EntityAdded?.Invoke(entity);
     }
 
     public void DeleteEntities(IEnumerable<Entity> entities)
@@ -41,6 +48,7 @@ public class EntityManagerImpl : IEntityManager
         foreach (var entity in entities)
         {
             _entitiesSource.Remove(entity);
+            EntityRemoved?.Invoke(entity);
             entity.Children.ForEach(x => _entitiesSource.Remove(x));
         }
     }
@@ -113,10 +121,7 @@ public class EntityManagerImpl : IEntityManager
             entity.IsHit = false;
         }
 
-        if (last is not null)
-        {
-            last.IsHit = true;
-        }
+        last?.IsHit = true;
     }
 
     private readonly record struct EntityWrapper(Entity Entity, Point OriginalPosition);

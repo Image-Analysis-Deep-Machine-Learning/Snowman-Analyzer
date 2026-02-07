@@ -2,19 +2,20 @@
 using Avalonia;
 using Avalonia.Media;
 using Snowman.Core.Drawing;
-using Snowman.Data;
 using Snowman.Events;
 
 namespace Snowman.Core.Entities;
 
 public abstract class Entity : IDrawable
 {
+    private static int _maxInt;
     // TODO: configurable
     protected const int Radius = 5;
     
     private Point _pos;
     protected internal bool _selected;
     
+    public int Id { get; private set; }
     public event EventHandler<Entity, Point>? PositionChanges;
     public Entity? Parent { get; }
     public List<Entity> Children { get; } = [];
@@ -52,13 +53,23 @@ public abstract class Entity : IDrawable
     {
         Parent = parent;
         Position = position;
+
+        if (parent is null)
+        {
+            Id = ++_maxInt;
+        }
     }
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)
     {
         _pos = newPosition;
     }
-    
+
+    public override string ToString()
+    {
+        return $"ID: {Id}";
+    }
+
     public abstract void Render(DrawingContext context);
     public abstract bool EvaluateHit(Point cursorPosition);
     public abstract bool EvaluateHit(Rect selection);

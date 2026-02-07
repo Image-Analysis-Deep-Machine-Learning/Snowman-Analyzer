@@ -1,12 +1,115 @@
-﻿using System.Collections.Generic;
-using Snowman.Core.Scripting.Nodes.Ports;
-using Snowman.Core.Scripting.Variables;
+﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
 
 namespace Snowman.Core.Scripting.Nodes;
 
 public abstract class Node
 {
-    public virtual List<Output> Outputs { get; set; } = [];
-    public virtual List<Variable> Variables { get; set; } = [];
-    public virtual List<Input> Inputs { get; set; } = [];
+    public double X { get; set; }
+    public double Y { get; set; }
+    public int UniqueId { get; protected set; }
+    public Group Group { get; protected set; }
+    public ObservableCollection<Output> Outputs { get; }
+    public ObservableCollection<Input> Inputs { get; }
+    public ObservableCollection<Variable> Variables { get; }
+    public bool IsReady { get; set; }
+    public string Name { get; set; }
+
+    protected Node(IServiceProvider? serviceProvider = null)
+    {
+        Group = Group.Default;
+        Outputs = [];
+        Outputs.CollectionChanged += OnOutputsChanged;
+        Inputs = [];
+        Variables = [];
+        Name = string.Empty;
+        var nodeService = serviceProvider?.GetService<INodeService>();
+        UniqueId = nodeService?.ManageAndGetUID(this) ?? -1;
+    }
+
+    public virtual void Execute()
+    {
+        PrepareInputs();
+    }
+    
+    public void PrepareInputs()
+    {
+        foreach (var input in Inputs.Where(input => !input.HasValue))
+        {
+            input.AskForValue();
+        }
+    }
+
+    public void Reset()
+    {
+        if (!IsReady) return; // this node has been reset already
+        
+        foreach (var input in Inputs)
+        {
+            input.ResetPort();
+        }
+        
+        IsReady = false;
+    }
+    
+    public abstract Node Copy(IServiceProvider serviceProvider);
+    
+    public override string ToString()
+    {
+        return Name;
+    }
+
+    protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
+    {
+        copy.Name = Name;
+        copy.Group = Group;
+        
+        foreach (var input in Inputs)
+        {
+            copy.Inputs.Add((input.Copy(serviceProvider) as Input)!); // input is always an input TODO: check if there is a better way to copy things
+        }
+
+        foreach (var output in Outputs)
+        {
+            copy.Outputs.Add((output.Copy(serviceProvider) as Output)!);
+        }
+
+        foreach (var variable in Variables)
+        {
+            copy.Variables.Add(variable.Copy(serviceProvider));
+        }
+    }
+    
+    private void OnOutputsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        switch (e)
+        {
+            case { Action: NotifyCollectionChangedAction.Add, NewItems: not null }:
+            {
+                foreach (var newItem in e.NewItems)
+                {
+                    var output = newItem as Output;
+                    output?.ValueRequested += Execute;
+                    output?.ResetRequested += Reset;
+                }
+
+                break;
+            }
+            
+            case { Action: NotifyCollectionChangedAction.Remove, OldItems: not null }:
+            {
+                foreach (var oldItem in e.OldItems)
+                {
+                    var output = oldItem as Output;
+                    output?.ValueRequested -= Execute;
+                    output?.ResetRequested -= Reset;
+                }
+
+                break;
+            }
+        }
+    }
 }

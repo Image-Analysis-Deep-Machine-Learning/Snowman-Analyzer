@@ -1,0 +1,49 @@
+﻿using System.Collections.Generic;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
+
+namespace Snowman.Core.Scripting.Nodes.OutputNodes;
+
+public class LoggerOutputNode : OutputNode
+{
+    private readonly ILoggerService _loggerService = null!;
+    private readonly Input _messageInput;
+    
+    public LoggerOutputNode()
+    {
+        _messageInput = CreateInput();
+        Name = "Logger Output";
+    }
+
+    protected LoggerOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _loggerService = serviceProvider.GetService<ILoggerService>();
+    }
+
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        var copy = new LoggerOutputNode(serviceProvider);
+        return copy;
+    }
+
+    public override void ExecuteOutput()
+    {
+        base.ExecuteOutput(); // TODO: maybe change these overrides to template methods so I don't need to call base.XXX() every time?
+        var messages = _messageInput.Value as IEnumerable<string>;
+
+        foreach (var message in messages ?? [])
+        {
+            _loggerService.LogMessage(message);
+        }
+        
+        IsReady = true;
+    }
+
+    private Input CreateInput()
+    {
+        var stringInput = new Input("logger_input", typeof(IEnumerable<string>), Group.Default, "Message");
+        Inputs.Add(stringInput);
+        
+        return stringInput;
+    }
+}

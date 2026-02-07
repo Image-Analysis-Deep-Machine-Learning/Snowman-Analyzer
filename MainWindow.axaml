@@ -10,7 +10,7 @@
         x:DataType="dataContext:MainWindowDataContext"
         Title="Snowman"
         WindowState="Maximized"
-        Background="#1e1f22">
+        Icon="/Assets/snowman.ico">
     <Window.DataContext><dataContext:MainWindowDataContext></dataContext:MainWindowDataContext></Window.DataContext>
     <Window.Resources>
         <StreamGeometry x:Key="ArrowLeftRegular">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
@@ -18,7 +18,7 @@
     </Window.Resources>
     <Grid RowDefinitions="Auto, *, Auto">
         <!-- menu -->
-        <Menu Grid.Row="0" Background="#2b2d30">
+        <Menu Grid.Row="0">
             <MenuItem Header="_File">
                 <MenuItem Header="_New Project" Command ="{Binding NewProject}"/>
                 <MenuItem Header="_Open Project" Command ="{Binding OpenProject}"/>
@@ -35,7 +35,7 @@
         <!-- main display window -->
         <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5" HorizontalAlignment="Stretch">
             <!-- viewport -->
-            <Border Grid.Row="0" Grid.Column="0"  BorderBrush="#4b4c4e" BorderThickness="4" CornerRadius="3">
+            <Border Grid.Row="0" Grid.Column="0"  BorderBrush="{StaticResource ButtonBackground}" BorderThickness="4" CornerRadius="3">
                 <ctrl:ViewportWindow HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Border>
             
@@ -45,7 +45,7 @@
                     <!-- prev -->
                     <Button Grid.Column="0" Command="{Binding PrevFrame}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowLeftRegular}" Fill="White" Margin="0, 0, 0, 10"/>
+                            <Path Data="{StaticResource ArrowLeftRegular}" Fill="{StaticResource TextControlForeground}" Margin="0, 0, 0, 10"/>
                             <TextBlock Text="Prev" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -58,7 +58,7 @@
                     <!-- next -->
                     <Button Grid.Column="2" Command="{Binding NextFrame}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowRightRegular}" Fill="White" Margin="0, 0, 0, 10"/>
+                            <Path Data="{StaticResource ArrowRightRegular}" Fill="{StaticResource TextControlForeground}" Margin="0, 0, 0, 10"/>
                             <TextBlock Text="Next" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -114,7 +114,7 @@
                     <Button Name="ToggleEventTimelineButton" Width="24" Height="24" Click="ToggleEventTimelineButton_OnClick" ToolTip.Tip="Event Timeline">
                         <Path Name="EventTimelinePath"
                               Data="{StaticResource EventTimelineIcon}"
-                              Fill="White"
+                              Fill="{StaticResource TextControlForeground}"
                               Stretch="Uniform"
                               Width="16" Height="16"
                               VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -124,25 +124,26 @@
             </Grid>
             
             <!-- run script -->
-            <DockPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding IsEntitySelected}">
-                <DockPanel DockPanel.Dock="Top">
-                    <Label Content="Scripts to run:" Margin="10" VerticalAlignment="Center"></Label>
-                </DockPanel>
-                <DockPanel DockPanel.Dock="Top">
-                    <Label Margin="10" VerticalAlignment="Center">ID:</Label>
-                    <TextBox HorizontalAlignment="Stretch" Margin="10" Text="{Binding }"></TextBox>
-                </DockPanel>
-                <!-- <Button DockPanel.Dock="Top" VerticalAlignment="Top" Margin="10, 0, 10, 10" Content="Run Demo Script" Command="{Binding Demo}"></Button> -->
-                <TextBox TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch" DockPanel.Dock="Top" Margin="10, 0, 10, 5" AcceptsReturn="True" Name="DemoOutput"></TextBox>
-            </DockPanel>
-            <DockPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10, 5, 10, 10">
-                <Button DockPanel.Dock="Bottom" VerticalAlignment="Top" Margin="10, 10, 10, 0" Content="Clear Event Info" Command="{Binding ClearEventInfo}"></Button>
-                <TextBox DockPanel.Dock="Top" Name="InfoBox" TextWrapping="Wrap" Classes="TextArea" VerticalAlignment="Stretch"></TextBox>
-            </DockPanel>
+            <ctrl:NodeViewport Grid.Row="0" Grid.Column="1"/>
+            
+            <!-- logging console -->
+            <TextBox Grid.Row="1"
+                     Grid.Column="1"
+                     Margin="10"
+                     Padding="2"
+                     AcceptsReturn="True"
+                     IsReadOnly="True"
+                     VerticalAlignment="Stretch"
+                     TextWrapping="Wrap"
+                     VerticalContentAlignment="Top"
+                     FontFamily="Cascadia Code,Consolas,Monospace"
+                     FontSize="15"
+                     Name="LoggerTextBox"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
         </Grid>
         
         <!-- bottom bar -->
-        <Border Grid.Row="2" Background="#2b2d30" Padding="5" Height="25">
+        <Border Grid.Row="2" Background="{StaticResource CalendarViewBackground}" Padding="5" Height="25">
             <!-- progress bar -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                 <ProgressBar Height="15" MaxWidth="200"

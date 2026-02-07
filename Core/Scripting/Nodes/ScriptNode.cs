@@ -1,93 +1,63 @@
-﻿using System;
-using System.IO;
-using Python.Runtime;
-using Snowman.Core.Scripting.Nodes.Ports;
-using Snowman.Core.Scripting.Variables;
-using Snowman.Utilities;
+﻿using Python.Runtime;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 
-/// <summary>
-/// A script node is a representation of a python script. It is created by loading a python script and reading the input
-/// output, variables, name, and other information
-/// </summary>
 public class ScriptNode : Node
 {
-    public string SourcePath { get; private set; }
-    /// <summary>
-    /// Timestamp of last change to the source file. If a newer version is found, the script is reloaded
-    /// </summary>
-    public DateTime LastChanged { get; private set; }
-    public string PythonScriptContent { get; private set; } = null!; // this will never be null when exiting the constructor, but intellisense is not mature enough to figure it out on its own
-    /// <summary>
-    /// If the script node is invalid, all changes will be locked until the invalid 
-    /// </summary>
-    public bool Invalid { get; private set; }
+    public string PythonScriptContent { get; set; } = null!;
 
-    public ScriptNode(string sourcePath)
+    public ScriptNode()
     {
-        SourcePath = sourcePath;
-        LoadScriptContent();
-    }
-
-    public bool ReloadIfNewer()
-    {
-        var newer = File.GetLastWriteTime(SourcePath) > LastChanged;
-            
-        if (newer)
-        {
-            LoadScriptContent();
-        }
         
-        return newer;
     }
 
-    private void LoadScriptContent()
+    protected ScriptNode(IServiceProvider serviceProvider) : base(serviceProvider)
     {
-        try
-        {
-            LastChanged = File.GetLastWriteTime(SourcePath);
-            PythonScriptContent = File.ReadAllText(SourcePath);
-            LoadNode();
-            Invalid = false;
-        }
-            
-        catch (Exception)
-        {
-            Invalid = true;
-            // log exception somewhere so the user can see it, a log of some sort?
-        }
+        
     }
 
-    private void LoadNode()
+    public override void Execute()
     {
-        /*using (Py.GIL())
+        base.Execute();
+        RunPythonScript();
+        IsReady = true;
+    }
+
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        var copy =  new ScriptNode(serviceProvider);
+
+        CopyBasicInfo(copy, serviceProvider);
+        
+        copy.PythonScriptContent = PythonScriptContent;
+
+        return copy;
+    }
+
+    private void RunPythonScript()
+    {
+        using (Py.GIL())
         {
             using (var scope = Py.CreateScope())
             {
+                foreach (var input in Inputs)
+                {
+                    scope.Set(input.Name, input.Value);
+                }
+
+                foreach (var variable in Variables)
+                {
+                    scope.Set(variable.Name, variable.Value);
+                }
+                
                 scope.Exec(PythonScriptContent);
 
-                if (!scope.TryGet<PyList>("script_inputs", out var scriptInputs))
+                foreach (var output in Outputs)
                 {
-                    // script has no inputs defined - this is a valid state
+                    output.Value = scope.Get(output.Name).AsManagedObject(output.Type);
                 }
-                
-                if (!scope.TryGet<PyList>("script_outputs", out var scriptOutputs))
-                {
-                    // script has no outputs defined - this is a valid state
-                }
-                
-                if (!scope.TryGet<PyList>("script_vars", out var scriptVars))
-                {
-                    // script has no inputs defined - this is a valid state
-                }
-
-                var castInputs = Helpers.PyListToPolymorphicList<Input>(scriptInputs, "script_inputs");
-                var castOutputs = Helpers.PyListToPolymorphicList<Output>(scriptInputs, "script_outputs");
-                var castVariables = Helpers.PyListToPolymorphicList<Variable>(scriptInputs, "script_vars");
-                
-                var a = 00;
             }
-        }*/
+        }
     }
 }

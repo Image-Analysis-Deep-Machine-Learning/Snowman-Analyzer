@@ -1,0 +1,15 @@
+﻿<ctrl:VariableControl x:TypeArguments="dataContext:NumberVariable"
+                      xmlns="https://github.com/avaloniaui"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                      mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                      x:Class="Snowman.Core.Scripting.UserInterface.Controls.NumberVariableControl"
+                      xmlns:dataContext="using:Snowman.Core.Scripting.DataSource.Variables"
+                      xmlns:ctrl="using:Snowman.Core.Scripting.UserInterface"
+                      x:DataType="dataContext:NumberVariable">
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="{Binding FriendlyName}" Margin="10"/>
+        <NumericUpDown HorizontalAlignment="Stretch" Value="{Binding TypedValue, Mode=TwoWay}"/>
+    </StackPanel>
+</ctrl:VariableControl>

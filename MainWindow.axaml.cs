@@ -29,10 +29,12 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        ServiceProviderAttachedProperty.SetProvider(this, new ServiceProviderImpl());
-        _app = new SnowmanApp(ServiceProviderAttachedProperty.GetProvider(this));
+        var serviceProvider = new ServiceProviderImpl();
+        ServiceProviderAttachedProperty.SetProvider(this, serviceProvider);
+        _app = new SnowmanApp(serviceProvider);
         StorageProviderFactory.InitializeStorageProvider(StorageProvider);
         InitializeComponent();
+        serviceProvider.RegisterService<ILoggerService>(new LoggerServiceImpl(LoggerTextBox));
         
         var theme = Application.Current?.ActualThemeVariant;
             
