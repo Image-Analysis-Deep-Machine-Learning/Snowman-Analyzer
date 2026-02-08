@@ -6,9 +6,9 @@ namespace Snowman.Core.Scripting.DataSource;
 
 public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChanged
 {
-    public T TypedValue
+    public T? TypedValue
     {
-        get => (T)Value;
+        get => (T?)Value;
 
         set
         {
@@ -29,9 +29,9 @@ public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChang
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    protected bool SetField<TParam>(ref TParam field, TParam value, [CallerMemberName] string? propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        if (EqualityComparer<TParam>.Default.Equals(field, value)) return false;
         field = value;
         OnPropertyChanged(propertyName);
         return true;

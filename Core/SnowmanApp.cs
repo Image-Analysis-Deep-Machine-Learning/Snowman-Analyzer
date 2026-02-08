@@ -20,13 +20,10 @@ public class SnowmanApp
     // it was 54 before
     public Project Project { get; }
 
-    private readonly IServiceProvider _serviceProvider;
-
     public SnowmanApp(IServiceProvider serviceProvider)
     {
         Instance = this;
-        _serviceProvider = serviceProvider;
-        Project = new Project(_serviceProvider); // TODO: this will need a factory that will rewire all existing services
+        Project = new Project(serviceProvider); // TODO: this will need a factory that will rewire all existing services
         InitializePythonExecutionEnvironment();
     }
 

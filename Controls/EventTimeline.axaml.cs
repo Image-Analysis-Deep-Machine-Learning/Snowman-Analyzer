@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.LogicalTree;
 using Avalonia.Media;
-using Snowman.Core;
-using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
-using Snowman.Utilities;
 
 namespace Snowman.Controls;
 
@@ -99,12 +93,5 @@ public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext
         context.FillRectangle(Brushes.Transparent, new Rect(0, 0, Bounds.Width, Bounds.Height));
         DataContext.Render(context);
         base.Render(context);
-    }
-
-    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
-    {
-        DataContext = new EventTimelineDataContext(ServiceProviderAttachedProperty.GetProvider(this));
-        DataContext.ParentRendererControl = this;
-        base.OnAttachedToLogicalTree(e);
     }
 }

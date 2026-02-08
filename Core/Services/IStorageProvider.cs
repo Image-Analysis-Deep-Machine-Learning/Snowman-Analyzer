@@ -1,6 +1,8 @@
-﻿namespace Snowman.Core.Services;
+﻿using Avalonia.Platform.Storage;
 
-public interface IStorageProviderService
+namespace Snowman.Core.Services;
+
+public interface IStorageProviderService : IService
 {
-    
+    public IStorageProvider GetStorageProvider();
 }

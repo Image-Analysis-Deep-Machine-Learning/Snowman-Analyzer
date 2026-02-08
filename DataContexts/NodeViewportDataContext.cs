@@ -5,15 +5,15 @@ using Snowman.Core.Services;
 
 namespace Snowman.DataContexts;
 
-public class NodeViewportDataContext()
+public partial class NodeViewportDataContext
 {
-    private readonly INodeService _nodeService = null!;
-    private readonly IServiceProvider _serviceProvider = null!;
+    private readonly INodeService _nodeService;
+    private readonly IServiceProvider _serviceProvider;
     
-    public IEnumerable<Node> AvailableScripts => _nodeService?.GetNodes() ?? [];
+    public IEnumerable<Node> AvailableScripts => _nodeService.GetNodes();
     public Node? SelectedNode { get; set; }
 
-    public NodeViewportDataContext(IServiceProvider serviceProvider) : this()
+    public NodeViewportDataContext(IServiceProvider serviceProvider)
     {
         _nodeService = serviceProvider.GetService<INodeService>();
         _serviceProvider = serviceProvider;
@@ -23,7 +23,6 @@ public class NodeViewportDataContext()
     public void AddNode()
     {
         _nodeService.AddNodeToCanvas(SelectedNode?.Copy(_serviceProvider));
-        _serviceProvider.GetService<ILoggerService>().LogMessage("Node added");
     }
 
     public void RunGraph()

@@ -6,6 +6,7 @@ using Snowman.Core.Entities;
 using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events.Viewport;
+using Snowman.Utilities;
 
 namespace Snowman.Core.Tools;
 

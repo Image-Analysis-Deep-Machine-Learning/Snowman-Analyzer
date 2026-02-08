@@ -5,7 +5,6 @@ using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Snowman.Core;
 using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
 using Snowman.Core.Services;
@@ -18,7 +17,6 @@ namespace Snowman.Controls;
 
 public class EventPin : UserControlWrapper<EventPinDataContext>
 {
-    private readonly IDatasetImagesService _datasetImagesService;
     private List<EventData> Events { get; }
     public int FrameIndex { get; }
     private readonly int _frequency;
@@ -32,7 +30,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     
     public EventPin(IServiceProvider serviceProvider, List<EventData> events, int frameIndex, RuleData rule, int frequency)
     {
-        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        var datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Events = events;
         FrameIndex = frameIndex;
         Rule = rule;
@@ -56,7 +54,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
 
         PointerPressed += (s, e) =>
         {
-            _datasetImagesService.SkipToFrame(FrameIndex);
+            datasetImagesService.SkipToFrame(FrameIndex);
             
             var tempEntities = new HashSet<Entity>();
             var tempBoundingBoxes = new HashSet<IDrawable>();

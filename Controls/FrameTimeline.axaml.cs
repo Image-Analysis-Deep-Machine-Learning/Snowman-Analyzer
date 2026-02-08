@@ -1,8 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Input;
-using Avalonia.LogicalTree;
-using Avalonia.Media;
-using Snowman.Core.Services;
+﻿using Avalonia.Input;
 using Snowman.DataContexts;
 
 namespace Snowman.Controls;
@@ -18,21 +14,6 @@ public partial class FrameTimeline : UserControlWrapper<FrameTimelineDataContext
         KeyDown += OnKeyDown;
     }
 
-    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
-    {
-        DataContext = new FrameTimelineDataContext(ServiceProviderAttachedProperty.GetProvider(this));
-        DataContext.ItemsSourceChanged += UpdateTimelineItemsSource;
-        base.OnAttachedToLogicalTree(e);
-    }
-
-    private void UpdateTimelineItemsSource()
-    {
-        // I have no fucking idea how else to tell this retarded control that the ItemsSource has changed
-        var a = FrameItems.ItemsSource;
-        FrameItems.ItemsSource = null;
-        FrameItems.ItemsSource = a;
-    }
-
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         DataContext.PointerPressed(e.GetPosition(this));
@@ -46,7 +27,7 @@ public partial class FrameTimeline : UserControlWrapper<FrameTimelineDataContext
         switch (e.Key)
         {
             case Key.Left:
-                //PrevFrameCommand.Execute(null);
+                //PrevFrameCommand.Execute(null); //TODO: add this back
                 break;
             case Key.Right:
                 //NextFrameCommand.Execute(null);

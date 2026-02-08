@@ -81,12 +81,12 @@ public class ScriptParser
             _result.Outputs.Add(newOutput);
         }
         
-        // TODO: variables
         foreach (var variable in _script.Definition.Variables)
         {
             var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.Definition.Name}");
             var variableInstance = VariablePrototypeRegistry.GetVariableCopy(variableType, serviceProvider);
             variableInstance.Name = variable.Name;
+            variableInstance.Group = _groups[variable.Group];
             variableInstance.Type = variableType;
             variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
             _result.Variables.Add(variableInstance);

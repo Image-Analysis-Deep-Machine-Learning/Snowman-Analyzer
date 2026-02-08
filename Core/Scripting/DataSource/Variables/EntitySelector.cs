@@ -12,8 +12,8 @@ public class EntitySelector : GenericVariableWrapper<Entity>
 {
     public ObservableCollection<Entity> AvailableEntities { get; } = [];
     public Type EntitySubtype { get; private set; }
-    
-    public EntitySelector(string name, Group group, string friendlyName) : base(name, group, friendlyName)
+
+    private EntitySelector(string name, Group group, string friendlyName) : base(name, group, friendlyName)
     {
         EntitySubtype = typeof(Entity);
     }
@@ -22,8 +22,12 @@ public class EntitySelector : GenericVariableWrapper<Entity>
 
     public override Variable Copy(IServiceProvider serviceProvider)
     {
-        var copy = new EntitySelector(Name, Group, FriendlyName) { TypedValue = TypedValue };
-        copy.EntitySubtype = EntitySubtype;
+        var copy = new EntitySelector(Name, Group, FriendlyName)
+        {
+            TypedValue = TypedValue,
+            EntitySubtype = EntitySubtype
+        };
+        
         var currentEntities = serviceProvider.GetService<IEntityManager>().GetMainEntities();
 
         foreach (var entity in currentEntities)

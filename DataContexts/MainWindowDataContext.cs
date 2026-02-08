@@ -5,28 +5,28 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Snowman.Core;
 using Snowman.Core.Services;
-using Snowman.Factories;
+using Snowman.Utilities;
 using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class MainWindowDataContext
+public partial class MainWindowDataContext
 {
-    private IDatasetImagesService _datasetImagesService = null!;
+    private readonly IDatasetImagesService _datasetImagesService;
+    private readonly IStorageProviderService _storageProviderService;
 
-    public bool IsEntitySelected => false;
-
-    public void Constructor(IServiceProvider serviceProvider)
+    public MainWindowDataContext(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
     }
     
     public void NewProject() { } // TODO
     
     public async Task OpenProject()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
             FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
@@ -53,7 +53,7 @@ public class MainWindowDataContext
     
     public async Task SaveProject()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().SaveFilePickerAsync(new FilePickerSaveOptions()
+        var filePickerResult = await _storageProviderService.GetStorageProvider().SaveFilePickerAsync(new FilePickerSaveOptions()
         {
             FileTypeChoices = [AdditionalFilePickerFileTypes.Xml],
             Title = "Save Project File"
@@ -79,7 +79,7 @@ public class MainWindowDataContext
     
     public async Task OpenXml()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
             FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
@@ -106,7 +106,7 @@ public class MainWindowDataContext
     
     public async Task LoadVideoFile()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
             FileTypeFilter = [AdditionalFilePickerFileTypes.Video],

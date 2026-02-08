@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.CompilerServices;
-using Avalonia;
 using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Controls;
-using Snowman.Core;
 using Snowman.Core.Services;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class EventTimelineDataContext() : INotifyPropertyChanged
+public partial class EventTimelineDataContext : INotifyPropertyChanged
 {
-    private IDatasetImagesService _datasetImagesService = null!;
-    public EventTimeline ParentRendererControl { get; set; } = null!;
+    private readonly IDatasetImagesService _datasetImagesService;
+    public EventTimeline ParentRendererControl { get; set; }
 
     public event Action? ZoomScaleChanged;
     private double _zoomScale = 1.0;
@@ -58,9 +55,10 @@ public class EventTimelineDataContext() : INotifyPropertyChanged
     private readonly Pen _penMinor = new(TickBrush, 0.5);
     private readonly Typeface _font = new("Arial");
 
-    public EventTimelineDataContext(IServiceProvider serviceProvider) : this()
+    public EventTimelineDataContext(IServiceProvider serviceProvider, EventTimeline eventTimeline)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        ParentRendererControl = eventTimeline;
     }
 
     public static Dictionary<int, (Avalonia.Media.Color, Avalonia.Media.Color)> TimelineColors { get; } = [];

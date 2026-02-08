@@ -9,11 +9,7 @@ namespace Snowman
 {
     public partial class LoadVideoWindow : Window, INotifyPropertyChanged
     {
-        private double _startSelectedTime;
-        private double _endSelectedTime;
         public new event PropertyChangedEventHandler? PropertyChanged;
-        private double _selectedFps;
-        private string _selectedFrameFormat = "jpeg";
 
         public LoadVideoWindow()
         {
@@ -37,10 +33,10 @@ namespace Snowman
 
         public double SelectedFps
         {
-            get => _selectedFps;
+            get;
             set
             {
-                _selectedFps = value;
+                field = value;
                 OnPropertyChanged(nameof(SelectedFps));
                 OnPropertyChanged(nameof(SelectedFpsStr));
             }
@@ -48,10 +44,10 @@ namespace Snowman
 
         public double StartSelectedTime
         {
-            get => _startSelectedTime;
+            get;
             set
             {
-                _startSelectedTime = value;
+                field = value;
                 OnPropertyChanged(nameof(StartSelectedTime));
                 OnPropertyChanged(nameof(LowerSelectedTimeStr));
             }
@@ -59,15 +55,15 @@ namespace Snowman
 
         public double EndSelectedTime
         {
-            get => _endSelectedTime;
+            get;
             set
             {
-                _endSelectedTime = value;
+                field = value;
                 OnPropertyChanged(nameof(EndSelectedTime));
                 OnPropertyChanged(nameof(UpperSelectedTimeStr));
             }
         }
-        
+
         public string LowerSelectedTimeStr => $@"{TimeSpan.FromSeconds(StartSelectedTime):mm\:ss\.fff}";
         
         public string UpperSelectedTimeStr => $@"{TimeSpan.FromSeconds(EndSelectedTime):mm\:ss\.fff}";
@@ -75,17 +71,17 @@ namespace Snowman
         public string SelectedFpsStr => $"{SelectedFps:0.###} FPS";
 
         public List<string> FrameFormats { get; } = ["jpeg", "png", "gif", "tiff", "bmp"];
-        
+
         public string SelectedFrameFormat
         {
-            get => _selectedFrameFormat;
+            get;
             set
             {
-                _selectedFrameFormat = value;
+                field = value;
                 OnPropertyChanged(nameof(SelectedFrameFormat));
             }
-        }
-        
+        } = "jpeg";
+
         private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

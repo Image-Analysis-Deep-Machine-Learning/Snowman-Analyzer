@@ -90,7 +90,7 @@ public class BoundingBox : IDrawable
 
 	[XmlElement(ElementName = "class_name")] public ClassName ClassName { get; set; } = new();
 	
-	public void Render(DrawingContext context)
+	public void Render(DrawingContext context) // TODO: remove, this should be just a xml data class, NOT FOR STORAGE
 	{
 		AnnotationRenderer.RenderBoundingBox(this, context);
 	}

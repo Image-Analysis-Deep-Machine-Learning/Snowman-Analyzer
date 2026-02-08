@@ -4,6 +4,7 @@ using System.Linq;
 using Avalonia;
 using Snowman.Core.Entities;
 using Snowman.Events.Suppliers;
+using Snowman.Utilities;
 
 namespace Snowman.Core.Services.Impl;
 

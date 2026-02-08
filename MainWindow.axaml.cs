@@ -6,7 +6,6 @@ using Snowman.Core;
 using Snowman.Core.Services;
 using Snowman.Core.Services.Impl;
 using Snowman.DataContexts;
-using Snowman.Factories;
 
 namespace Snowman;
 
@@ -16,24 +15,18 @@ public partial class MainWindow : Window
     private readonly IBrush _brush;
     private SnowmanApp _app;
 
-    static MainWindow()
-    {
-        DataContextProperty.Changed.AddClassHandler<MainWindow>((window, args) =>
-        {
-            if (args.NewValue is not MainWindowDataContext dataContext) return;
-            
-            dataContext.Constructor(ServiceProviderAttachedProperty.GetProvider(window));
-            //dataContext.SetupZoomScaleChangedHandler();
-        });
-    }
-
     public MainWindow()
     {
+        // the most important lines of this application that handle the dependency injection magic
         var serviceProvider = new ServiceProviderImpl();
+        DataContext = new MainWindowDataContext(serviceProvider);
         ServiceProviderAttachedProperty.SetProvider(this, serviceProvider);
+        
+        serviceProvider.RegisterService<IStorageProviderService>(new StorageProviderServiceImpl(StorageProvider));
         _app = new SnowmanApp(serviceProvider);
-        StorageProviderFactory.InitializeStorageProvider(StorageProvider);
+        
         InitializeComponent();
+        
         serviceProvider.RegisterService<ILoggerService>(new LoggerServiceImpl(LoggerTextBox));
         
         var theme = Application.Current?.ActualThemeVariant;

@@ -3,7 +3,7 @@ using System.Linq;
 using Avalonia;
 using Snowman.Core.Entities;
 
-namespace Snowman.Core;
+namespace Snowman.Utilities;
 
 public static class ExtensionMethods
 {

@@ -5,9 +5,9 @@ using Snowman.Core.Scripting.Nodes;
 
 namespace Snowman.DataContexts;
 
-public class NodeControlDataContext() : INotifyPropertyChanged
+public partial class NodeControlDataContext : INotifyPropertyChanged
 {
-    private readonly Node _node = null!;
+    private readonly Node _node;
     
     public event PropertyChangedEventHandler? PropertyChanged;
     
@@ -36,7 +36,7 @@ public class NodeControlDataContext() : INotifyPropertyChanged
         }
     }
 
-    public NodeControlDataContext(Node node) : this()
+    public NodeControlDataContext(Node node)
     {
         _node = node;
     }

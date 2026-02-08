@@ -9,7 +9,6 @@
                              xmlns:ctrl="using:Snowman.Controls"
                              x:DataType="dataContext:FrameTimelineDataContext"
                              Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
-    <ctrl:UserControlWrapper.DataContext><dataContext:FrameTimelineDataContext></dataContext:FrameTimelineDataContext></ctrl:UserControlWrapper.DataContext>
     <ItemsControl Name="FrameItems" ItemsSource="{Binding Frames}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>

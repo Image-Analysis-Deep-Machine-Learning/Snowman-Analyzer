@@ -10,11 +10,11 @@ namespace Snowman.Controls;
 
 public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
 {
+    private static int _topZIndex; // does not matter that it's static, there's no way someone's clicking over 2 billion times
+    
     private readonly INodeService _nodeService;
     private Point _dragStartPoint;
     private bool _isDragging;
-    private static int _topZIndex; // does not matter that it's static, there's no way someone's clicking over 2 billion times
-    
     
     public NodeControl(Node node, IServiceProvider serviceProvider)
     {
@@ -36,7 +36,7 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
-        if (!_isDragging || Parent is not Canvas canvas || DataContext is not NodeControlDataContext dataContext) return;
+        if (!_isDragging || Parent is not Canvas canvas || DataContext is not { } dataContext) return;
 
         var pos = e.GetPosition(canvas);
         var delta = pos - _dragStartPoint;

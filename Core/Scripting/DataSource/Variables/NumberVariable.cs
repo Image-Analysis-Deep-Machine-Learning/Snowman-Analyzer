@@ -6,7 +6,7 @@ namespace Snowman.Core.Scripting.DataSource.Variables;
 
 public class NumberVariable : GenericVariableWrapper<decimal>
 {
-    public NumberVariable(string name, Group group, string friendlyName): base(name, group, friendlyName)
+    private NumberVariable(string name, Group group, string friendlyName): base(name, group, friendlyName)
     {
         TypedValue = 0;
     }

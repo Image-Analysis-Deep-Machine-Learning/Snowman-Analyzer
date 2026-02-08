@@ -1,13 +1,14 @@
-﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:NodeControlDataContext" xmlns="https://github.com/avaloniaui"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:NodeControlDataContext"
+                         xmlns="https://github.com/avaloniaui"
                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                          mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                          x:Class="Snowman.Controls.NodeControl"
                          xmlns:dataContext="using:Snowman.DataContexts"
-                         xmlns:ctrl="clr-namespace:Snowman.Controls"
-                         ClipToBounds="False"
-                         x:DataType="dataContext:NodeControlDataContext">
+                         xmlns:ctrl="using:Snowman.Controls"
+                         x:DataType="dataContext:NodeControlDataContext"
+                         ClipToBounds="False">
     <Border Background="#333333"
             CornerRadius="5"
             BoxShadow="5 5 25 0 Black"

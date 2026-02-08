@@ -14,8 +14,7 @@ internal class ServiceProviderImpl : IServiceProvider
     {
         RegisterDefaultServices();
     }
-
-    // TODO: let the service provider create the instances?
+    
     public void RegisterService<T>(T service) where T : IService
     {
         _services[typeof(T)] = service;

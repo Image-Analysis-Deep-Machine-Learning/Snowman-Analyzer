@@ -1,9 +1,8 @@
-﻿using System.Linq;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Media;
 using Snowman.Data;
 
-namespace Snowman.Core;
+namespace Snowman.Core.Drawing;
 
 public static class AnnotationRenderer
 {

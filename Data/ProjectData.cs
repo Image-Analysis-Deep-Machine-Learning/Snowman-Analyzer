@@ -1,12 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Xml.Serialization;
 using Avalonia;
-using Snowman.Core;
 using Snowman.Core.Entities;
-using Snowman.Core.Scripting;
 
 namespace Snowman.Data;
 

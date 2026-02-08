@@ -1,3 +1,3 @@
 ﻿namespace Snowman.DataContexts;
 
-public class ViewportWindowDataContext;
+public partial class ViewportWindowDataContext;

@@ -42,7 +42,7 @@ public class Helpers
         if (ListFactories.TryGetValue(type, out var factory)) return factory();
         
         var t = typeof(List<>).MakeGenericType(type);
-        factory = () => (IList)Activator.CreateInstance(t);
+        factory = () => Activator.CreateInstance(t) as IList ?? throw new InvalidOperationException($"Type {t} is cannot be cast to IList");
         ListFactories.Add(type, factory);
 
         return factory();

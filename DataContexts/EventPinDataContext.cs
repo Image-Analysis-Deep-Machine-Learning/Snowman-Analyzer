@@ -1,5 +1,3 @@
 ﻿namespace Snowman.DataContexts;
 
-public class EventPinDataContext
-{
-}
+public class EventPinDataContext;
