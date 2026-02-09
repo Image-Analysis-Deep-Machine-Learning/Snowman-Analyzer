@@ -9,8 +9,8 @@ public interface IEntityManager : IService, IDrawableSource
 {
     public IEnumerable<Entity> GetEntities();
     public IEnumerable<Entity> GetSelectedEntities();
-    public void CreateEntity(Entity entity);
-    public void DeleteEntities(IEnumerable<Entity> entities);
+    public void AddEntity(Entity entity);
+    public void RemoveEntities(IEnumerable<Entity> entities);
     public void SelectEntities(IEnumerable<Entity> entities);
     public void DeselectEntities(IEnumerable<Entity> entities);
     public void DeselectAllEntities();

@@ -12,7 +12,9 @@ namespace Snowman.Core.Services.Impl;
 public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 {
     private readonly List<Entity> _entities;
+    private readonly List<Entity> _entitiesIncludingChildren;
     private readonly List<EntityWrapper> _selectedEntities;
+    private readonly PriorityQueue<int, int> _freeEntityIds;
     
     public event Events.EventHandler<Entity>? EntityAdded;
     public event Events.EventHandler<Entity>? EntityRemoved;
@@ -21,12 +23,14 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     {
         serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IEntityEventSupplier>(this);
         _entities = [];
+        _entitiesIncludingChildren = [];
         _selectedEntities = [];
+        _freeEntityIds =  new PriorityQueue<int, int>([(0, 0)]);
     }
 
     public IEnumerable<Entity> GetEntities()
     {
-        return _entities.AsReadOnly();
+        return _entities.ToList();
     }
 
     public IEnumerable<Entity> GetSelectedEntities()
@@ -34,17 +38,55 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         return _selectedEntities.Select(x => x.Entity);
     }
 
-    public void CreateEntity(Entity entity)
+    public void AddEntity(Entity entity)
     {
+        if (entity.Id == -1)
+        {
+            entity.Id = GetNextEntityId();
+        }
+        
         _entities.Add(entity);
+        
+        var entityQueue = new Queue<Entity>([entity]);
+
+        while (entityQueue.Count > 0)
+        {
+            var e = entityQueue.Dequeue();
+            _entitiesIncludingChildren.Add(e);
+            
+            foreach (var child in e.Children)
+            {
+                entityQueue.Enqueue(child);
+            }
+        }
+        
         EntityAdded?.Invoke(entity);
     }
 
-    public void DeleteEntities(IEnumerable<Entity> entities)
+    public void RemoveEntities(IEnumerable<Entity> entities)
     {
         foreach (var entity in entities)
         {
+            if (entity.Id != -1)
+            {
+                _freeEntityIds.Enqueue(entity.Id, entity.Id);
+            }
+            
             _entities.Remove(entity);
+            
+            var entityQueue = new Queue<Entity>([entity]);
+
+            while (entityQueue.Count > 0)
+            {
+                var e = entityQueue.Dequeue();
+                _entitiesIncludingChildren.Remove(e);
+            
+                foreach (var child in e.Children)
+                {
+                    entityQueue.Enqueue(child);
+                }
+            }
+            
             EntityRemoved?.Invoke(entity);
         }
     }
@@ -93,7 +135,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     public IEnumerable<Entity> GetEntitiesHitByPoint(Point point)
     {
         List<Entity> hitEntities = [];
-        hitEntities.AddRange(_entities.Where(entity => entity.EvaluateHit(point)));
+        hitEntities.AddRange(_entitiesIncludingChildren.Where(entity => entity.EvaluateHit(point)));
 
         return hitEntities;
     }
@@ -107,7 +149,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     {
         Entity? last = null;
 
-        foreach (var entity in _entities.OfParentType<T>())
+        foreach (var entity in _entitiesIncludingChildren.OfParentType<T>())
         {
             if (entity.EvaluateHit(point))
             {
@@ -124,6 +166,18 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     public IEnumerable<IDrawable> GetDrawables()
     {
         return _entities.AsReadOnly();
+    }
+
+    private int GetNextEntityId()
+    {
+        var nextId = _freeEntityIds.Dequeue();
+
+        if (_freeEntityIds.Count == 0)
+        {
+            _freeEntityIds.Enqueue(nextId + 1, nextId + 1);
+        }
+
+        return nextId;
     }
 
     private readonly record struct EntityWrapper(Entity Entity, Point OriginalPosition);

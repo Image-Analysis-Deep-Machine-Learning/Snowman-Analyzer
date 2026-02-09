@@ -17,9 +17,9 @@ namespace Snowman.Core.Services.Impl;
 public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, IDatasetImagesEventSupplier
 {
     private const int CachePurgeInterval = 2;
-    private static readonly IEnumerable<ImageFrame> PlaceHolderFrame = [new() { Src = "placeholder.png" }];
+    private static readonly IEnumerable<Image> PlaceHolderFrame = [new() { Src = "placeholder.png" }];
     
-    private readonly List<ImageFrame> _imageList;
+    private readonly List<Image> _imageList;
     private string _baseFolder;
     private int _currentFrameIndex;
     private Bitmap?[] _cachedFrames;
@@ -85,7 +85,7 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
         return thumbnail;
     }
 
-    public void LoadNewImageList(IEnumerable<ImageFrame> imageList, string baseFolder)
+    public void LoadNewImageList(IEnumerable<Image> imageList, string baseFolder)
     {
         _baseFolder = baseFolder;
         _imageList.Clear();

@@ -72,7 +72,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         if (e.WrappedArgs.Key == Key.Delete)
         {
             var selectedEntities = EntityManager.GetSelectedEntities();
-            EntityManager.DeleteEntities(selectedEntities);
+            EntityManager.RemoveEntities(selectedEntities);
         }
     }
     

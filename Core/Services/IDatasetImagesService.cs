@@ -13,6 +13,6 @@ public interface IDatasetImagesService : IService
     public int MaxFrameIndex();
     public void SkipToFrame(int index);
     public Bitmap ThumbnailAt(int index);
-    public void LoadNewImageList(IEnumerable<ImageFrame> imageList, string baseFolder);
+    public void LoadNewImageList(IEnumerable<Image> imageList, string baseFolder);
     public Size GetImageSize();
 }

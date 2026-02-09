@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Snowman.Core.Entities;
 
@@ -18,12 +19,14 @@ public class ProjectDataConverter
 
     public static List<EntityData> SerializeEntities(IEnumerable<Entity> entities)
     {
-        foreach (var entity in entities)
-        {
-            
-        }
+        return entities.Select(entity => EntitySerializers[entity.GetType()](entity)).ToList();
     }
 
+    public static IEnumerable<Entity> DeserializeEntities(IEnumerable<EntityData> entitiesData)
+    {
+        return entitiesData.Select(entityData => EntityDeserializers[entityData.GetType()](entityData));
+    }
+    
     private static void RegisterEntitySerializer<TEntity, TEntityData>(Func<TEntity, TEntityData> serializer) where TEntity : Entity where TEntityData : EntityData
     {
         EntitySerializers[typeof(TEntity)] = entity => serializer((TEntity)entity);
@@ -43,5 +46,11 @@ public class ProjectDataConverter
     private static void RegisterEntityDeserializers()
     {
         RegisterEntityDeserializer<PointEntityData, PointEntity>(entityData => new PointEntity(new Point(entityData.X, entityData.Y)));
+        RegisterEntityDeserializer<RectangleEntityData, RectangleEntity>(entityData =>
+        {
+            var pos1 = new Point(entityData.X, entityData.Y);
+            var pos2 = pos1 + new Vector(entityData.Width, entityData.Height);
+            return new RectangleEntity(pos1, pos2);
+        });
     }
 }

@@ -32,7 +32,7 @@ public class ScriptParser
     {
         _groups[string.Empty] = Group.Default;
         
-        foreach (var group in _script.Definition.Groups)
+        foreach (var group in _script.NodeDefinitionData.Groups)
         {
             var path = group.FullPath;
             var nextDelimiterIndex = path.IndexOf(Group.GroupDelimiter);
@@ -59,31 +59,31 @@ public class ScriptParser
             }
         }
         
-        foreach (var input in _script.Definition.Inputs)
+        foreach (var input in _script.NodeDefinitionData.Inputs)
         {
             var newInput = new Input(
                 input.Name,
-                Type.GetType(input.Type) ?? throw new FormatException($"Cannot construct input {input.FriendlyName} with '{input.Type}' type in script {_script.Definition.Name}"),
+                Type.GetType(input.Type) ?? throw new FormatException($"Cannot construct input {input.FriendlyName} with '{input.Type}' type in script {_script.NodeDefinitionData.Name}"),
                 _groups[input.Group],
                 input.FriendlyName ?? input.Name);
             
             _result.Inputs.Add(newInput);
         }
         
-        foreach (var output in _script.Definition.Outputs)
+        foreach (var output in _script.NodeDefinitionData.Outputs)
         {
             var newOutput = new Output(
                 output.Name,
-                Type.GetType(output.Type) ?? throw new FormatException($"Cannot construct output {output.FriendlyName} with '{output.Type}' type in script {_script.Definition.Name}"),
+                Type.GetType(output.Type) ?? throw new FormatException($"Cannot construct output {output.FriendlyName} with '{output.Type}' type in script {_script.NodeDefinitionData.Name}"),
                 _groups[output.Group],
                 output.FriendlyName ?? output.Name);
             
             _result.Outputs.Add(newOutput);
         }
         
-        foreach (var variable in _script.Definition.Variables)
+        foreach (var variable in _script.NodeDefinitionData.Variables)
         {
-            var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.Definition.Name}");
+            var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.NodeDefinitionData.Name}");
             var variableInstance = VariablePrototypeRegistry.GetVariableCopy(variableType, serviceProvider);
             variableInstance.Name = variable.Name;
             variableInstance.Group = _groups[variable.Group];
@@ -93,7 +93,7 @@ public class ScriptParser
         }
 
         _result.PythonScriptContent = _script.Code;
-        _result.Name = _script.Definition.Name;
+        _result.Name = _script.NodeDefinitionData.Name;
     }
 
     private ScriptNode GetResult()

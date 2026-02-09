@@ -19,7 +19,7 @@ public abstract class Entity : IDrawable
     public Entity? Parent { get; }
     public bool IsHit { get; set; }
     public bool IsHighlighted { get; set; }
-    protected List<Entity> Children { get; } = [];
+    public List<Entity> Children { get; } = [];
 
     public virtual bool Selected
     {

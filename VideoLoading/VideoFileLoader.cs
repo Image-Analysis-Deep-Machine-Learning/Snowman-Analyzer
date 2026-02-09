@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Snowman.Data;
+using Image = Snowman.Data.Image;
 
 namespace Snowman.VideoLoading
 {
@@ -100,7 +101,7 @@ namespace Snowman.VideoLoading
                 });
             });
             
-            Images imageList = new();
+            List<Image> imageList = new();
             
             var fileNames = Directory.GetFiles(metadata.FrameFolderPath, $"frame_*.{metadata.FrameFormat}")
                 .Select(Path.GetFileName)
@@ -108,10 +109,10 @@ namespace Snowman.VideoLoading
             
             foreach (var fileName in fileNames)
             {
-                if (fileName != null) imageList.ImageList.Add(new ImageFrame { Src = fileName });
+                if (fileName != null) imageList.Add(new Image { Src = fileName });
             }
             
-            metadata.FrameCount = imageList.ImageList.Count;
+            metadata.FrameCount = imageList.Count;
 
             var videoFileSequence = new VideoSequence
             {

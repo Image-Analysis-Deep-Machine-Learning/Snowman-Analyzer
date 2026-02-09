@@ -28,7 +28,7 @@ public class PointTool : EntityEditTool<PointEntity>
         {
             var pointerPosition = e.GetTransformedPointerPosition();
             var newEntity = new PointEntity(pointerPosition);
-            EntityManager.CreateEntity(newEntity);
+            EntityManager.AddEntity(newEntity);
             EntityManager.SelectEntities([newEntity]);
         }
         

@@ -7,7 +7,7 @@ using System.Xml.Serialization;
 namespace Snowman.Data;
 
 [XmlRoot("ScriptDefinition")]
-public class ScriptDefinition
+public class ScriptNodeDefinitionData
 {
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
@@ -29,20 +29,22 @@ public class ScriptDefinition
     [XmlArrayItem("Variable")]
     public List<VariableDefinition> Variables { get; set; } = [];
     
-    public static string Serialize(ScriptDefinition def)
+    public static string Serialize(ScriptNodeDefinitionData def)
     {
-        var serializer = new XmlSerializer(typeof(ScriptDefinition));
+        var serializer = new XmlSerializer(typeof(ScriptNodeDefinitionData));
         var sb = new StringBuilder();
         using var writer = new StringWriter(sb);
         serializer.Serialize(writer, def);
+        
         return sb.ToString();
     }
 
-    public static ScriptDefinition Deserialize(string str)
+    public static ScriptNodeDefinitionData Deserialize(string str)
     {
-        var serializer = new XmlSerializer(typeof(ScriptDefinition));
+        var serializer = new XmlSerializer(typeof(ScriptNodeDefinitionData));
         using var reader = new StringReader(str);
-        return (serializer.Deserialize(reader) as ScriptDefinition)!;
+        
+        return (serializer.Deserialize(reader) as ScriptNodeDefinitionData)!;
     }
 }
 

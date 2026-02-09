@@ -1,10 +1,11 @@
-﻿using Snowman.Data;
+﻿using System.Collections.Generic;
+using Snowman.Data;
 
 namespace Snowman.VideoLoading
 {
     public class VideoSequence
     {
-        public required Images ImageList { get; set; }
+        public required List<Image> ImageList { get; set; }
         public required VideoSequenceMetadata Metadata { get; set; }
     }
 

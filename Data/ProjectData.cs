@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
-using Avalonia;
-using Snowman.Core.Entities;
 
 namespace Snowman.Data;
 
 [XmlRoot(ElementName="data")]
 public class ProjectData
 {
+    // TODO: being able to save nodes as well
     [XmlElement(ElementName="metadata")] public string LoadedDatasetPath { get; set; } = string.Empty;
     [XmlElement(ElementName="entities")] public List<EntityData> Entities { get; set; } = [];
     
@@ -31,7 +30,6 @@ public class ProjectData
     }
 }
 
-// TODO: it would be nice not having duplicate classes just for storage of the data if possible - come up with a solution
 [XmlInclude(typeof(PointEntityData))]
 [XmlInclude(typeof(RectangleEntityData))]
 [XmlRoot(ElementName="entity")]
@@ -40,17 +38,9 @@ public abstract class EntityData
     [XmlElement(ElementName="x")] public double X { get; set; }
     [XmlElement(ElementName="y")] public double Y { get; set; }
     [XmlElement(ElementName="id")] public int Id { get; set; }
-
-    public abstract Entity ToEntity();
 }
 
-public class PointEntityData : EntityData
-{
-    public override Entity ToEntity()
-    {
-        return new PointEntity(new Point(X, Y));
-    }
-}
+public class PointEntityData : EntityData;
 
 public class RectangleEntityData : EntityData
 {
@@ -58,10 +48,4 @@ public class RectangleEntityData : EntityData
     public double Width { get; set; }
     [XmlElement(ElementName="height")]
     public double Height { get; set; }
-
-    public override Entity ToEntity()
-    {
-        var newRectangleEntity = new RectangleEntity(new Point(X, Y), new Point(X + Width, Y + Height));
-        return newRectangleEntity;
-    }
 }

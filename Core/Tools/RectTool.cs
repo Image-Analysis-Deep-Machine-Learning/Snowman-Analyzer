@@ -30,7 +30,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
                 if (!EntityManager.GetSelectedEntities().Any())
                 {
                     var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
-                    EntityManager.CreateEntity(newRectangleEntity);
+                    EntityManager.AddEntity(newRectangleEntity);
                     _bottomLeftCorner = newRectangleEntity.GetBottomLeftCorner();
                     EntityManager.SelectEntities([_bottomLeftCorner]);
                 }
