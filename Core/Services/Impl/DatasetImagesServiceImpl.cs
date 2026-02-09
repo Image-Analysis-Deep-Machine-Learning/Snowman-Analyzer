@@ -17,13 +17,13 @@ namespace Snowman.Core.Services.Impl;
 public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, IDatasetImagesEventSupplier
 {
     private const int CachePurgeInterval = 2;
-    private static readonly ImageFrame PlaceHolderFrame = new() { Src = "placeholder.png" };
+    private static readonly IEnumerable<ImageFrame> PlaceHolderFrame = [new() { Src = "placeholder.png" }];
     
     private readonly List<ImageFrame> _imageList;
+    private string _baseFolder;
     private int _currentFrameIndex;
     private Bitmap?[] _cachedFrames;
     private Bitmap?[] _cachedThumbnails;
-    private string _baseFolder;
     private DateTime _lastCachePurgeTime;
     
     public event SignalEventHandler? SelectedFrameChanged;
@@ -32,12 +32,12 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
     {
         serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
         serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IDatasetImagesEventSupplier>(this);
+        _imageList = [];
         _baseFolder = string.Empty;
-        _imageList = [PlaceHolderFrame];
         _currentFrameIndex = 0;
-        _cachedFrames = new Bitmap[_imageList.Count];
-        _cachedThumbnails = new Bitmap[_imageList.Count];
-        _lastCachePurgeTime = DateTime.Now;
+        _cachedFrames = [];
+        _cachedThumbnails = [];
+        LoadNewImageList(PlaceHolderFrame, _baseFolder);
     }
 
     public IEnumerable<IDrawable> GetDrawables()
@@ -92,7 +92,8 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
         _imageList.AddRange(imageList);
         _cachedFrames = new Bitmap[_imageList.Count];
         _cachedThumbnails = new Bitmap[_imageList.Count];
-        _lastCachePurgeTime = DateTime.Now;
+        
+        ClearCache(true);
     }
 
     public Size GetImageSize()
@@ -103,14 +104,15 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
     /// <summary>
     /// Returns current frame at given index. Either from cache if it's cached or loads the corresponding frame, caches it and returns.
     /// The cache is regularly cleared to avoid large images taking up precious space in RAM
-    /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory after regular cache clearing. 
+    /// The returned Bitmap should NEVER be saved to avoid keeping GC from clearing the memory during regular cache clearing. 
     /// </summary>
     private Bitmap FrameAt(int index)
     {
         ClearCache(); // TODO: a better approach would be a task that is clearing the cache regularly, but that would require synchronization and I'm too lazy
         var cachedFrame = _cachedFrames[index];
         
-        if (cachedFrame is not null) return cachedFrame;
+        if (cachedFrame is not null)
+            return cachedFrame;
         
         var imageFrame = _imageList[index];
         var fileName = Path.Combine(_baseFolder, imageFrame.Src);
@@ -152,13 +154,19 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
             default:
                 var bitmap = new Bitmap(fileName);
                 _cachedFrames[index] = bitmap;
+                // GC.AddMemoryPressure was added because images loaded from PNG format (cause unknown) have not been
+                // cleared by GC as they should causing an apparent memory leak. Forcing GC to consider the size of the
+                // PNG bitmap during creation as well as forcing GC to collect garbage when clearing cache fixes this
+                // issue. Never believe a broken framework to not have memory leaks. Even if it's built on a programming
+                // language with managed memory.
+                GC.AddMemoryPressure((long)(bitmap.Size.Width * bitmap.Size.Height * 4));
                 return bitmap;
         }
     }
     
-    private void ClearCache()
+    private void ClearCache(bool force = false)
     {
-        if (_lastCachePurgeTime.AddSeconds(CachePurgeInterval) > DateTime.Now) return;
+        if (_lastCachePurgeTime.AddSeconds(CachePurgeInterval) > DateTime.Now && !force) return;
         
         _lastCachePurgeTime = DateTime.Now;
         ResetFrameCache();
@@ -168,6 +176,7 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
     {
         for (var i = 0; i < _cachedFrames.Length; i++)
         {
+            // TODO: do not clear cache of frames that are currently visible
             _cachedFrames[i] = null;
             _cachedThumbnails[i] = null;
         }

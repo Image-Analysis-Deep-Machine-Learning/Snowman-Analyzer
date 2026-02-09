@@ -9,10 +9,7 @@ public class PointEntity : Entity
 {
     private static readonly Pen Pen = new(Brushes.Black);
     
-    public PointEntity(Point position, Entity? parent = null) : base(parent)
-    {
-        Position = position;
-    }
+    public PointEntity(Point position, Entity? parent = null) : base(parent, position) { }
 
     public override bool EvaluateHit(Point cursorPosition)
     {

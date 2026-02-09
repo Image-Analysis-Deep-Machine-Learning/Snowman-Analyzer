@@ -11,7 +11,7 @@ namespace Snowman.Core.Tools;
 
 public class RectTool : EntityEditTool<RectangleEntity>
 {
-    private PointEntity? _bottomLeftCorner;
+    private Entity? _bottomLeftCorner;
     
     public RectTool() : base("_Rect Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
     
@@ -31,7 +31,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
                 {
                     var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
                     EntityManager.CreateEntity(newRectangleEntity);
-                    _bottomLeftCorner = (PointEntity)newRectangleEntity.Children[2]; // TODO: getter on the rectangle entity?
+                    _bottomLeftCorner = newRectangleEntity.GetBottomLeftCorner();
                     EntityManager.SelectEntities([_bottomLeftCorner]);
                 }
             }

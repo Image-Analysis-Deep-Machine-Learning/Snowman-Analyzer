@@ -26,7 +26,12 @@ public class SnowmanApp
         Project = new Project(serviceProvider); // TODO: this will need a factory that will rewire all existing services
         InitializePythonExecutionEnvironment();
     }
-
+    
+    public async Task OpenProject(IStorageFile file)
+    {
+        await Project.OpenProject(file);
+    }
+    
     private static void InitializePythonExecutionEnvironment()
     {
         if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
@@ -48,10 +53,5 @@ public class SnowmanApp
         //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
         p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
         //p.Start();
-    }
-
-    public async Task OpenProject(IStorageFile file)
-    {
-        await Project.OpenProject(file);
     }
 }

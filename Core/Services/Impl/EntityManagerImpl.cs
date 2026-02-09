@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
+using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
 using Snowman.Events.Suppliers;
 using Snowman.Utilities;
@@ -10,21 +11,22 @@ namespace Snowman.Core.Services.Impl;
 
 public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 {
-    private readonly List<Entity> _entitiesSource;
-    private readonly List<EntityWrapper> _selectedEntities = [];
+    private readonly List<Entity> _entities;
+    private readonly List<EntityWrapper> _selectedEntities;
     
     public event Events.EventHandler<Entity>? EntityAdded;
     public event Events.EventHandler<Entity>? EntityRemoved;
 
-    public EntityManagerImpl(List<Entity> entitiesSource, IServiceProvider serviceProvider)
+    public EntityManagerImpl(IServiceProvider serviceProvider)
     {
-        _entitiesSource = entitiesSource;
         serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IEntityEventSupplier>(this);
+        _entities = [];
+        _selectedEntities = [];
     }
 
-    public IEnumerable<Entity> GetMainEntities()
+    public IEnumerable<Entity> GetEntities()
     {
-        return _entitiesSource.Where(x => x.Parent is null);
+        return _entities.AsReadOnly();
     }
 
     public IEnumerable<Entity> GetSelectedEntities()
@@ -34,13 +36,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 
     public void CreateEntity(Entity entity)
     {
-        _entitiesSource.Add(entity);
-        
-        foreach (var child in entity.Children)
-        {
-            _entitiesSource.Add(child);
-        }
-        
+        _entities.Add(entity);
         EntityAdded?.Invoke(entity);
     }
 
@@ -48,9 +44,8 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     {
         foreach (var entity in entities)
         {
-            _entitiesSource.Remove(entity);
+            _entities.Remove(entity);
             EntityRemoved?.Invoke(entity);
-            entity.Children.ForEach(x => _entitiesSource.Remove(x));
         }
     }
 
@@ -98,7 +93,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     public IEnumerable<Entity> GetEntitiesHitByPoint(Point point)
     {
         List<Entity> hitEntities = [];
-        hitEntities.AddRange(_entitiesSource.Where(entity => entity.EvaluateHit(point)));
+        hitEntities.AddRange(_entities.Where(entity => entity.EvaluateHit(point)));
 
         return hitEntities;
     }
@@ -112,7 +107,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     {
         Entity? last = null;
 
-        foreach (var entity in _entitiesSource.OfParentType<T>())
+        foreach (var entity in _entities.OfParentType<T>())
         {
             if (entity.EvaluateHit(point))
             {
@@ -123,6 +118,12 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         }
 
         last?.IsHit = true;
+    }
+    
+    
+    public IEnumerable<IDrawable> GetDrawables()
+    {
+        return _entities.AsReadOnly();
     }
 
     private readonly record struct EntityWrapper(Entity Entity, Point OriginalPosition);

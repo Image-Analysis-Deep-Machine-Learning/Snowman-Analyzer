@@ -22,7 +22,7 @@
                 <MenuItem Header="_New Project" Command ="{Binding NewProject}"/>
                 <MenuItem Header="_Open Project" Command ="{Binding OpenProject}"/>
                 <MenuItem Header="_Save Project" Command ="{Binding SaveProject}"/>
-                <MenuItem Header="_Open Dataset" Command="{Binding OpenXml}"/>
+                <MenuItem Header="_Open Dataset" Command="{Binding OpenDataset}"/>
                 <MenuItem Header="_Settings"/>
                 <Separator/>
                 <MenuItem Header="_Load Video File" Command="{Binding LoadVideoFile}"/>
@@ -39,12 +39,27 @@
             </Border>
             
             <!-- timeline container -->
-            <Grid Grid.Row="1" Grid.Column="0" Margin="0, 5, 0, 0">
-                <Grid Name="FrameTimelineGrid" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto">
+            <Grid Grid.Row="1"
+                  Grid.Column="0"
+                  Margin="0, 5, 0, 0"
+                  Classes.FrameActive="{Binding FrameTimelineActive}"
+                  Classes.EventActive="{Binding EventTimelineActive}">
+                <Grid.Styles>
+                    <Style Selector="Grid.FrameActive Path.FrameTimelinePath">
+                        <Setter Property="Fill" Value="{StaticResource SystemAccentColor}"/>
+                    </Style>
+                    <Style Selector="Grid.EventActive Path.EventTimelinePath">
+                        <Setter Property="Fill" Value="{StaticResource SystemAccentColor}"/>
+                    </Style>
+                    <Style Selector="Grid Path">
+                        <Setter Property="Fill" Value="{DynamicResource TextControlForeground}"/>
+                    </Style>
+                </Grid.Styles>
+                <Grid RowDefinitions="*" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding FrameTimelineActive}">
                     <!-- prev -->
                     <Button Grid.Column="0" Command="{Binding PrevFrame}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowLeftRegular}" Fill="{StaticResource TextControlForeground}" Margin="0, 0, 0, 10"/>
+                            <Path Data="{StaticResource ArrowLeftRegular}" Margin="0, 0, 0, 10"/>
                             <TextBlock Text="Prev" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -57,42 +72,11 @@
                     <!-- next -->
                     <Button Grid.Column="2" Command="{Binding NextFrame}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowRightRegular}" Fill="{StaticResource TextControlForeground}" Margin="0, 0, 0, 10"/>
+                            <Path Data="{StaticResource ArrowRightRegular}" Margin="0, 0, 0, 10"/>
                             <TextBlock Text="Next" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
-                
-                <!-- event timeline -->
-                <Border Name="EventTimelineBorder" IsVisible="False" Margin="10, 0, 10, 0">
-                    <ctrl:EventTimeline/>
-                </Border>
-                
-                <!-- zoom -->
-                <ComboBox
-                    Name="ZoomComboBox"
-                    HorizontalAlignment="Right" VerticalAlignment="Bottom" ZIndex="100"
-                    ItemsSource="{Binding ZoomScaleOptions}"
-                    SelectedItem="{Binding  ZoomScaleString, Mode=TwoWay}"
-                    Width="75" MinHeight="15" FontSize="12"
-                    Background="Transparent" BorderBrush="Transparent"
-                    HorizontalContentAlignment="Right"
-                    IsVisible="False">
-                    <ComboBox.Styles>
-                        <Style Selector="ComboBox:pointerover /template/ Border">
-                            <Setter Property="Background" Value="#4b4c4e"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Style>
-                        <Style Selector="ComboBox:pressed /template/ Border">
-                            <Setter Property="Background" Value="#4b4c4e"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Style>
-                        <Style Selector="ComboBox:dropdownopen /template/ Border">
-                            <Setter Property="Background" Value="#4b4c4e"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Style>
-                    </ComboBox.Styles>
-                </ComboBox>
                 
                 <!-- timeline toggle buttons -->
                 <StackPanel
@@ -100,29 +84,30 @@
                     HorizontalAlignment="Right" VerticalAlignment="Top" ZIndex="100">
                     
                     <!-- frame timeline -->
-                    <Button Name="ToggleFrameTimelineButton" Width="24" Height="24" Margin="0, 0, 5, 0" Click="ToggleFrameTimelineButton_OnClick" ToolTip.Tip="Frame Timeline">
-                        <Path Name="FrameTimelinePath"
+                    <Button Width="24" Height="24" Margin="0, 0, 5, 0" Command="{Binding SetTimelineMode}" CommandParameter="Frame" ToolTip.Tip="Frame Timeline">
+                        <Path
+                            Classes="FrameTimelinePath"
                             Data="{StaticResource FrameTimelineIcon}"
-                            Fill="{DynamicResource SystemAccentColor}"
                             Stretch="Uniform"
                             Width="16" Height="16"
-                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                        </Path>
                     </Button>
                     
                     <!-- event timeline -->
-                    <Button Name="ToggleEventTimelineButton" Width="24" Height="24" Click="ToggleEventTimelineButton_OnClick" ToolTip.Tip="Event Timeline">
-                        <Path Name="EventTimelinePath"
-                              Data="{StaticResource EventTimelineIcon}"
-                              Fill="{StaticResource TextControlForeground}"
-                              Stretch="Uniform"
-                              Width="16" Height="16"
-                              VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Button Width="24" Height="24" Command="{Binding SetTimelineMode}" CommandParameter="Event" ToolTip.Tip="Event Timeline">
+                        <Path
+                            Classes="EventTimelinePath"
+                            Data="{StaticResource EventTimelineIcon}"
+                            Stretch="Uniform"
+                            Width="16" Height="16"
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
                         </Path>
                     </Button>
                 </StackPanel>
             </Grid>
             
-            <!-- run script -->
+            <!-- node viewport -->
             <ctrl:NodeViewport Grid.Row="0" Grid.Column="1"/>
             
             <!-- logging console -->

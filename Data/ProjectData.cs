@@ -32,19 +32,19 @@ public class ProjectData
 }
 
 // TODO: it would be nice not having duplicate classes just for storage of the data if possible - come up with a solution
-[XmlInclude(typeof(EntityPointData))]
-[XmlInclude(typeof(EntityRectangleData))]
+[XmlInclude(typeof(PointEntityData))]
+[XmlInclude(typeof(RectangleEntityData))]
 [XmlRoot(ElementName="entity")]
 public abstract class EntityData
 {
     [XmlElement(ElementName="x")] public double X { get; set; }
     [XmlElement(ElementName="y")] public double Y { get; set; }
-    [XmlElement(ElementName="script_paths")] public List<string> ScriptPaths { get; set; } = [];
+    [XmlElement(ElementName="id")] public int Id { get; set; }
 
     public abstract Entity ToEntity();
 }
 
-public class EntityPointData : EntityData
+public class PointEntityData : EntityData
 {
     public override Entity ToEntity()
     {
@@ -52,7 +52,7 @@ public class EntityPointData : EntityData
     }
 }
 
-public class EntityRectangleData : EntityData
+public class RectangleEntityData : EntityData
 {
     [XmlElement(ElementName="width")]
     public double Width { get; set; }

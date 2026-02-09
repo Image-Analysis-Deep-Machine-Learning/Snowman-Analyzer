@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using Avalonia;
+using Snowman.Core.Drawing;
 using Snowman.Core.Entities;
 
 namespace Snowman.Core.Services;
 
-public interface IEntityManager : IService
+public interface IEntityManager : IService, IDrawableSource
 {
-    public IEnumerable<Entity> GetMainEntities();
+    public IEnumerable<Entity> GetEntities();
     public IEnumerable<Entity> GetSelectedEntities();
     public void CreateEntity(Entity entity);
     public void DeleteEntities(IEnumerable<Entity> entities);

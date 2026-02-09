@@ -80,12 +80,3 @@ public partial class FrameTimelineDataContext
         Frames = null!;
     }
 }
-
-public partial class EventTimelineDataContext
-{
-    public EventTimelineDataContext()
-    {
-        _datasetImagesService = null!;
-        ParentRendererControl = null!;
-    }
-}

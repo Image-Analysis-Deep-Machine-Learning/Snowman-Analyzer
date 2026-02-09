@@ -13,6 +13,9 @@ public class RectangleEntity : Entity
     private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
 
     private Rect _rectangle;
+    
+    public double Width => _rectangle.Width;
+    public double Height => _rectangle.Height;
 
     public override bool Selected
     {
@@ -51,15 +54,20 @@ public class RectangleEntity : Entity
         PositionChanges += OnPositionChanges;
     }
 
-    private void OnPositionChanges(object? sender, Point oldPosition)
+    public Entity GetBottomLeftCorner()
     {
-        var vec =  Position - oldPosition;
-        _rectangle = _rectangle.Translate(vec);
-
-        foreach (var child in Children)
+        return Children[2];
+    }
+    
+    public override Entity Clone()
+    {
+        var copy = new RectangleEntity(Position,
+            Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height))
         {
-            child.SetPositionWithoutRaisingEvent(child.Position + vec);
-        }
+            Selected = Selected,
+            IsHit = IsHit
+        };
+        return copy;
     }
 
     public override bool EvaluateHit(Point cursorPosition)
@@ -85,10 +93,26 @@ public class RectangleEntity : Entity
         
         context.FillRectangle(fillBrush, _rectangle);
         context.DrawRectangle(pen, _rectangle);
-        
+
+        foreach (var child in Children) // TODO: change Render to a template method
+        {
+            child.Render(context);
+        }
+
         if (Parent is null)
         {
             context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, Brushes.DarkOrange), Position + new Vector(-7, -17));
+        }
+    }
+    
+    private void OnPositionChanges(object? sender, Point oldPosition)
+    {
+        var vec =  Position - oldPosition;
+        _rectangle = _rectangle.Translate(vec);
+
+        foreach (var child in Children)
+        {
+            child.SetPositionWithoutRaisingEvent(child.Position + vec);
         }
     }
 
@@ -107,16 +131,5 @@ public class RectangleEntity : Entity
         
         SetPositionWithoutRaisingEvent(new Point(minX, minY));
         _rectangle = new Rect(Position, new Point(maxX, maxY));
-    }
-
-    public override Entity Clone()
-    {
-        var copy = new RectangleEntity(Position,
-            Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height))
-        {
-            Selected = Selected,
-            IsHit = IsHit
-        };
-        return copy;
     }
 }

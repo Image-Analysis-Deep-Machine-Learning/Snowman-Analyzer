@@ -43,13 +43,6 @@ public static class DataContextInjector
     // keep in alphabetic order to make it easier to read
     private static void RegisterDataContextFactories()
     {
-        // EventPin will probably not exist and is not used currently so it does not use this pattern
-        RegisterDataContextFactory<EventTimeline>((control, serviceProvider) => // TODO: this control is not refactored and will need to be changed later
-        {
-            var dataContext = new EventTimelineDataContext(serviceProvider, control);
-            dataContext.ParentRendererControl = control;
-            return dataContext;
-        });
         RegisterDataContextFactory<FrameTimeline>((_, serviceProvider) => new FrameTimelineDataContext(serviceProvider));
         RegisterDataContextFactory<GraphOverlay>((_, serviceProvider) => new GraphOverlayDataContext(serviceProvider));
         // NodeControl is dynamically generated, it does not use this pattern TODO: check if it can be done

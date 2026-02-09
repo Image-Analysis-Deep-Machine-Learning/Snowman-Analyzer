@@ -2,15 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Snowman.Core.Services;
 using Snowman.Events.Suppliers;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
 public partial class FrameTimelineDataContext
 {
+    private readonly IDatasetImagesService _datasetImagesService;
+    
     public FrameCollection Frames { get; set; }
 
     public Rect ControlBounds
@@ -27,24 +29,35 @@ public partial class FrameTimelineDataContext
     public FrameTimelineDataContext(IServiceProvider serviceProvider)
     {
         Frames = new FrameCollection(serviceProvider, ControlBounds.Width);
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += RefreshFrames);
     }
-
-    public void PointerPressed(Point clickPosition)
+    
+    
+    public void ProcessKeyDown(KeyEventArgs e)
     {
-        /*if (_timelineFrames == null)
-            return;
-
-        if (!(clickPosition.Y >= _timelineFrames[0].Rect.Y) ||
-            !(clickPosition.Y <= _timelineFrames[0].Rect.Y + _timelineFrames[0].Rect.Height)) return;
-
-        foreach (var timelineFrame in _timelineFrames.Where(
-                     timelineFrame => clickPosition.X >= timelineFrame.Rect.X &&
-                                      clickPosition.X <= timelineFrame.Rect.X + _timelineFrames[0].Rect.Width))
+        switch (e.Key)
         {
-            _datasetImagesService.SkipToFrame(timelineFrame.Index);
-            break;
-        }*/
+            case Key.Left:
+                _datasetImagesService.PrevFrame();
+                break;
+            case Key.Right:
+                _datasetImagesService.NextFrame();
+                break;
+        }
+    }
+
+    public void ProcessWheelChange(PointerWheelEventArgs e)
+    {
+        switch (e.Delta.Y)
+        {
+            case < 0:
+                _datasetImagesService.PrevFrame();
+                break;
+            case > 0:
+                _datasetImagesService.NextFrame();
+                break;
+        }
     }
 
     private void RefreshFrames()
@@ -132,6 +145,11 @@ public partial class FrameTimelineDataContext
             public Bitmap Image => datasetImagesService.ThumbnailAt(index);
             public bool Selected => index == datasetImagesService.CurrentFrameIndex();
             public bool Invisible { get; init; }
+
+            public void ProcessPointerPressed()
+            {
+                datasetImagesService.SkipToFrame(index);
+            }
         }
         
         private class FrameCollectionEnumerator : IEnumerator<TimelineFrame>

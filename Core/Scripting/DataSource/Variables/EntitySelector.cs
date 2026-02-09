@@ -28,7 +28,7 @@ public class EntitySelector : GenericVariableWrapper<Entity>
             EntitySubtype = EntitySubtype
         };
         
-        var currentEntities = serviceProvider.GetService<IEntityManager>().GetMainEntities();
+        var currentEntities = serviceProvider.GetService<IEntityManager>().GetEntities();
 
         foreach (var entity in currentEntities)
         {
