@@ -18,6 +18,7 @@ public static class ToolRegistry
         RegisterTool(new EntityEditTool<Entity>());
         RegisterTool(new PointTool());
         RegisterTool(new RectTool());
+        RegisterTool(new LineTool());
         RegisterTool(new PolygonTool());
     }
 

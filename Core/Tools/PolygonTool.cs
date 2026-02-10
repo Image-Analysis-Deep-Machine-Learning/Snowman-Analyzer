@@ -17,6 +17,22 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
     
     protected PolygonTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
+    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
+    {
+        if (_polygonInCreation is not null)
+        {
+            if (e.WrappedArgs.Properties.IsLeftButtonPressed)
+            {
+                EntityManager.DeselectAllEntities();
+                OriginalClickPosition = e.GetTransformedPointerPosition();
+            }
+
+            return;
+        }
+        
+        base.PointerPressedAction(sender, e);
+    }
+
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
         var pointerPosition = e.GetTransformedPointerPosition();
@@ -29,7 +45,7 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
             {
                 if (!EntityManager.GetSelectedEntities().Any())
                 {
-                    _polygonInCreation = new PolygonEntity(pointerPosition);
+                    _polygonInCreation = new PolygonEntity(pointerPosition, pointerPosition);
                     EntityManager.AddEntity(_polygonInCreation);
                     EntityManager.SelectEntities([_polygonInCreation.Children[^1]]);
                 }

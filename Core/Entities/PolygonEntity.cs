@@ -7,21 +7,16 @@ namespace Snowman.Core.Entities;
 
 public class PolygonEntity : Entity
 {
-    private static readonly Brush FillBrush = new SolidColorBrush(Colors.Red, 0.2);
-    private static readonly Brush TempFillBrush = new SolidColorBrush(Colors.Purple, 0.2);
-    private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
-    private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
-
     private bool _isClosed;
     
     public bool CanBeClosed => Children.Count > 3;
 
-    public PolygonEntity(Point startingPoint) : base(startingPoint)
+    public PolygonEntity(Point point1, Point point2) : base(point1)
     {
-        var controlPoint = new PointEntity(startingPoint, this);
+        var controlPoint = new PointEntity(point1, this);
         controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
         _children.Add(controlPoint);
-        _children.Add(new PointEntity(startingPoint, this) { IsVisible = false });
+        _children.Add(new PointEntity(point2, this) { IsVisible = false });
         PositionChanges += OnPositionChanges;
     }
 
@@ -44,7 +39,6 @@ public class PolygonEntity : Entity
         if (!IsVisible) return;
         
         var points = GetRawPoints();
-        
         var geometry = new StreamGeometry();
         
         using (var geometryContext = geometry.Open())
@@ -54,18 +48,18 @@ public class PolygonEntity : Entity
             for (var i = 1; i < points.Length; i++)
             {
                 geometryContext.LineTo(points[i], false);
-                drawingContext.DrawLine(Pen, points[i - 1], points[i]);
+                drawingContext.DrawLine(GetPen(), points[i - 1], points[i]);
             }
             
             geometryContext.EndFigure(true);
 
             if (_isClosed)
             {
-                drawingContext.DrawLine(Pen, points[^1], points[0]);
+                drawingContext.DrawLine(GetPen(), points[^1], points[0]);
             }
         }
         
-        drawingContext.DrawGeometry(FillBrush, null, geometry);
+        drawingContext.DrawGeometry(GetBrush(), null, geometry);
         
         foreach (var child in Children)
         {

@@ -7,11 +7,6 @@ namespace Snowman.Core.Entities;
 
 public class RectangleEntity : Entity
 {
-    private static readonly Brush FillBrush = new SolidColorBrush(Colors.Red, 0.2);
-    private static readonly Brush TempFillBrush = new SolidColorBrush(Colors.Purple, 0.2);
-    private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
-    private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
-
     private Rect _rectangle;
     
     public double Width => _rectangle.Width;
@@ -72,17 +67,8 @@ public class RectangleEntity : Entity
     {
         if (!IsVisible) return; // TODO: change to template methods, I am losing my mind with these infinite overrides and duplicate code
         
-        var fillBrush = FillBrush;
-        var pen = Pen;
-        
-        if (IsHighlighted)
-        {
-            fillBrush = TempFillBrush;
-            pen = TempPen;
-        }
-        
-        context.FillRectangle(fillBrush, _rectangle);
-        context.DrawRectangle(pen, _rectangle);
+        context.FillRectangle(GetBrush(), _rectangle);
+        context.DrawRectangle(GetPen(), _rectangle);
 
         foreach (var child in Children) // TODO: change Render to a template method
         {

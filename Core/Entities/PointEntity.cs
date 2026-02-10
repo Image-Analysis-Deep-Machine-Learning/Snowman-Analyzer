@@ -25,14 +25,7 @@ public class PointEntity : Entity
     {
         if (!IsVisible) return;
         
-        IBrush brush;
-
-        if      (IsHit)         brush = Brushes.Lime;
-        else if (Selected)      brush = Brushes.DeepSkyBlue;
-        else if (IsHighlighted) brush = Brushes.Purple;
-        else                    brush = Brushes.Red;
-        
-        context.DrawEllipse(brush, Pen, Position, Radius, Radius);
+        context.DrawEllipse(GetBrush(1.0), Pen, Position, Radius, Radius);
 
         if (Parent is null)
         {

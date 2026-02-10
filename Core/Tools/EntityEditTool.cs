@@ -16,7 +16,7 @@ namespace Snowman.Core.Tools;
 /// <typeparam name="TEntity">Filters entities that the tool can edit</typeparam>
 public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 {
-    private Point _originalClickPosition;
+    protected Point OriginalClickPosition;
     protected bool Dragging;
     protected IEntityManager EntityManager = null!;
     
@@ -32,7 +32,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
             var pointerPosition = e.GetTransformedPointerPosition();
             var filteredEntities = EntityManager.GetEntitiesHitByPoint(pointerPosition).OfParentType<TEntity>().ToList();
             EntityManager.SelectEntities(filteredEntities.Count > 0 ? [filteredEntities.Last()] : []); // select only one entity TODO: multi-selection with shift?
-            _originalClickPosition = e.GetTransformedPointerPosition();
+            OriginalClickPosition = e.GetTransformedPointerPosition();
 
             if (filteredEntities.Count > 0)
             {
@@ -55,7 +55,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         
         if (Dragging)
         {
-            EntityManager.MoveSelectedEntities(cursorPositionLocal - _originalClickPosition, true);
+            EntityManager.MoveSelectedEntities(cursorPositionLocal - OriginalClickPosition, true);
         }
 
         else
