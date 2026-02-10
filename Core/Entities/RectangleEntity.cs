@@ -24,7 +24,11 @@ public class RectangleEntity : Entity
         set
         {
             base.Selected = value;
-            Children.ForEach(c => c._selected = value);
+
+            foreach (var child in Children)
+            {
+                child._selected = value;
+            }
         }
     }
     
@@ -38,7 +42,7 @@ public class RectangleEntity : Entity
         
         _rectangle = new Rect(Position, new Point(maxX, maxY));
         
-        Children.AddRange([
+        _children.AddRange([
             new PointEntity(Position, this), // top left
             new PointEntity(Position.WithX(Position.X + _rectangle.Width), this), // top right
             new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this), // bottom right
@@ -54,25 +58,9 @@ public class RectangleEntity : Entity
         PositionChanges += OnPositionChanges;
     }
 
-    public Entity GetBottomLeftCorner()
-    {
-        return Children[2];
-    }
-    
-    public override Entity Clone()
-    {
-        var copy = new RectangleEntity(Position,
-            Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height))
-        {
-            Selected = Selected,
-            IsHit = IsHit
-        };
-        return copy;
-    }
-
     public override bool EvaluateHit(Point cursorPosition)
     {
-        return _rectangle.Contains(cursorPosition);
+        return IsVisible && _rectangle.Contains(cursorPosition);
     }
 
     public override bool EvaluateHit(Rect selection)
@@ -82,6 +70,8 @@ public class RectangleEntity : Entity
 
     public override void Render(DrawingContext context)
     {
+        if (!IsVisible) return; // TODO: change to template methods, I am losing my mind with these infinite overrides and duplicate code
+        
         var fillBrush = FillBrush;
         var pen = Pen;
         
@@ -107,7 +97,7 @@ public class RectangleEntity : Entity
     
     private void OnPositionChanges(object? sender, Point oldPosition)
     {
-        var vec =  Position - oldPosition;
+        var vec = Position - oldPosition;
         _rectangle = _rectangle.Translate(vec);
 
         foreach (var child in Children)

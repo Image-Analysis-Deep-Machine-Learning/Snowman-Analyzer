@@ -9,11 +9,11 @@ public class PointEntity : Entity
 {
     private static readonly Pen Pen = new(Brushes.Black);
     
-    public PointEntity(Point position, Entity? parent = null) : base(parent, position) { }
+    public PointEntity(Point position, Entity? parent = null) : base(position, parent) { }
 
     public override bool EvaluateHit(Point cursorPosition)
     {
-        return cursorPosition.DistanceTo(Position) <= Radius;
+        return IsVisible && cursorPosition.DistanceTo(Position) <= Radius;
     }
 
     public override bool EvaluateHit(Rect selection)
@@ -23,6 +23,8 @@ public class PointEntity : Entity
 
     public override void Render(DrawingContext context)
     {
+        if (!IsVisible) return;
+        
         IBrush brush;
 
         if      (IsHit)         brush = Brushes.Lime;
@@ -36,16 +38,5 @@ public class PointEntity : Entity
         {
             context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, Brushes.DarkOrange), Position + new Vector(-7, -17));
         }
-    }
-
-    public override Entity Clone()
-    {
-        var copy = new PointEntity(Position, Parent)
-        {
-            Selected = Selected,
-            IsHit = IsHit,
-        };
-        
-        return copy;
     }
 }

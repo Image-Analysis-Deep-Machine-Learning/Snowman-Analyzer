@@ -12,7 +12,7 @@
     <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
         <ctrl:ToolBar Grid.Row="0" Name="ToolBar"/>
         <Panel Grid.Row="1">
-            <ctrl:Viewport Name="Viewport"/>
+            <ctrl:Viewport Name="Viewport" Background="Transparent"/>
         </Panel>
     </Grid>
 </ctrl:UserControlWrapper>

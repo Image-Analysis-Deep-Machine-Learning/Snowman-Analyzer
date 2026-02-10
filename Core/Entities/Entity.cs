@@ -8,18 +8,22 @@ namespace Snowman.Core.Entities;
 
 public abstract class Entity : IDrawable
 {
-    // TODO: configurable
     protected const int Radius = 5;
+
+    public event EventHandler<Entity>? EntityChanged;
     
     private Point _pos;
     protected internal bool _selected;
+    protected List<Entity> _children = [];
     
     public int Id { get; set; }
     public event EventHandler<Entity, Point>? PositionChanges;
     public Entity? Parent { get; }
     public bool IsHit { get; set; }
     public bool IsHighlighted { get; set; }
-    public List<Entity> Children { get; } = [];
+    public bool IsVisible { get; set; }
+
+    public IReadOnlyList<Entity> Children => _children.AsReadOnly();
 
     public virtual bool Selected
     {
@@ -48,11 +52,12 @@ public abstract class Entity : IDrawable
         }
     }
 
-    protected Entity(Entity? parent = null, Point position = default)
+    protected Entity(Point position = default, Entity? parent = null)
     {
         Parent = parent;
         Position = position;
         Id = -1;
+        IsVisible = true;
     }
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)
@@ -65,8 +70,12 @@ public abstract class Entity : IDrawable
         return $"ID: {Id}";
     }
 
-    public abstract void Render(DrawingContext context);
+    protected void RaiseEntityChanged()
+    {
+        EntityChanged?.Invoke(this);
+    }
+
+    public abstract void Render(DrawingContext drawingContext);
     public abstract bool EvaluateHit(Point cursorPosition);
     public abstract bool EvaluateHit(Rect selection);
-    public abstract Entity Clone();
 }
