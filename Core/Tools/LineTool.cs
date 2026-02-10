@@ -9,13 +9,13 @@ using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
-public class RectTool : EntityEditTool<RectangleEntity>
+public class LineTool : EntityEditTool<LineEntity>
 {
     private Entity? _selectedPoint;
     
-    public RectTool() : base("_Rect Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
+    public LineTool() : base("_Line Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
     
-    protected RectTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+    protected LineTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
@@ -29,9 +29,9 @@ public class RectTool : EntityEditTool<RectangleEntity>
             {
                 if (!EntityManager.GetSelectedEntities().Any())
                 {
-                    var newRectangleEntity = new RectangleEntity(pointerPosition, pointerPosition);
-                    EntityManager.AddEntity(newRectangleEntity);
-                    _selectedPoint = newRectangleEntity.Children[^1];
+                    var newLineEntity = new LineEntity(pointerPosition, pointerPosition);
+                    EntityManager.AddEntity(newLineEntity);
+                    _selectedPoint = newLineEntity.Children[^1];
                     EntityManager.SelectEntities([_selectedPoint]);
                 }
             }
@@ -52,7 +52,7 @@ public class RectTool : EntityEditTool<RectangleEntity>
     
     public override Tool Clone(IServiceProvider serviceProvider)
     {
-        return new RectTool(Name, Cursor, Icon)
+        return new LineTool(Name, Cursor, Icon)
         {
             EntityManager = serviceProvider.GetService<IEntityManager>()
         };

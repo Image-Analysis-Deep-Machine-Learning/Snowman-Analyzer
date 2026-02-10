@@ -15,6 +15,7 @@ public class ViewportMoveTool : Tool
     private Vector _originalMovement;
     private Point _clickOrigin;
     private bool _pressed;
+    
     protected Vector CurrentMouseMovement { get; private set; }
     
     /// <summary>

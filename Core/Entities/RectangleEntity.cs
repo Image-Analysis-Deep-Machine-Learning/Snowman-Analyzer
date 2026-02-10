@@ -7,11 +7,6 @@ namespace Snowman.Core.Entities;
 
 public class RectangleEntity : Entity
 {
-    private static readonly Brush FillBrush = new SolidColorBrush(Colors.Red, 0.2);
-    private static readonly Brush TempFillBrush = new SolidColorBrush(Colors.Purple, 0.2);
-    private static readonly Pen Pen = new(new SolidColorBrush(Colors.Red));
-    private static readonly Pen TempPen = new(new SolidColorBrush(Colors.Purple), 2);
-
     private Rect _rectangle;
     
     public double Width => _rectangle.Width;
@@ -24,7 +19,11 @@ public class RectangleEntity : Entity
         set
         {
             base.Selected = value;
-            Children.ForEach(c => c._selected = value);
+
+            foreach (var child in Children)
+            {
+                child._selected = value;
+            }
         }
     }
     
@@ -38,7 +37,7 @@ public class RectangleEntity : Entity
         
         _rectangle = new Rect(Position, new Point(maxX, maxY));
         
-        Children.AddRange([
+        _children.AddRange([
             new PointEntity(Position, this), // top left
             new PointEntity(Position.WithX(Position.X + _rectangle.Width), this), // top right
             new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this), // bottom right
@@ -54,25 +53,9 @@ public class RectangleEntity : Entity
         PositionChanges += OnPositionChanges;
     }
 
-    public Entity GetBottomLeftCorner()
-    {
-        return Children[2];
-    }
-    
-    public override Entity Clone()
-    {
-        var copy = new RectangleEntity(Position,
-            Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height))
-        {
-            Selected = Selected,
-            IsHit = IsHit
-        };
-        return copy;
-    }
-
     public override bool EvaluateHit(Point cursorPosition)
     {
-        return _rectangle.Contains(cursorPosition);
+        return IsVisible && _rectangle.Contains(cursorPosition);
     }
 
     public override bool EvaluateHit(Rect selection)
@@ -82,17 +65,10 @@ public class RectangleEntity : Entity
 
     public override void Render(DrawingContext context)
     {
-        var fillBrush = FillBrush;
-        var pen = Pen;
+        if (!IsVisible) return; // TODO: change to template methods, I am losing my mind with these infinite overrides and duplicate code
         
-        if (IsHighlighted)
-        {
-            fillBrush = TempFillBrush;
-            pen = TempPen;
-        }
-        
-        context.FillRectangle(fillBrush, _rectangle);
-        context.DrawRectangle(pen, _rectangle);
+        context.FillRectangle(GetBrush(), _rectangle);
+        context.DrawRectangle(GetPen(), _rectangle);
 
         foreach (var child in Children) // TODO: change Render to a template method
         {
@@ -107,7 +83,7 @@ public class RectangleEntity : Entity
     
     private void OnPositionChanges(object? sender, Point oldPosition)
     {
-        var vec =  Position - oldPosition;
+        var vec = Position - oldPosition;
         _rectangle = _rectangle.Translate(vec);
 
         foreach (var child in Children)

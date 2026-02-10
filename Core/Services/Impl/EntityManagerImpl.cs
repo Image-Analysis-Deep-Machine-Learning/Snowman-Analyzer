@@ -52,6 +52,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         while (entityQueue.Count > 0)
         {
             var e = entityQueue.Dequeue();
+            e.EntityChanged += UpdateEntity;
             _entitiesIncludingChildren.Add(e);
             
             foreach (var child in e.Children)
@@ -178,6 +179,35 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         }
 
         return nextId;
+    }
+    
+    private void UpdateEntity(Entity entity)
+    {
+        var entityQueue = new Queue<Entity>([entity]);
+        // remove all entities that make up this entity including children
+        while (entityQueue.Count > 0)
+        {
+            var e = entityQueue.Dequeue();
+            _entitiesIncludingChildren.Remove(e);
+            
+            foreach (var child in e.Children)
+            {
+                entityQueue.Enqueue(child);
+            }
+        }
+        
+        entityQueue = new Queue<Entity>([entity]);
+        // add all entities that make up this entity including children
+        while (entityQueue.Count > 0)
+        {
+            var e = entityQueue.Dequeue();
+            _entitiesIncludingChildren.Add(e);
+            
+            foreach (var child in e.Children)
+            {
+                entityQueue.Enqueue(child);
+            }
+        }
     }
 
     private readonly record struct EntityWrapper(Entity Entity, Point OriginalPosition);

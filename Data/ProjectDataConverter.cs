@@ -6,7 +6,7 @@ using Snowman.Core.Entities;
 
 namespace Snowman.Data;
 
-public class ProjectDataConverter
+public static class ProjectDataConverter
 {
     private static readonly Dictionary<Type, Func<Entity, EntityData>> EntitySerializers = [];
     private static readonly Dictionary<Type, Func<EntityData, Entity>> EntityDeserializers = [];
@@ -39,18 +39,38 @@ public class ProjectDataConverter
     
     private static void RegisterEntitySerializers()
     {
-        RegisterEntitySerializer<PointEntity, PointEntityData>(entity => new PointEntityData { Id = entity.Id, X = entity.Position.X, Y = entity.Position.Y });
-        RegisterEntitySerializer<RectangleEntity, RectangleEntityData>(entity => new RectangleEntityData { Id = entity.Id, X = entity.Position.X, Y = entity.Position.Y, Width = entity.Width, Height = entity.Height });
+        RegisterEntitySerializer<PointEntity, PointEntityData>(entity => new PointEntityData { Id = entity.Id, Position = entity.Position.ToPointData() });
+        RegisterEntitySerializer<RectangleEntity, RectangleEntityData>(entity => new RectangleEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), Width = entity.Width, Height = entity.Height });
+        RegisterEntitySerializer<LineEntity, LineEntityData>(entity => new LineEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), SecondPoint = entity.Children[1].Position.ToPointData() });
+        RegisterEntitySerializer<PolygonEntity, PolygonEntityData>(entity => new PolygonEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), Points = entity.Children.Skip(1).Select(x => x.Position.ToPointData()).ToList() });
     }
 
     private static void RegisterEntityDeserializers()
     {
-        RegisterEntityDeserializer<PointEntityData, PointEntity>(entityData => new PointEntity(new Point(entityData.X, entityData.Y)));
+        RegisterEntityDeserializer<PointEntityData, PointEntity>(entityData => new PointEntity(entityData.Position.ToPoint()) { Id  = entityData.Id });
         RegisterEntityDeserializer<RectangleEntityData, RectangleEntity>(entityData =>
         {
-            var pos1 = new Point(entityData.X, entityData.Y);
+            var pos1 = entityData.Position.ToPoint();
             var pos2 = pos1 + new Vector(entityData.Width, entityData.Height);
-            return new RectangleEntity(pos1, pos2);
+            return new RectangleEntity(pos1, pos2) { Id  = entityData.Id };
+        });
+        RegisterEntityDeserializer<LineEntityData, LineEntity>(entityData => new LineEntity(entityData.Position.ToPoint(), entityData.SecondPoint.ToPoint()) { Id  = entityData.Id });
+        RegisterEntityDeserializer<PolygonEntityData, PolygonEntity>(entityData =>
+        {
+            var newPolygonEntity = new PolygonEntity(entityData.Position.ToPoint(), entityData.Points[0].ToPoint()) { Id  = entityData.Id };
+
+            for (var i = 1; i < entityData.Points.Count; i++)
+            {
+                newPolygonEntity.AddPoint(entityData.Points[i].ToPoint());
+            }
+            
+            newPolygonEntity.AddPoint(default);
+            newPolygonEntity.ClosePolygon();
+            
+            return newPolygonEntity;
         });
     }
+    
+    private static Point ToPoint(this PointData pointData) => new(pointData.X, pointData.Y);
+    private static PointData ToPointData(this Point point) => new() { X = point.X, Y = point.Y };
 }
