@@ -1,64 +1,84 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Snowman.Core.Services;
-using Snowman.Events;
 using Snowman.Events.Suppliers;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class FrameTimelineDataContext()
+public partial class FrameTimelineDataContext
 {
-    private Rect _controlBounds;
-
-    public event SignalEventHandler? ItemsSourceChanged;
-
-    public FrameCollection Frames { get; set; } = null!;
+    private readonly IDatasetImagesService _datasetImagesService;
     
+    public FrameCollection Frames { get; set; }
+
     public Rect ControlBounds
     {
-        get => _controlBounds;
+        get;
         set
         {
-            _controlBounds = value;
+            field = value;
             Frames.TimelineWidth = value.Width;
-            ItemsSourceChanged?.Invoke();
+            RefreshFrames();
         }
     }
 
-    public FrameTimelineDataContext(IServiceProvider serviceProvider) : this()
+    public FrameTimelineDataContext(IServiceProvider serviceProvider)
     {
         Frames = new FrameCollection(serviceProvider, ControlBounds.Width);
-        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => ItemsSourceChanged?.Invoke());
-        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += () => ItemsSourceChanged?.Invoke());
-    }
-
-    public void PointerPressed(Point clickPosition)
-    {
-        /*if (_timelineFrames == null)
-            return;
-
-        if (!(clickPosition.Y >= _timelineFrames[0].Rect.Y) ||
-            !(clickPosition.Y <= _timelineFrames[0].Rect.Y + _timelineFrames[0].Rect.Height)) return;
-
-        foreach (var timelineFrame in _timelineFrames.Where(
-                     timelineFrame => clickPosition.X >= timelineFrame.Rect.X &&
-                                      clickPosition.X <= timelineFrame.Rect.X + _timelineFrames[0].Rect.Width))
-        {
-            _datasetImagesService.SkipToFrame(timelineFrame.Index);
-            break;
-        }*/
+        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += RefreshFrames);
     }
     
-    public class FrameCollection : IEnumerable<FrameCollection.TimelineFrame>
+    
+    public void ProcessKeyDown(KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Left:
+                _datasetImagesService.PrevFrame();
+                break;
+            case Key.Right:
+                _datasetImagesService.NextFrame();
+                break;
+        }
+    }
+
+    public void ProcessWheelChange(PointerWheelEventArgs e)
+    {
+        switch (e.Delta.Y)
+        {
+            case < 0:
+                _datasetImagesService.PrevFrame();
+                break;
+            case > 0:
+                _datasetImagesService.NextFrame();
+                break;
+        }
+    }
+
+    private void RefreshFrames()
+    {
+        Frames.Refresh();
+    }
+    
+    // In order to tell the ItemsSource in ItemsControl to refresh, the IEnumerable source needs to implement
+    // INotifyCollectionChanged AND also IList. Why? FUCK YOU, that's why. To avoid adding unnecessary boilerplate from
+    // IList methods and properties NO ONE WILL EVER FUCKING USE ArrayList is extended instead. Do not remove ArrayList
+    // as the base class, otherwise the collection silently with no exception whatsoever stops reacting to notifications
+    // about updating. I am losing my mind here. Help
+    public class FrameCollection : ArrayList, IEnumerable<FrameCollection.TimelineFrame>, INotifyCollectionChanged
     {
         private readonly IDatasetImagesService _datasetImagesService;
         private readonly TimelineFrame _invisibleFrame;
         private TimelineFrame[] _frames = [];
         private int _visibleFrameCount;
 
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+        
         public double TimelineWidth
         {
             set
@@ -66,6 +86,7 @@ public class FrameTimelineDataContext()
                 _visibleFrameCount = (int)(value / 100);
                 
                 if (_visibleFrameCount % 2 == 0) _visibleFrameCount += 1;
+                Refresh();
             }
         }
         
@@ -81,24 +102,24 @@ public class FrameTimelineDataContext()
             });
         }
         
-        public IEnumerator<TimelineFrame> GetEnumerator()
+        public override IEnumerator<TimelineFrame> GetEnumerator()
         {
             var currentSelectedFrame = _datasetImagesService.CurrentFrameIndex();
             var minIndex = currentSelectedFrame - _visibleFrameCount / 2;
             var maxIndex = currentSelectedFrame + _visibleFrameCount / 2;
             return new FrameCollectionEnumerator(minIndex, maxIndex, this);
         }
-
+        
+        public void Refresh()
+        {
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+        
         private TimelineFrame GetFrameAt(int index)
         {
             if (index < 0 || index >= _frames.Length) return _invisibleFrame;
             
             return _frames[index];
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         private void ReloadFrames()
@@ -109,6 +130,13 @@ public class FrameTimelineDataContext()
             {
                 _frames[i] = new TimelineFrame(i, _datasetImagesService);
             }
+            
+            Refresh();
+        }
+        
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
         
         public class TimelineFrame(int index, IDatasetImagesService datasetImagesService)
@@ -117,6 +145,11 @@ public class FrameTimelineDataContext()
             public Bitmap Image => datasetImagesService.ThumbnailAt(index);
             public bool Selected => index == datasetImagesService.CurrentFrameIndex();
             public bool Invisible { get; init; }
+
+            public void ProcessPointerPressed()
+            {
+                datasetImagesService.SkipToFrame(index);
+            }
         }
         
         private class FrameCollectionEnumerator : IEnumerator<TimelineFrame>

@@ -10,12 +10,12 @@ public class Script
     private const string ScriptDefinitionFileName = "definition.xml";
     private const string ScriptCodeFileName = "code.py";
     
-    public ScriptDefinition Definition { get; }
+    public ScriptNodeDefinitionData NodeDefinitionData { get; }
     public string Code { get; }
 
-    private Script(ScriptDefinition scriptDefinition, string code)
+    private Script(ScriptNodeDefinitionData scriptNodeDefinitionData, string code)
     {
-        Definition = scriptDefinition;
+        NodeDefinitionData = scriptNodeDefinitionData;
         Code = code;
     }
 
@@ -33,7 +33,7 @@ public class Script
 
         using var scriptDefinitionReader = new StreamReader(scriptDefinitionEntry.First().Open());
         var scriptDefinitionString = scriptDefinitionReader.ReadToEnd();
-        var scriptDefinition = ScriptDefinition.Deserialize(scriptDefinitionString);
+        var scriptDefinition = ScriptNodeDefinitionData.Deserialize(scriptDefinitionString);
         
         using var scriptCodeReader = new StreamReader(scriptCodeEntry.First().Open());
         var scriptCode = scriptCodeReader.ReadToEnd();

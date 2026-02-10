@@ -1,32 +1,56 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
-using Snowman.Core;
 using Snowman.Core.Services;
-using Snowman.Factories;
+using Snowman.Utilities;
 using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class MainWindowDataContext
+public partial class MainWindowDataContext : INotifyPropertyChanged
 {
-    private IDatasetImagesService _datasetImagesService = null!;
+    private readonly IDatasetImagesService _datasetImagesService;
+    private readonly IStorageProviderService _storageProviderService;
+    private readonly IProjectService _projectService;
+    
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    public bool IsEntitySelected => false;
+    public bool FrameTimelineActive => ActiveTimeline == TimelineMode.Frame;
+    public bool EventTimelineActive => ActiveTimeline == TimelineMode.Event;
+    
+    private TimelineMode ActiveTimeline
+    {
+        get;
+        set
+        {
+            field = value;
+            OnPropertyChanged(nameof(FrameTimelineActive));
+            OnPropertyChanged(nameof(EventTimelineActive));
+        }
+    }
 
-    public void Constructor(IServiceProvider serviceProvider)
+    public MainWindowDataContext(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _projectService = serviceProvider.GetService<IProjectService>();
+    }
+
+    public void SetTimelineMode(TimelineMode mode)
+    {
+        ActiveTimeline = mode;
     }
     
     public void NewProject() { } // TODO
     
     public async Task OpenProject()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
             FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
@@ -37,23 +61,18 @@ public class MainWindowDataContext
 
         try
         {
-            await SnowmanApp.Instance.OpenProject(filePickerResult[0]);
+            await _projectService.OpenProject(filePickerResult[0]);
         }
 
         catch (Exception)
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
-            return;
         }
-        // TODO: commented due to inaccessibility of controls from datacontext I FUCKING LOVE MVC AND XAML UI FRAMEWORK HAHAHAHAHHAHAHAHAHAHHAHAHAHA
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();
-        EventTimeline.InvalidateVisual();*/
     }
     
     public async Task SaveProject()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().SaveFilePickerAsync(new FilePickerSaveOptions()
+        var filePickerResult = await _storageProviderService.GetStorageProvider().SaveFilePickerAsync(new FilePickerSaveOptions()
         {
             FileTypeChoices = [AdditionalFilePickerFileTypes.Xml],
             Title = "Save Project File"
@@ -63,84 +82,36 @@ public class MainWindowDataContext
 
         try
         {
-            await SnowmanApp.Instance.Project.SaveProject(filePickerResult);
+            await _projectService.SaveProject(filePickerResult);
         }
 
         catch (Exception)
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
-            return;
         }
-        // TODO: commented due to inaccessibility of controls from datacontext
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();
-        EventTimeline.InvalidateVisual();*/
     }
     
-    public async Task OpenXml()
+    public async Task OpenDataset()
     {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
             FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
-            Title = "Open XML File"
+            Title = "Open Dataset XML File"
         });
 
         if (!filePickerResult.Any()) return;
 
         try
         {
-            await SnowmanApp.Instance.Project.OpenXml(filePickerResult[0]);
+            await _projectService.OpenDataset(filePickerResult[0].Path.LocalPath);
         }
 
         catch (Exception)
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
-            return;
         }
-        // TODO: commented due to inaccessibility of controls from datacontext
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();
-        EventTimeline.InvalidateVisual();*/
     }
-    
-    public async Task LoadVideoFile()
-    {
-        var filePickerResult = await StorageProviderFactory.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            AllowMultiple = false,
-            FileTypeFilter = [AdditionalFilePickerFileTypes.Video],
-            Title = "Open Video File"
-        });
-
-        if (!filePickerResult.Any()) return;
-
-        var ownerWindow = this;
-        // HOW JUST HOW
-        //await SnowmanApp.Instance.Project.LoadVideoFile(filePickerResult[0], ownerWindow, ProgressBar, ProgressBarText);
-        // TODO: commented due to inaccessibility of controls from datacontext
-        /*RendererControl.InvalidateVisual();
-        FrameTimeline.InvalidateVisual();
-        EventTimeline.InvalidateVisual();*/
-    }
-
-    public ObservableCollection<string> ZoomScaleOptions { get; } = ["1x", "2x", "5x", "10x", "20x"];
-    private static string FormatZoomScale(double value) => $"{value:0.#}x";
-
-    public string ZoomScaleString
-    {
-        get; // => FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
-        set;
-        /*{
-            if (value.EndsWith('x') && double.TryParse(value.TrimEnd('x'), out var parsed))
-            {
-                SnowmanApp.Instance.EventTimelineDataContext.ZoomScale = parsed;
-                // EVEEEEEENTS SDASOWFJIASNFLKJNASFNLASJKNFSJLABNFJLKSABFJKLasd
-                OnPropertyChanged();
-                EventTimeline.InvalidateVisual();
-            }
-        }*/
-    } = null!;
 
     public void PrevFrame()
     {
@@ -152,72 +123,18 @@ public class MainWindowDataContext
         _datasetImagesService.NextFrame();
     }
 
-    public void UpdateFrame() {}
-    
-    public void SetupZoomScaleChangedHandler()
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
-        /*SnowmanApp.Instance.EventTimelineDataContext.ZoomScaleChanged += () =>
-        {
-            var zoomScale = FormatZoomScale(SnowmanApp.Instance.EventTimelineDataContext.ZoomScale);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
-            if (!ZoomScaleOptions.Contains(zoomScale))
-            {
-                if (_lastCustomZoom is not null) ZoomScaleOptions.Remove(_lastCustomZoom);
-                ZoomScaleOptions.Add(zoomScale);
-                _lastCustomZoom = zoomScale;
-            }
-            else if (_lastCustomZoom != null && zoomScale != _lastCustomZoom)
-            {
-                var toRemove = _lastCustomZoom;
-                _lastCustomZoom = null;
-                // remove the temporary zoom scale after UI update finishes
-                Dispatcher.UIThread.Post(() =>
-                {
-                    ZoomScaleOptions.Remove(toRemove);
-                }, Avalonia.Threading.DispatcherPriority.Background);
-            }
-            //you know what
-            //OnPropertyChanged(nameof(ZoomScaleString));
-        };*/
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
     
-    
-//     public void Demo()
-//     {
-//         if (Design.IsDesignMode) return;
-//
-//         var ruleId = SnowmanApp.Instance.Project.Rules.Count;
-//         var ruleName = new StringBuilder();
-//
-//         /*if (IsEntitySelected)
-//             for (var i = 0; i < SnowmanApp.Instance.Project.SelectedEntity!.Scripts.Count; i++)
-//             {
-//                 var script = SnowmanApp.Instance.Project.SelectedEntity.Scripts[i];
-//                 ruleName.Append(script.Name);
-//                 if (i != SnowmanApp.Instance.Project.SelectedEntity.Scripts.Count - 1) ruleName.Append(" + ");
-//             }
-// */
-//         var (baseColor, lightColor) = ColorGeneration.GetHuePair(ruleId);
-//         EventTimelineDataContext.TimelineColors.TryAdd(ruleId, (baseColor, lightColor));
-//             
-//         var output = SnowmanApp.Instance.Project.Demo();
-//         //DemoOutput.Text = output.Item1; // TODO: bindings
-//
-//         SnowmanApp.Instance.Project.Rules.Add(new RuleData(ruleId, ruleName.ToString(), output.Item3));
-//         SnowmanApp.Instance.Project.EventsByFrameIndexByRuleId.Add(ruleId, output.Item2 ?? new Dictionary<int, List<EventData>>());
-//             
-//         SnowmanApp.Instance.EventTimelineDataContext.Redraw();
-//         //EventTimeline.InvalidateVisual();
-//     }
-
-    public void ClearEventInfo()
-    {
-        //SnowmanApp.Instance.Project.TempEntities = null;
-        //SnowmanApp.Instance.Project.TempBoundingBoxes = null;
-            
-        //SnowmanApp.Instance.RendererDataContext.ParentRendererControl.InvalidateVisual();
-        //SnowmanApp.Instance.FrameTimelineDataContext.ParentRendererControl.InvalidateVisual();
-            
-        //InfoBox.Text = string.Empty; // bindings TODO
-    }
+    public enum TimelineMode { Frame, Event }
 }

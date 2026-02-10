@@ -5,7 +5,8 @@ namespace Snowman.Events.Viewport;
 
 public readonly record struct ViewportPointerMovedEventArgs(
     PointerEventArgs WrappedArgs,
-    Visual SenderVisual,Matrix TransformationMatrix
+    Visual SenderVisual,
+    Matrix TransformationMatrix
 )
 {
     public Point GetTransformedPointerPosition() => GetPointerPosition().Transform(TransformationMatrix.Invert());

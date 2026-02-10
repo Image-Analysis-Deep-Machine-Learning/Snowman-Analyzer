@@ -8,19 +8,18 @@ namespace Snowman.Core.Entities;
 
 public abstract class Entity : IDrawable
 {
-    private static int _maxInt;
     // TODO: configurable
     protected const int Radius = 5;
     
     private Point _pos;
     protected internal bool _selected;
     
-    public int Id { get; private set; }
+    public int Id { get; set; }
     public event EventHandler<Entity, Point>? PositionChanges;
     public Entity? Parent { get; }
-    public List<Entity> Children { get; } = [];
     public bool IsHit { get; set; }
     public bool IsHighlighted { get; set; }
+    public List<Entity> Children { get; } = [];
 
     public virtual bool Selected
     {
@@ -53,11 +52,7 @@ public abstract class Entity : IDrawable
     {
         Parent = parent;
         Position = position;
-
-        if (parent is null)
-        {
-            Id = ++_maxInt;
-        }
+        Id = -1;
     }
 
     public void SetPositionWithoutRaisingEvent(Point newPosition)

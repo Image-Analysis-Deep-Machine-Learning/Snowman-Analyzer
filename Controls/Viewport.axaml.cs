@@ -1,10 +1,7 @@
 ﻿using Avalonia.Input;
-using Avalonia.LogicalTree;
 using Avalonia.Media;
-using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events;
-using Snowman.Events.Suppliers;
 using Snowman.Events.Viewport;
 
 namespace Snowman.Controls;
@@ -66,14 +63,5 @@ public partial class Viewport : UserControlWrapper<ViewportDataContext>
         var args = new ViewportKeyDownEventArgs(e);
         KeyDown?.Invoke(DataContext, args);
         InvalidateVisual();
-    }
-
-    protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
-    {
-        var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
-        DataContext = new ViewportDataContext(serviceProvider);
-        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += InvalidateVisual);
-        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += InvalidateVisual);
-        base.OnAttachedToLogicalTree(e);
     }
 }

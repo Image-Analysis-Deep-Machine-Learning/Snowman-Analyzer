@@ -4,13 +4,14 @@ using Snowman.Core.Services;
 
 namespace Snowman.DataContexts;
 
-public class GraphOverlayDataContext()
+public partial class GraphOverlayDataContext
 {
-    private readonly INodeService _nodeService = null!;
-    private readonly Pen _pen = new (Brushes.Lime, 2, lineCap: PenLineCap.Round);
+    private readonly Pen _pen;
+    private readonly INodeService _nodeService;
     
-    public GraphOverlayDataContext(IServiceProvider serviceProvider) : this()
+    public GraphOverlayDataContext(IServiceProvider serviceProvider)
     {
+        _pen = new Pen(Brushes.Lime, 2, lineCap: PenLineCap.Round);
         _nodeService = serviceProvider.GetService<INodeService>();
     }
 

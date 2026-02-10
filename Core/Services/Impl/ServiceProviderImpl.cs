@@ -14,8 +14,7 @@ internal class ServiceProviderImpl : IServiceProvider
     {
         RegisterDefaultServices();
     }
-
-    // TODO: let the service provider create the instances?
+    
     public void RegisterService<T>(T service) where T : IService
     {
         _services[typeof(T)] = service;
@@ -32,5 +31,7 @@ internal class ServiceProviderImpl : IServiceProvider
         RegisterService<IEventManager>(new EventManagerImpl());
         RegisterService<IDrawingService>(new DrawingServiceImpl());
         RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(this));
+        RegisterService<IEntityManager>(new EntityManagerImpl(this));
+        RegisterService<IProjectService>(new ProjectServiceImpl(this));
     }
 }

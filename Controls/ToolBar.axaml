@@ -1,15 +1,14 @@
 ﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ToolBarDataContext"
-                             xmlns="https://github.com/avaloniaui"
-                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                             x:Class="Snowman.Controls.ToolBar"
-                             xmlns:dataContext="using:Snowman.DataContexts"
-                             xmlns:ctrl="using:Snowman.Controls"
-                             x:DataType="dataContext:ToolBarDataContext"
-                             x:Name="Root">
-    <ctrl:UserControlWrapper.DataContext><dataContext:ToolBarDataContext></dataContext:ToolBarDataContext></ctrl:UserControlWrapper.DataContext>
+                         xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="Snowman.Controls.ToolBar"
+                         xmlns:dataContext="using:Snowman.DataContexts"
+                         xmlns:ctrl="using:Snowman.Controls"
+                         x:DataType="dataContext:ToolBarDataContext"
+                         x:Name="Root">
     <ItemsControl ItemsSource="{Binding Tools}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>

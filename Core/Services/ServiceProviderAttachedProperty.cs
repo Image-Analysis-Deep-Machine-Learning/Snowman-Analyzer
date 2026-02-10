@@ -6,7 +6,7 @@ public class ServiceProviderAttachedProperty
 {
     public static readonly AttachedProperty<IServiceProvider> ProviderProperty =
         AvaloniaProperty.RegisterAttached<ServiceProviderAttachedProperty, AvaloniaObject, IServiceProvider>(
-            "Provider",
+            nameof(ServiceProviderAttachedProperty),
             inherits: true);
 
     public static void SetProvider(AvaloniaObject o, IServiceProvider value) =>

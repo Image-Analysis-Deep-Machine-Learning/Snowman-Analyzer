@@ -9,7 +9,6 @@
                              xmlns:ctrl="using:Snowman.Controls"
                              x:DataType="dataContext:FrameTimelineDataContext"
                              Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
-    <ctrl:UserControlWrapper.DataContext><dataContext:FrameTimelineDataContext></dataContext:FrameTimelineDataContext></ctrl:UserControlWrapper.DataContext>
     <ItemsControl Name="FrameItems" ItemsSource="{Binding Frames}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -18,9 +17,42 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate>
-                <Grid RowDefinitions="15,*" MaxWidth="100" VerticalAlignment="Center" Margin="5,5,5,5" IsVisible="{Binding !Invisible}">
-                    <TextBlock Grid.Row="0" Text="{Binding Label}"/>
-                    <Image Grid.Row="1" Source="{Binding Image}" PointerPressed="OnPointerPressed"/>
+                <Grid RowDefinitions="15,*"
+                      MaxWidth="100"
+                      VerticalAlignment="Center"
+                      Margin="5,5,5,5"
+                      IsVisible="{Binding !Invisible}"
+                      Classes.Selected="{Binding Selected}">
+                    <Grid.Styles>
+                        <Style Selector="Grid > TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource ButtonBackground}"/>
+                        </Style>
+                        <Style Selector="Grid > Border">
+                            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBackground}"/>
+                        </Style>
+                        <Style Selector="Grid.Selected > TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}"/>
+                        </Style>
+                        <Style Selector="Grid.Selected > Border">
+                            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
+                        </Style>
+                    </Grid.Styles>
+                    <TextBlock Grid.Row="0"
+                               TextAlignment="Center"
+                               Text="{Binding Label}"
+                               Margin="5"
+                               FontFamily="Arial"/>
+                    <Border Grid.Row="1"
+                            BorderThickness="3"
+                            CornerRadius="3">
+                        <Image Source="{Binding Image}">
+                            <Interaction.Behaviors>
+                                <EventTriggerBehavior EventName="PointerPressed">
+                                    <InvokeCommandAction Command="{Binding ProcessPointerPressed}" />
+                                </EventTriggerBehavior>
+                            </Interaction.Behaviors>
+                        </Image>
+                    </Border>
                 </Grid>
             </DataTemplate>
         </ItemsControl.ItemTemplate>

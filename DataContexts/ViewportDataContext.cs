@@ -8,44 +8,17 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public class ViewportDataContext()
+public partial class ViewportDataContext
 {
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.5;
     private const double MaxZoom = 10.0;
     
-    private readonly IDrawingService _drawingService = null!;
-    private readonly IDatasetImagesService _datasetImagesService = null!;
+    private readonly IDrawingService _drawingService;
 
-    public ViewportDataContext(IServiceProvider serviceProvider) : this()
-    {
-        _drawingService = serviceProvider.GetService<IDrawingService>();
-        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
-        
-        CachedImageSize = _datasetImagesService.GetImageSize();
-        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
-        {
-            x.DatasetLoaded += () =>
-            {
-                CachedImageSize = _datasetImagesService.GetImageSize();
-                ResetTransform();
-            };
-        });
-    }
-
-    // TODO: set once the image size is known and then change only when the size changes - project load?
-    private Size CachedImageSize
-    {
-        get;
-        set
-        {
-            if (value == field) return;
-
-            field = value;
-            TransformationMatrix = GetTransformationMatrix();
-        }
-    }
-
+    private double _additionalScale;
+    private Size _cachedImageSize;
+    
     public Rect ControlBounds
     {
         get;
@@ -55,16 +28,6 @@ public class ViewportDataContext()
             TransformationMatrix = GetTransformationMatrix();
         }
     }
-
-    public double AdditionalScale
-    {
-        get;
-        set
-        {
-            field = value;
-            TransformationMatrix = GetTransformationMatrix();
-        }
-    } = 1.0;
 
     public Vector AdditionalTranslation
     {
@@ -78,13 +41,33 @@ public class ViewportDataContext()
 
     public Matrix TransformationMatrix { get; private set; }
 
+    public ViewportDataContext(IServiceProvider serviceProvider)
+    {
+        _additionalScale = 1.0;
+        
+        _drawingService = serviceProvider.GetService<IDrawingService>();
+        var datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        
+        _cachedImageSize = datasetImagesService.GetImageSize();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x =>
+        {
+            x.DatasetLoaded += () =>
+            {
+                _cachedImageSize = datasetImagesService.GetImageSize();
+                ResetTransform();
+            };
+        });
+        
+        ResetTransform();
+    }
+
     public void Zoom(double delta, Point atPosition)
     {
-        var oldZoom = AdditionalScale;
-        AdditionalScale *= 1 + delta * ZoomStep;
+        var oldZoom = _additionalScale;
+        _additionalScale *= 1 + delta * ZoomStep;
         
-        AdditionalScale = Math.Clamp(AdditionalScale, MinZoom, MaxZoom);
-        AdditionalTranslation += (oldZoom - AdditionalScale) * (atPosition - AdditionalTranslation) / oldZoom;
+        _additionalScale = Math.Clamp(_additionalScale, MinZoom, MaxZoom);
+        AdditionalTranslation += (oldZoom - _additionalScale) * (atPosition - AdditionalTranslation) / oldZoom;
     }
 
     public void Render(DrawingContext drawingContext)
@@ -105,21 +88,21 @@ public class ViewportDataContext()
         }
     }
     
-    public void ResetTransform()
+    private void ResetTransform()
     {
+        _additionalScale = 1.0;
         AdditionalTranslation = Vector.Zero;
-        AdditionalScale = 1.0;
     }
         
     private Matrix GetTransformationMatrix()
     {
         // scale transform to fit the frame (initially)
-        var widthRatio = ControlBounds.Width / CachedImageSize.Width;
-        var heightRatio = ControlBounds.Height / CachedImageSize.Height;
+        var widthRatio = ControlBounds.Width / _cachedImageSize.Width;
+        var heightRatio = ControlBounds.Height / _cachedImageSize.Height;
         var scalingFactor = Math.Min(widthRatio, heightRatio);
         var fitScale = Matrix.CreateScale(scalingFactor, scalingFactor);
         // new image scale, used to calculate the center translation
-        var scaledImageSize = new Rect(CachedImageSize).TransformToAABB(fitScale).Size;
+        var scaledImageSize = new Rect(_cachedImageSize).TransformToAABB(fitScale).Size;
             
         // translate transform to center the frame in the viewport (initially)
         var centerTranslate = Matrix.CreateTranslation((ControlBounds.Width - scaledImageSize.Width) / 2, (ControlBounds.Height - scaledImageSize.Height) / 2);
@@ -128,7 +111,7 @@ public class ViewportDataContext()
         var additionalTranslate = Matrix.CreateTranslation(AdditionalTranslation);
             
         // additional scale transform
-        var additionalScale = Matrix.CreateScale(AdditionalScale, AdditionalScale);
+        var additionalScale = Matrix.CreateScale(_additionalScale, _additionalScale);
             
         // apply transforms
         return fitScale.Append(centerTranslate).Append(additionalScale).Append(additionalTranslate);

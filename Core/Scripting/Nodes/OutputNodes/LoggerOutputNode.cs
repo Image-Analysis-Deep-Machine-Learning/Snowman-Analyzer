@@ -8,16 +8,16 @@ public class LoggerOutputNode : OutputNode
 {
     private readonly ILoggerService _loggerService = null!;
     private readonly Input _messageInput;
+
+    private LoggerOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _loggerService = serviceProvider.GetService<ILoggerService>();
+    }
     
     public LoggerOutputNode()
     {
         _messageInput = CreateInput();
         Name = "Logger Output";
-    }
-
-    protected LoggerOutputNode(IServiceProvider serviceProvider) : this()
-    {
-        _loggerService = serviceProvider.GetService<ILoggerService>();
     }
 
     public override Node Copy(IServiceProvider serviceProvider)
@@ -29,11 +29,11 @@ public class LoggerOutputNode : OutputNode
     public override void ExecuteOutput()
     {
         base.ExecuteOutput(); // TODO: maybe change these overrides to template methods so I don't need to call base.XXX() every time?
-        var messages = _messageInput.Value as IEnumerable<string>;
+        var messages = _messageInput.Value as IEnumerable<object?>;
 
         foreach (var message in messages ?? [])
         {
-            _loggerService.LogMessage(message);
+            _loggerService.LogMessage(message?.ToString());
         }
         
         IsReady = true;
@@ -41,7 +41,7 @@ public class LoggerOutputNode : OutputNode
 
     private Input CreateInput()
     {
-        var stringInput = new Input("logger_input", typeof(IEnumerable<string>), Group.Default, "Message");
+        var stringInput = new Input("logger_input", typeof(IEnumerable<object?>), Group.Default, "Message");
         Inputs.Add(stringInput);
         
         return stringInput;

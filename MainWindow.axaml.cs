@@ -1,66 +1,73 @@
-using Avalonia;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.Media;
-using Snowman.Core;
+using Python.Runtime;
 using Snowman.Core.Services;
 using Snowman.Core.Services.Impl;
 using Snowman.DataContexts;
-using Snowman.Factories;
+using Snowman.Utilities;
+using Ursa.Controls;
 
 namespace Snowman;
 
 public partial class MainWindow : Window
 {
-    private static IBrush SystemColorBrush { get; set; } = new SolidColorBrush(Color.Parse("#0078D4"));
-    private readonly IBrush _brush;
-    private SnowmanApp _app;
-
-    static MainWindow()
-    {
-        DataContextProperty.Changed.AddClassHandler<MainWindow>((window, args) =>
-        {
-            if (args.NewValue is not MainWindowDataContext dataContext) return;
-            
-            dataContext.Constructor(ServiceProviderAttachedProperty.GetProvider(window));
-            //dataContext.SetupZoomScaleChangedHandler();
-        });
-    }
-
     public MainWindow()
     {
+        InitializePythonExecutionEnvironment();
+        // the most important lines of this application that handle the dependency injection magic
         var serviceProvider = new ServiceProviderImpl();
+        serviceProvider.RegisterService<IStorageProviderService>(new StorageProviderServiceImpl(StorageProvider));
+        DataContext = new MainWindowDataContext(serviceProvider);
         ServiceProviderAttachedProperty.SetProvider(this, serviceProvider);
-        _app = new SnowmanApp(serviceProvider);
-        StorageProviderFactory.InitializeStorageProvider(StorageProvider);
+
         InitializeComponent();
-        serviceProvider.RegisterService<ILoggerService>(new LoggerServiceImpl(LoggerTextBox));
         
-        var theme = Application.Current?.ActualThemeVariant;
-            
-        if (Application.Current?.FindResource(theme, "SystemAccentColor") is Color accent)
+        serviceProvider.RegisterService<IProgressBarService>(new ProgressBarServiceImpl(ProgressBar, ProgressBarText));
+        serviceProvider.RegisterService<ILoggerService>(new LoggerServiceImpl(LoggerTextBox));
+    }
+    
+    public async Task LoadVideoFile()
+    {
+        try
         {
-            SystemColorBrush = new SolidColorBrush(accent);
+            var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
+            var metadataResult = await new Controls.LoadVideoWindow(serviceProvider).ShowDialog<VideoSequenceMetadata?>(this);
+
+            if (metadataResult is null) return;
+            
+            var newDatasetPath = await VideoFileLoader.ExtractFramesAsync(metadataResult, serviceProvider);
+            await serviceProvider.GetService<IProjectService>().OpenDataset(newDatasetPath);
         }
 
-        _brush = new SolidColorBrush(Colors.White);
+        catch (Exception e)
+        {
+            await MessageBox.ShowAsync("Něco se posralo " + e.Message);
+        }
     }
-
-    private void ToggleFrameTimelineButton_OnClick(object? sender, RoutedEventArgs e)
+    
+    private static void InitializePythonExecutionEnvironment()
     {
-        FrameTimelineGrid.IsVisible = true;
-        FrameTimelinePath.Fill = SystemColorBrush;
-        EventTimelineBorder.IsVisible = false;
-        EventTimelinePath.Fill = _brush;
-        ZoomComboBox.IsVisible = false;
-    }
-
-    private void ToggleEventTimelineButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        EventTimelineBorder.IsVisible = true;
-        EventTimelinePath.Fill = SystemColorBrush;
-        FrameTimelineGrid.IsVisible = false;
-        FrameTimelinePath.Fill = _brush;
-        ZoomComboBox.IsVisible = true;
+        if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
+            
+        // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
+        var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
+        Runtime.PythonDLL = Path.Combine(pythonDir, "python312.dll"); 
+        PythonEngine.PythonHome = pythonDir;
+        PythonEngine.Initialize();
+        PythonEngine.BeginAllowThreads();
+            
+        // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
+        // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
+        // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
+        // TODO: DEBUGGER
+        var p = new Process();
+        var exe = Path.Combine(pythonDir, "python.exe");
+        p.StartInfo.FileName = exe;
+        //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
+        p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
+        //p.Start();
     }
 }

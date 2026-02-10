@@ -7,15 +7,9 @@ public class ScriptNode : Node
 {
     public string PythonScriptContent { get; set; } = null!;
 
-    public ScriptNode()
-    {
-        
-    }
+    private ScriptNode(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-    protected ScriptNode(IServiceProvider serviceProvider) : base(serviceProvider)
-    {
-        
-    }
+    public ScriptNode() { }
 
     public override void Execute()
     {

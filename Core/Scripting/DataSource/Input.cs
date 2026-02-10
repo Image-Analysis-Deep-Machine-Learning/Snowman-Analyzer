@@ -37,7 +37,7 @@ public class Input(string name, Type type, Group group, string friendlyName) : P
 
                 else
                 {
-                    list = Value as IList;
+                    list = Value as IList ?? throw new InvalidCastException($"Cannot cast {Value?.GetType()} to IList");
                 }
                 
                 list!.Add(connectedOutput.Value);

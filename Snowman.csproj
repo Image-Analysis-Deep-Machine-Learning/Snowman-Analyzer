@@ -24,6 +24,7 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
     <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
     <PackageReference Include="Irihi.Ursa" Version="1.14.1" />
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.14.1" />
@@ -49,6 +50,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ffmpeg\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="Controls\Viewport.axaml.cs">
       <DependentUpon>CanvasRenderer.axaml</DependentUpon>
       <SubType>Code</SubType>
@@ -67,6 +73,10 @@
     </Compile>
     <Compile Update="Core\Scripting\UserInterface\Controls\NumberVariableControl.axaml.cs">
       <DependentUpon>NumberVariableControl.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\LoadVideoWindow.axaml.cs">
+      <DependentUpon>LoadVideoWindow.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

@@ -1,6 +1,6 @@
 ﻿using Avalonia.Platform.Storage;
 
-namespace Snowman.Core;
+namespace Snowman.Utilities;
 
 public static class AdditionalFilePickerFileTypes
 {
