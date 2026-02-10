@@ -7,33 +7,29 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Drawing;
-using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.Events;
 using Snowman.Events.Suppliers;
 
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Services.Impl;
 
-namespace Snowman.Core;
-
-public class Project : IDrawableSource, IProjectEventSupplier
+public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEventSupplier
 {
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly IEntityManager _entityManager;
     private string _currentXmlPath;
+    private DatasetData _datasetData;
     
     public event SignalEventHandler? ProjectLoaded;
     public event SignalEventHandler? DatasetLoaded;
-
-    private DatasetData DatasetData { get; set; }
     
-    public Project(IServiceProvider serviceProvider)
+    public ProjectServiceImpl(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         _entityManager = serviceProvider.GetService<IEntityManager>();
         serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
         serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
-        DatasetData = new DatasetData();
+        _datasetData = new DatasetData();
         _currentXmlPath = string.Empty;
         ProjectLoaded?.Invoke();
     }
@@ -41,52 +37,20 @@ public class Project : IDrawableSource, IProjectEventSupplier
     public IEnumerable<IDrawable> GetDrawables()
     {
         var ret = new List<IDrawable>();
-        ret.AddRange(DatasetData.Images.Count > _datasetImagesService.CurrentFrameIndex() ? DatasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes.Select(x => new BoundingBoxWrapper(x) as IDrawable) : []);
+        ret.AddRange(_datasetData.Images.Count > _datasetImagesService.CurrentFrameIndex() ? _datasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes.Select(x => new BoundingBoxWrapper(x) as IDrawable) : []);
         ret.AddRange(_entityManager.GetDrawables());
         
         return ret;
     }
-    
-    // public async Task LoadVideoFile(IStorageFile file, Window ownerWindow, ProgressBar progressBar, TextBlock progressBarText)
-    // {
-    //     // TODO: when loading another video file, save current contents of output folder and then clear it
-    //     const string outputFolderPath = @"..\..\..\VideoLoading\ExtractedFrames";
-    //     var videoMetadata = await VideoFileLoader.GetVideoMetadataAsync(file, outputFolderPath);
-    //     var loadVideoWindow = new LoadVideoWindow(videoMetadata);
-    //     
-    //     var dialogSubmitted = await loadVideoWindow.ShowDialog<bool>(ownerWindow);
-    //
-    //     if (dialogSubmitted)
-    //     {
-    //         videoMetadata.StartTime = loadVideoWindow.StartSelectedTime;
-    //         videoMetadata.EndTime = loadVideoWindow.EndSelectedTime;
-    //         videoMetadata.FrameRate = loadVideoWindow.SelectedFps;
-    //         videoMetadata.FrameFormat = loadVideoWindow.SelectedFrameFormat;
-    //         videoMetadata.FrameCount =
-    //             Convert.ToInt32(Math.Round(videoMetadata.FrameRate * videoMetadata.DurationSeconds));
-    //
-    //         var videoFileSequence = await VideoFileLoader.ExtractFramesAsync(file, videoMetadata, progressBar, progressBarText);
-    //         XmlData.Images = videoFileSequence.ImageList;
-    //         _datasetImagesService.LoadNewImageList(XmlData.Images.ImageList.AsReadOnly(), videoFileSequence.Metadata.FrameFolderPath);
-    //     }
-    // }
 
-    public async Task OpenDataset(IStorageFile file)
-    {
-        await OpenDatasetInternal(file.Path.LocalPath);
-    }
-
-    // I love 7 levels of abstraction. I eat it for breakfast
-    private async Task OpenDatasetInternal(string datasetPath)
+    public async Task OpenDataset(string datasetPath)
     {
         var fileStream = new FileStream(datasetPath, FileMode.Open);
         using var reader = new StreamReader(fileStream);
         var fileContent = await reader.ReadToEndAsync();
         
-        DatasetData = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
-        _currentXmlPath = datasetPath;
-        _datasetImagesService.LoadNewImageList(DatasetData.Images.AsReadOnly(), Path.GetDirectoryName(_currentXmlPath) ?? string.Empty);
-        DatasetLoaded?.Invoke();
+        var dataset = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
+        SetDatasetInternal(dataset, datasetPath);
     }
 
     public async Task OpenProject(IStorageFile file)
@@ -99,12 +63,10 @@ public class Project : IDrawableSource, IProjectEventSupplier
         var projectData = ProjectData.Deserialize(fileContent);
         
         if (projectData == null) throw new Exception("Project data could not be deserialized");
-        
-        // TODO: project using dataset loaded from a video does not reopen with the video frames
 
         if (!string.IsNullOrEmpty(projectData.LoadedDatasetPath))
         {
-            await OpenDatasetInternal(projectData.LoadedDatasetPath);
+            await OpenDataset(projectData.LoadedDatasetPath);
         }
         
         _entityManager.RemoveEntities(_entityManager.GetEntities());
@@ -117,7 +79,6 @@ public class Project : IDrawableSource, IProjectEventSupplier
         ProjectLoaded?.Invoke();
     }
 
-    // TODO ADADSDASDSA
     public async Task SaveProject(IStorageFile file)
     {
         var projectData = new ProjectData
@@ -129,6 +90,14 @@ public class Project : IDrawableSource, IProjectEventSupplier
         var fileStream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(fileStream);
         await writer.WriteAsync(ProjectData.Serialize(projectData));
+    }
+
+    private void SetDatasetInternal(DatasetData dataset, string datasetPath)
+    {
+        _datasetData = dataset;
+        _currentXmlPath = datasetPath;
+        _datasetImagesService.LoadNewImageList(_datasetData.Images.AsReadOnly(), Path.GetDirectoryName(_currentXmlPath) ?? string.Empty);
+        DatasetLoaded?.Invoke();
     }
 
     private readonly struct BoundingBoxWrapper(BoundingBox bb) : IDrawable

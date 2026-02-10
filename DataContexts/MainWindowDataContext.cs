@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
-using Snowman.Core;
 using Snowman.Core.Services;
 using Snowman.Utilities;
 using Ursa.Controls;
@@ -18,6 +16,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 {
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IProjectService _projectService;
     
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -39,6 +38,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _projectService = serviceProvider.GetService<IProjectService>();
     }
 
     public void SetTimelineMode(TimelineMode mode)
@@ -61,7 +61,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         try
         {
-            await SnowmanApp.Instance.OpenProject(filePickerResult[0]);
+            await _projectService.OpenProject(filePickerResult[0]);
         }
 
         catch (Exception)
@@ -82,7 +82,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         try
         {
-            await SnowmanApp.Instance.Project.SaveProject(filePickerResult);
+            await _projectService.SaveProject(filePickerResult);
         }
 
         catch (Exception)
@@ -104,29 +104,13 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         try
         {
-            await SnowmanApp.Instance.Project.OpenDataset(filePickerResult[0]);
+            await _projectService.OpenDataset(filePickerResult[0].Path.LocalPath);
         }
 
         catch (Exception)
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
         }
-    }
-    
-    public async Task LoadVideoFile()
-    {
-        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            AllowMultiple = false,
-            FileTypeFilter = [AdditionalFilePickerFileTypes.Video],
-            Title = "Open Video File"
-        });
-
-        if (!filePickerResult.Any()) return;
-
-        var ownerWindow = this;
-        // HOW JUST HOW
-        //await SnowmanApp.Instance.Project.LoadVideoFile(filePickerResult[0], ownerWindow, ProgressBar, ProgressBarText);
     }
 
     public void PrevFrame()

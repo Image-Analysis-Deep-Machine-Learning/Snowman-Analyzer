@@ -32,5 +32,6 @@ internal class ServiceProviderImpl : IServiceProvider
         RegisterService<IDrawingService>(new DrawingServiceImpl());
         RegisterService<IDatasetImagesService>(new DatasetImagesServiceImpl(this));
         RegisterService<IEntityManager>(new EntityManagerImpl(this));
+        RegisterService<IProjectService>(new ProjectServiceImpl(this));
     }
 }

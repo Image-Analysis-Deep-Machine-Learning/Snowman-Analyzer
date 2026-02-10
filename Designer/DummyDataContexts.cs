@@ -5,62 +5,12 @@
 // Some non-null initializations are required for the actual application to work
 namespace Snowman.DataContexts;
 
-public partial class MainWindowDataContext
+public partial class FrameTimelineDataContext
 {
-    public MainWindowDataContext()
+    public FrameTimelineDataContext()
     {
         _datasetImagesService = null!;
-        _storageProviderService = null!;
-    }
-}
-
-public partial class ViewportWindowDataContext
-{
-    public ViewportWindowDataContext()
-    {
-            
-    }
-}
-
-public partial class ViewportDataContext
-{
-    public ViewportDataContext()
-    {
-        _drawingService = null!;
-    }
-}
-
-public partial class ToolBarDataContext
-{
-    public ToolBarDataContext()
-    {
-        Tools = [];
-        ActiveTool = null!;
-    }
-}
-
-public partial class NodeViewportDataContext
-{
-    public NodeViewportDataContext()
-    {
-        _nodeService = new DummyNodeService();
-        _serviceProvider = null!;
-    }
-}
-
-public partial class NodePortDataContext
-{
-    public NodePortDataContext()
-    {
-        _nodeService = null!;
-    }
-}
-
-public partial class NodeControlDataContext
-{
-    public NodeControlDataContext()
-    {
-        _node = null!;
+        Frames = null!;
     }
 }
 
@@ -73,10 +23,69 @@ public partial class GraphOverlayDataContext
     }
 }
 
-public partial class FrameTimelineDataContext
+public partial class LoadVideoWindowDataContext
 {
-    public FrameTimelineDataContext()
+    public LoadVideoWindowDataContext()
     {
-        Frames = null!;
+        _storageProviderService = null!;
+    }
+}
+
+public partial class MainWindowDataContext
+{
+    public MainWindowDataContext()
+    {
+        _datasetImagesService = null!;
+        _storageProviderService = null!;
+    }
+}
+
+public partial class NodeControlDataContext
+{
+    public NodeControlDataContext()
+    {
+        _node = null!;
+    }
+}
+
+public partial class NodePortDataContext
+{
+    public NodePortDataContext()
+    {
+        _nodeService = null!;
+    }
+}
+
+public partial class NodeViewportDataContext
+{
+    public NodeViewportDataContext()
+    {
+        _nodeService = new DummyNodeService();
+        _serviceProvider = null!;
+    }
+}
+
+public partial class ToolBarDataContext
+{
+    public ToolBarDataContext()
+    {
+        Tools = [];
+        ActiveTool = null!;
+    }
+}
+
+public partial class ViewportDataContext
+{
+    public ViewportDataContext()
+    {
+        _drawingService = null!;
+    }
+}
+
+public partial class ViewportWindowDataContext
+{
+    public ViewportWindowDataContext()
+    {
+            
     }
 }
