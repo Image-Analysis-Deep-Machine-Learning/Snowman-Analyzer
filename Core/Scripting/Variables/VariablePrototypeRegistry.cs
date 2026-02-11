@@ -12,13 +12,14 @@ public static class VariablePrototypeRegistry
 
     static VariablePrototypeRegistry()
     {
-        RegisterVariablePrototype(typeof(NumberVariable), new NumberVariable());
-        RegisterVariablePrototype(typeof(EntitySelector), new EntitySelector());
+        RegisterVariablePrototype<NumberVariable>();
+        RegisterVariablePrototype<EntitySelector>();
+        RegisterVariablePrototype<DatasetSelector>();
     }
     
-    private static void RegisterVariablePrototype(Type type, Variable prototype)
+    private static void RegisterVariablePrototype<T>() where T : Variable, new()
     {
-        VariablePrototypes[type] = prototype;
+        VariablePrototypes[typeof(T)] = new T();
     }
 
     public static Variable GetVariableCopy(Type type, IServiceProvider serviceProvider)

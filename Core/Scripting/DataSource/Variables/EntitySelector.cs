@@ -8,7 +8,7 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource.Variables;
 
-public class EntitySelector : GenericVariableWrapper<Entity>
+public partial class EntitySelector : GenericVariableWrapper<Entity>
 {
     public ObservableCollection<Entity> AvailableEntities { get; } = [];
     public Type EntitySubtype { get; private set; }
@@ -17,8 +17,6 @@ public class EntitySelector : GenericVariableWrapper<Entity>
     {
         EntitySubtype = typeof(Entity);
     }
-
-    public EntitySelector() : this("sample_name", Group.Default, "Sample Name") { }
 
     public override Variable Copy(IServiceProvider serviceProvider)
     {

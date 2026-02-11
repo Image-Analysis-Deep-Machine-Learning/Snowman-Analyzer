@@ -92,6 +92,11 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         await writer.WriteAsync(ProjectData.Serialize(projectData));
     }
 
+    public DatasetData GetDatasetData()
+    {
+        return _datasetData;
+    }
+
     private void SetDatasetInternal(DatasetData dataset, string datasetPath)
     {
         _datasetData = dataset;

@@ -4,14 +4,12 @@ using Snowman.Core.Services;
 
 namespace Snowman.Core.Scripting.DataSource.Variables;
 
-public class NumberVariable : GenericVariableWrapper<decimal>
+public partial class NumberVariable : GenericVariableWrapper<decimal>
 {
     private NumberVariable(string name, Group group, string friendlyName): base(name, group, friendlyName)
     {
         TypedValue = 0;
     }
-
-    public NumberVariable() : this("sample_name", Group.Default, "Sample Name") { }
 
     public override Variable Copy(IServiceProvider serviceProvider)
     {
