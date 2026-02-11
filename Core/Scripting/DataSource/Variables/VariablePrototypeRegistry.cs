@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Snowman.Core.Scripting.DataSource;
-using Snowman.Core.Scripting.DataSource.Variables;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
-namespace Snowman.Core.Scripting.Variables;
+namespace Snowman.Core.Scripting.DataSource.Variables;
 
 public static class VariablePrototypeRegistry
 {
