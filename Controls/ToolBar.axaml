@@ -12,14 +12,14 @@
     <ItemsControl ItemsSource="{Binding Tools}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" />
+                <StackPanel Orientation="Horizontal" Spacing="5"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate>
                 <!-- This line doesn't work. Why? Because fuck you. That's why. -->
                 <!-- <Button Content="{Binding Name}" Command="{Binding #Root.DataContext.SetTool}" CommandParameter="{Binding }"/> -->
-                <Button Content="{Binding Name}" Command="{Binding  MakeActive}" CommandParameter="{Binding #Root.DataContext}"/>
+                <Button Content="{Binding Name}" Command="{Binding  MakeActive}" CommandParameter="{Binding #Root.DataContext}" Foreground="{StaticResource SystemAccentColor}"/>
             </DataTemplate>
         </ItemsControl.ItemTemplate>
     </ItemsControl>

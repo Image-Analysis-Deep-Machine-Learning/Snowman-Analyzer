@@ -12,6 +12,17 @@
         CanResize="False"
         SizeToContent="Height">
     <StackPanel Margin="30">
+        <StackPanel.Styles>
+            <Style Selector="StackPanel Button">
+                <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
+            </Style>
+            <Style Selector="StackPanel Slider">
+                <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
+            </Style>
+            <Style Selector="StackPanel Slider">
+                <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
+            </Style>
+        </StackPanel.Styles>
         <Button Content="Select Video File and Output Folder" Command="{Binding SelectVideoFile}" Margin="0, 0, 0, 30"/>
         
         <TextBlock HorizontalAlignment="Left">Select time range</TextBlock>

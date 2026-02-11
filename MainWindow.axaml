@@ -32,9 +32,17 @@
         </Menu>
         
         <!-- main display window -->
-        <Grid Grid.Row="1" RowDefinitions="7*,3*" ColumnDefinitions="7*,3*" Margin="5, 5" HorizontalAlignment="Stretch">
+        <Grid Grid.Row="1"
+              RowDefinitions="7*,3*"
+              ColumnDefinitions="7*,3*"
+              Margin="5, 5"
+              HorizontalAlignment="Stretch">
             <!-- viewport -->
-            <Border Grid.Row="0" Grid.Column="0"  BorderBrush="{StaticResource ButtonBackground}" BorderThickness="4" CornerRadius="3">
+            <Border Grid.Row="0"
+                    Grid.Column="0"
+                    BorderBrush="{StaticResource ButtonBackground}"
+                    BorderThickness="4"
+                    CornerRadius="3">
                 <ctrl:ViewportWindow HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Border>
             
@@ -54,66 +62,100 @@
                     <Style Selector="Grid Path">
                         <Setter Property="Fill" Value="{DynamicResource TextControlForeground}"/>
                     </Style>
+                    <Style Selector="Grid TextBlock">
+                        <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
+                    </Style>
                 </Grid.Styles>
                 <Grid RowDefinitions="*" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding FrameTimelineActive}">
                     <!-- prev -->
-                    <Button Grid.Column="0" Command="{Binding PrevFrame}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowLeftRegular}" Margin="0, 0, 0, 10"/>
-                            <TextBlock Text="Prev" HorizontalAlignment="Center"/>
+                    <Button Grid.Column="0"
+                            Command="{Binding PrevFrame}"
+                            HorizontalContentAlignment="Center"
+                            Width="60"
+                            Padding="2">
+                        <StackPanel Orientation="Vertical"
+                                    HorizontalAlignment="Center"
+                                    Spacing="5">
+                            <Path Data="{StaticResource ArrowLeftRegular}"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock Text="Prev"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     
                     <!-- frame timeline -->
-                    <Border Grid.Column="1" Margin="5, 0, 5, 0">
+                    <Border Grid.Column="1"
+                            Margin="5, 0, 5, 0">
                         <ctrl:FrameTimeline Name="FrameTimeline"/>
                     </Border>
                     
                     <!-- next -->
-                    <Button Grid.Column="2" Command="{Binding NextFrame}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowRightRegular}" Margin="0, 0, 0, 10"/>
-                            <TextBlock Text="Next" HorizontalAlignment="Center"/>
+                    <Button Grid.Column="2"
+                            Command="{Binding NextFrame}"
+                            HorizontalContentAlignment="Center"
+                            Width="60"
+                            Padding="2">
+                        <StackPanel Orientation="Vertical"
+                                    Spacing="5"
+                                    HorizontalAlignment="Center">
+                            <Path Data="{StaticResource ArrowRightRegular}"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock Text="Next"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
                 
+                <!-- event timeline -->
+                <Border Name="EventTimelineBorder" IsVisible="{Binding EventTimelineActive}">
+                    <ctrl:EventTimelineViewport/>
+                </Border>
+                
                 <!-- timeline toggle buttons -->
-                <StackPanel
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" ZIndex="100">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="100"
+                            Spacing="5">
                     
-                    <!-- frame timeline -->
-                    <Button Width="24" Height="24" Margin="0, 0, 5, 0" Command="{Binding SetTimelineMode}" CommandParameter="Frame" ToolTip.Tip="Frame Timeline">
-                        <Path
-                            Classes="FrameTimelinePath"
-                            Data="{StaticResource FrameTimelineIcon}"
-                            Stretch="Uniform"
-                            Width="16" Height="16"
-                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- frame timeline button -->
+                    <Button Width="24" Height="24" MinWidth="24" MinHeight="24"
+                            Padding="0"
+                            Command="{Binding SetTimelineMode}" CommandParameter="Frame" 
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            ToolTip.Tip="Frame Timeline">
+                        <Path Classes="FrameTimelinePath"
+                              Data="{StaticResource FrameTimelineIcon}"
+                              Stretch="Uniform"
+                              Width="16" Height="16"
+                              VerticalAlignment="Center" HorizontalAlignment="Center">
                         </Path>
                     </Button>
                     
-                    <!-- event timeline -->
-                    <Button Width="24" Height="24" Command="{Binding SetTimelineMode}" CommandParameter="Event" ToolTip.Tip="Event Timeline">
-                        <Path
-                            Classes="EventTimelinePath"
-                            Data="{StaticResource EventTimelineIcon}"
-                            Stretch="Uniform"
-                            Width="16" Height="16"
-                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- event timeline button -->
+                    <Button Width="24" Height="24" MinWidth="24" MinHeight="24"
+                            Padding="0"
+                            Command="{Binding SetTimelineMode}" CommandParameter="Event"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            ToolTip.Tip="Event Timeline">
+                        <Path Classes="EventTimelinePath"
+                              Data="{StaticResource EventTimelineIcon}"
+                              Fill="{StaticResource TextControlForeground}"
+                              Stretch="Uniform"
+                              Width="16" Height="16"
+                              VerticalAlignment="Center" HorizontalAlignment="Center">
                         </Path>
                     </Button>
                 </StackPanel>
             </Grid>
             
             <!-- node viewport -->
-            <ctrl:NodeViewport Grid.Row="0" Grid.Column="1"/>
+            <ctrl:NodeViewport Grid.Row="0" Grid.Column="1" Margin="5, 0, 0, 0"/>
             
             <!-- logging console -->
             <TextBox Grid.Row="1"
                      Grid.Column="1"
-                     Margin="10"
+                     Margin="5, 5, 0, 0"
                      Padding="2"
                      AcceptsReturn="True"
                      IsReadOnly="True"

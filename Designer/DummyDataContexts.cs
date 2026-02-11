@@ -5,6 +5,22 @@
 // Some non-null initializations are required for the actual application to work
 namespace Snowman.DataContexts;
 
+public partial class EventTimelineDataContext
+{
+    public EventTimelineDataContext()
+    {
+        
+    }
+}
+
+public partial class EventTimelineViewportDataContext
+{
+    public EventTimelineViewportDataContext()
+    {
+        
+    }
+}
+
 public partial class FrameTimelineDataContext
 {
     public FrameTimelineDataContext()

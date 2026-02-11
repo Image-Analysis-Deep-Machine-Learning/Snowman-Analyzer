@@ -79,6 +79,14 @@
       <DependentUpon>LoadVideoWindow.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Controls\EventTimelineViewport.axaml.cs">
+      <DependentUpon>EventTimelineViewport.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\EventTimeline.axaml.cs">
+      <DependentUpon>EventTimeline.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets\" />
