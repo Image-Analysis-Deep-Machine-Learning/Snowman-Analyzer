@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using Snowman.Core.Entities;
 
 namespace Snowman.Data;
@@ -27,26 +28,7 @@ namespace Snowman.Data;
  * ruleId - identifies the rule that has been applied, triggering the events
  *      (to distinguish between outputs of applying multiple rules)
  */
-public class EventData(BoundingBox objectBbox, bool isFirstEventOfObject, Entity entity)
-{
-    public BoundingBox ObjectBbox { get;} = objectBbox;
-    public bool IsFirstEventOfObject { get; set; } = isFirstEventOfObject;
-    public Entity Entity { get; } = entity;
 
-    public override string ToString()
-    {
-        StringBuilder sb = new();
-        sb.Append($"Object track ID: {ObjectBbox.ClassName.TrackId}\n");
-        sb.Append($"The first event of this object: {IsFirstEventOfObject}\n");
-        
-        // TODO: info about entity (maybe add entity IDs to identify them easily?)
-        var entityType = Entity.GetType().Name;
-        if (entityType.EndsWith("Entity")) entityType = entityType.Substring(0, entityType.Length - 6);
-        sb.Append($"Entity: {entityType}\n");
-       
-        return sb.ToString();
-    }
-}
 
 /**
  * maxFrequency - the largest number of events occurring simultaneously at any one frame from the whole sequence after applying this one rule

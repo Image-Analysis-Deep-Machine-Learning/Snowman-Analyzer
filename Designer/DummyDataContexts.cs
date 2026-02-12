@@ -1,4 +1,7 @@
-﻿using Snowman.Designer;
+﻿using Avalonia.Media;
+using Snowman.Core.Services;
+using Snowman.Data;
+using Snowman.Designer;
 // ReSharper disable once CheckNamespace
 // This file contains all dummy parameterless constructors for DataContexts
 // They initialize all readonly members and properties to "null!" or dummy objects so the designer still works
@@ -17,7 +20,7 @@ public partial class EventTimelineViewportDataContext
 {
     public EventTimelineViewportDataContext()
     {
-        
+        ScriptRuns = [new ScriptRun() {Name = "ja neviem", Outputs = { new TimelineOutput() {Name = "bude mat name", Layers = [new Layer() {Name = "AVTOBUS", Brush = Brushes.Aqua}]} }}, new ScriptRun() {Name = "ja neviem2"}];
     }
 }
 

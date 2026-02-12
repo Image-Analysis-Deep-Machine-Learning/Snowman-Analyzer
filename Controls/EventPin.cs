@@ -61,7 +61,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
             
             foreach (var eventData in Events)
             {
-                tempEntities.Add(eventData.Entity);
+                //tempEntities.Add(eventData.Entity);
                 //tempBoundingBoxes.Add(eventData.ObjectBbox);
             }
             
@@ -91,11 +91,11 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
                 Events[0] +
                 $"Rule {Rule.Id + 1}: {Rule.Name}");
             
-            if (Events[0].IsFirstEventOfObject)
-            {
-                // only draw the pin icon for the first event relating to the same tracked object   
-                DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
-            }
+            // if (Events[0].IsFirstEventOfObject)
+            // {
+            //     // only draw the pin icon for the first event relating to the same tracked object   
+            //     DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
+            // }
         }
         else
         {
@@ -107,9 +107,9 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
                 $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
                 "Click for more info");
             
-            var containsFirst = Events.Any(eventData => eventData.IsFirstEventOfObject);
-            // only draw filled pin icon if at least one event is the first event
-            if (containsFirst) DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
+            // var containsFirst = Events.Any(eventData => eventData.IsFirstEventOfObject);
+            // // only draw filled pin icon if at least one event is the first event
+            // if (containsFirst) DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
         }
     }
 

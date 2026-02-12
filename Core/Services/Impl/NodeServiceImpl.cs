@@ -32,6 +32,7 @@ public class NodeServiceImpl : INodeService
     private readonly GraphOverlay _backgroundOverlay; // TODO: maybe don't send the entire overlay here, but make an event supplier for NodeService that will fire every time the node graph changes
     private readonly GraphOverlay _foregroundOverlay;
     private readonly List<OutputNode> _outputNodes;
+    private ITimelineService? _timelineService;
     
     private Port? _currentDragPort;
     private Point? _currentDragPoint;
@@ -212,6 +213,8 @@ public class NodeServiceImpl : INodeService
     {
         var graphTask = new Task(() =>
         {
+            GetTimelineService().StartNewScriptRun();
+
             foreach (var outputNode in _outputNodes)
             {
                 outputNode.ExecuteOutput();
@@ -307,6 +310,7 @@ public class NodeServiceImpl : INodeService
     private void LoadOutputNodes()
     {
         OutputNodePrototypes.Add(new LoggerOutputNode());
+        OutputNodePrototypes.Add(new TimelineOutputNode());
     }
 
     private void LoadScripts()
@@ -322,5 +326,12 @@ public class NodeServiceImpl : INodeService
                 ScriptPrototypes.Add(scriptNode);
             }
         }
+    }
+
+    private ITimelineService GetTimelineService()
+    {
+        _timelineService ??= _serviceProvider.GetService<ITimelineService>();
+
+        return _timelineService;
     }
 }

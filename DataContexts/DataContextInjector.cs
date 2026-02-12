@@ -43,6 +43,18 @@ public static class DataContextInjector
     // keep in alphabetic order to make it easier to read
     private static void RegisterDataContextFactories()
     {
+        RegisterDataContextFactory<EventTimeline>((control, serviceProvider) =>
+        {
+            var dataContext =  new EventTimelineDataContext(serviceProvider, control.Canvas, control.TimelineOutput, control.Bounds);
+            dataContext.UpdateEventPins(dataContext.Zoom, 0);
+            return dataContext;
+        });
+        RegisterDataContextFactory<EventTimelineViewport>((control, serviceProvider) =>
+        {
+            var newDataContext = new EventTimelineViewportDataContext(serviceProvider, control.TimelineViewer);
+            serviceProvider.RegisterService<ITimelineService>(new TimelineServiceImpl(newDataContext));
+            return newDataContext;
+        });
         RegisterDataContextFactory<FrameTimeline>((_, serviceProvider) => new FrameTimelineDataContext(serviceProvider));
         RegisterDataContextFactory<GraphOverlay>((_, serviceProvider) => new GraphOverlayDataContext(serviceProvider));
         // NodeControl is dynamically generated, it does not use this pattern TODO: check if it can be done

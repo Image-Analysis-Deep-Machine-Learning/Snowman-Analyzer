@@ -1,33 +1,69 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Snowman.Controls;
+using Snowman.Data;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
 public partial class EventTimelineViewportDataContext
 {
-    public ObservableCollection<EventTimelineDataContext> Timelines { get; } = [];
+    private readonly StackPanel _scrollViewer;
+    private List<TimelineOutput> _timelines = [];
+
+    public ObservableCollection<ScriptRun> ScriptRuns { get; } = [];
 
     public double Zoom { get; private set; } = 1.0;
     public double Pan { get; private set; } = 0.0;
 
-    public void AddTimeline(EventTimelineDataContext timeline)
+    public EventTimelineViewportDataContext(IServiceProvider serviceProvider, StackPanel timelineViewer)
     {
-        timeline.AttachToViewport(this);
-        Timelines.Add(timeline);
+        _scrollViewer = timelineViewer;
     }
 
-    public void ApplyZoom(double delta)
+    public void SelectedScriptRun(ScriptRun scriptRun)
     {
-        Zoom = Math.Clamp(Zoom + delta, 0.1, 10);
-        foreach (var t in Timelines)
-            t.OnZoomChanged(Zoom);
+        _timelines.Clear();
+
+        foreach (var output in scriptRun.Outputs)
+        {
+            _timelines.Add(output);
+        }
+
+        UpdateTimelines();
     }
 
-    public void ApplyPan(double delta)
+    private void UpdateTimelines()
     {
-        Pan += delta;
-        foreach (var t in Timelines)
-            t.OnPanChanged(Pan);
+        _scrollViewer.Children.Clear();
+
+        foreach (var timeline in _timelines)
+        {
+            _scrollViewer.Children.Add(new EventTimeline(timeline) { Background = Brushes.Transparent});
+        }
     }
+
+    // public void AddTimeline(EventTimelineDataContext timeline)
+    // {
+    //     timeline.AttachToViewport(this);
+    //     Timelines.Add(timeline);
+    // }
+    //
+    // public void ApplyZoom(double delta)
+    // {
+    //     Zoom = Math.Clamp(Zoom + delta, 0.1, 10);
+    //     foreach (var t in Timelines)
+    //         t.OnZoomChanged(Zoom);
+    // }
+    //
+    // public void ApplyPan(double delta)
+    // {
+    //     Pan += delta;
+    //     foreach (var t in Timelines)
+    //         t.OnPanChanged(Pan);
+    // }
 }
 
