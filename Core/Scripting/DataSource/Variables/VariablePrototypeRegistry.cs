@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Snowman.Core.Scripting.DataSource;
-using Snowman.Core.Scripting.DataSource.Variables;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
-namespace Snowman.Core.Scripting.Variables;
+namespace Snowman.Core.Scripting.DataSource.Variables;
 
 public static class VariablePrototypeRegistry
 {
@@ -12,13 +10,14 @@ public static class VariablePrototypeRegistry
 
     static VariablePrototypeRegistry()
     {
-        RegisterVariablePrototype(typeof(NumberVariable), new NumberVariable());
-        RegisterVariablePrototype(typeof(EntitySelector), new EntitySelector());
+        RegisterVariablePrototype<NumberVariable>();
+        RegisterVariablePrototype<EntitySelector>();
+        RegisterVariablePrototype<DatasetSelector>();
     }
     
-    private static void RegisterVariablePrototype(Type type, Variable prototype)
+    private static void RegisterVariablePrototype<T>() where T : Variable, new()
     {
-        VariablePrototypes[type] = prototype;
+        VariablePrototypes[typeof(T)] = new T();
     }
 
     public static Variable GetVariableCopy(Type type, IServiceProvider serviceProvider)

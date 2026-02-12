@@ -12,7 +12,7 @@ public abstract class Tool
     public Cursor Cursor { get; }
     public ImageBrush Icon { get; }
 
-    public Tool(string name, Cursor cursor, ImageBrush icon)
+    protected Tool(string name, Cursor cursor, ImageBrush icon)
     {
         Name = name;
         Cursor = cursor;

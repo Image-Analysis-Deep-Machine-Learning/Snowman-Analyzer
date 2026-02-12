@@ -16,19 +16,22 @@ namespace Snowman.Core.Services.Impl;
 public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEventSupplier
 {
     private readonly IDatasetImagesService _datasetImagesService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IEntityManager _entityManager;
-    private string _currentXmlPath;
+    private INodeService? _nodeService;
     private DatasetData _datasetData;
+    private string _currentXmlPath;
     
     public event SignalEventHandler? ProjectLoaded;
     public event SignalEventHandler? DatasetLoaded;
     
     public ProjectServiceImpl(IServiceProvider serviceProvider)
     {
-        _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
-        _entityManager = serviceProvider.GetService<IEntityManager>();
-        serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
-        serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
+        _serviceProvider = serviceProvider;
+        _datasetImagesService = _serviceProvider.GetService<IDatasetImagesService>();
+        _entityManager = _serviceProvider.GetService<IEntityManager>();
+        _serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
+        _serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
         _datasetData = new DatasetData();
         _currentXmlPath = string.Empty;
         ProjectLoaded?.Invoke();
@@ -76,6 +79,8 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
             _entityManager.AddEntity(entity);
         }
         
+        GetNodeService().LoadGraph(projectData.NodeGraph);
+        
         ProjectLoaded?.Invoke();
     }
 
@@ -84,12 +89,18 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         var projectData = new ProjectData
         {
             LoadedDatasetPath = _currentXmlPath,
-            Entities = ProjectDataConverter.SerializeEntities(_entityManager.GetEntities())
+            Entities = ProjectDataConverter.SerializeEntities(_entityManager.GetEntities()),
+            NodeGraph = GetNodeService().SaveGraph()
         };
         
         var fileStream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(fileStream);
         await writer.WriteAsync(ProjectData.Serialize(projectData));
+    }
+
+    public DatasetData GetDatasetData()
+    {
+        return _datasetData;
     }
 
     private void SetDatasetInternal(DatasetData dataset, string datasetPath)
@@ -118,5 +129,12 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
             var boundingBoxRectangle = new Rect(bb.XLeftTop, bb.YLeftTop, bb.Width, bb.Height);
             context.DrawRectangle(bboxPen, boundingBoxRectangle);
         }
+    }
+
+    private INodeService GetNodeService()
+    {
+        _nodeService ??= _serviceProvider.GetService<INodeService>();
+        
+        return _nodeService;
     }
 }

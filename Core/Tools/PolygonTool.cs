@@ -14,8 +14,8 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
     private PolygonEntity? _polygonInCreation;
 
     public PolygonTool() : base("_Polygon Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
-    
-    protected PolygonTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+
+    private PolygonTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
     public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
     {

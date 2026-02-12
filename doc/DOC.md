@@ -70,6 +70,26 @@ DataContexts that are set via DataContextInjector should be divided into two par
 </ctrl:UserControlWrapper>
 ```
 
+### How to add new entities
+
+Each entity is in [Entities](../Core/Entities) folder. Entities can be composited together. The approach of adding and managing child entities is up to the developer.
+
+Entity has a Render method where the entity is being rendered using DrawingContext from the viewport. Always check if the `IsVisible` property is true before drawing the entity (same for hit evaluation method). Children are not automatically rendered and must be rendered separately. Same applies for the label with ID. This will change in the future to have less duplicate code with the power of template methods.
+
+Each entity needs its Tool in [Tools](../Core/Tools) folder. This tool should extend the EntityEditTool and override required functionality. This will change in the future to use commands instead of infinite branching of overriden code.
+
+The tool needs to be registered in the [ToolRegistry](../Core/Tools/ToolRegistry.cs) class.
+
+Entities must have corresponding Data classes in [ProjectData](../Data/ProjectData.cs) as well as converter factories in [ProjectDataConverter](../Data/ProjectDataConverter.cs) class. The EntityData class in [ProjectData.cs](../Data/ProjectData.cs) must have an XmlInclude attribute for each entity type to tell the XML parser what classes it can encounter.
+
+### How to add new variables
+
+Main variable classes are in [Variables](../Core/Scripting/DataSource/Variables) folder. These classes always extend the [GenericVariableWrapper](../Core/Scripting/DataSource/GenericVariableWrapper.cs) class to add property change support for GUI as well as strongly typed access to the Value property. Generic parameter of the class should be the type stored in the TypedValue property. This class acts as a DataContext for the GUI controls so it **MUST** have a parameterless constructor. Preferably in [DummyVariables](../Designer/DummyVariables.cs) class as a part of a partial class. This should include adding any other dummy objects needed for designer to load.
+
+Variables have controls in [UserInterface/Controls](../Core/Scripting/UserInterface/Controls) folder. These controls extend VariableControl as a base class to add additional constraints to the DataContext for generics safety.
+
+It is important to register the Variables as well as their controls (prototypes/factories) into [VariablePrototypeRegistry](../Core/Scripting/DataSource/Variables/VariablePrototypeRegistry.cs) and [DataSourceControlRegistry](../Core/Scripting/UserInterface/DataSourceControlRegistry.cs) respectively. This allows the ScriptBuilder to create a ScriptNode when parsing the .script file and NodeControlBuilder to build the node. This registration can technically be done automatically using reflection during runtime (to find all existing subclasses of the Variable and VariableControl types), so it might change in the future to automatically register any new types.
+
 ### General suggestions
 
 Order and group class members as close to this list as possible:

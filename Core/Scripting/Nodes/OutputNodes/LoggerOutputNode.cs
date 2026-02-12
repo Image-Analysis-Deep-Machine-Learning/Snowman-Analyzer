@@ -18,6 +18,7 @@ public class LoggerOutputNode : OutputNode
     {
         _messageInput = CreateInput();
         Name = "Logger Output";
+        UniqueIdentifier = nameof(LoggerOutputNode);
     }
 
     public override Node Copy(IServiceProvider serviceProvider)

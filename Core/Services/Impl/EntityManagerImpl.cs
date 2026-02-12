@@ -15,6 +15,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
     private readonly List<Entity> _entitiesIncludingChildren;
     private readonly List<EntityWrapper> _selectedEntities;
     private readonly PriorityQueue<int, int> _freeEntityIds;
+    private readonly HashSet<int> _occupiedEntityIds;
     
     public event Events.EventHandler<Entity>? EntityAdded;
     public event Events.EventHandler<Entity>? EntityRemoved;
@@ -25,6 +26,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         _entities = [];
         _entitiesIncludingChildren = [];
         _selectedEntities = [];
+        _occupiedEntityIds = [];
         _freeEntityIds =  new PriorityQueue<int, int>([(0, 0)]);
     }
 
@@ -44,7 +46,8 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
         {
             entity.Id = GetNextEntityId();
         }
-        
+
+        _occupiedEntityIds.Add(entity.Id);
         _entities.Add(entity);
         
         var entityQueue = new Queue<Entity>([entity]);
@@ -73,6 +76,7 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
                 _freeEntityIds.Enqueue(entity.Id, entity.Id);
             }
             
+            _occupiedEntityIds.Remove(entity.Id);
             _entities.Remove(entity);
             
             var entityQueue = new Queue<Entity>([entity]);
@@ -162,8 +166,13 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 
         last?.IsHit = true;
     }
-    
-    
+
+    public Entity? GetEntityById(int id)
+    {
+        return _entities.FirstOrDefault(x => x.Id == id);
+    }
+
+
     public IEnumerable<IDrawable> GetDrawables()
     {
         return _entities.AsReadOnly();
@@ -171,12 +180,18 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 
     private int GetNextEntityId()
     {
-        var nextId = _freeEntityIds.Dequeue();
-
-        if (_freeEntityIds.Count == 0)
+        int nextId;
+        
+        do
         {
-            _freeEntityIds.Enqueue(nextId + 1, nextId + 1);
-        }
+            nextId = _freeEntityIds.Dequeue();
+            
+            if (_freeEntityIds.Count == 0)
+            {
+                _freeEntityIds.Enqueue(nextId + 1, nextId + 1);
+            }
+        } while (_occupiedEntityIds.Contains(nextId));
+
 
         return nextId;
     }

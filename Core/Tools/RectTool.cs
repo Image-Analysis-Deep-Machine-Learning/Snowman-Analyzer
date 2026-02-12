@@ -14,8 +14,8 @@ public class RectTool : EntityEditTool<RectangleEntity>
     private Entity? _selectedPoint;
     
     public RectTool() : base("_Rect Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
-    
-    protected RectTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+
+    private RectTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 

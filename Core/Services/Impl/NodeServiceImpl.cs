@@ -15,6 +15,7 @@ using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.Nodes.OutputNodes;
 using Snowman.Core.Scripting.UserInterface;
+using Snowman.Data;
 using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
@@ -24,42 +25,52 @@ public class NodeServiceImpl : INodeService
     private const string ScriptFileExtension = ".script";
     private const string ScriptsFolder = "Scripts";
 
-    private readonly List<Node> ScriptPrototypes;
-    private readonly List<Node> OutputNodePrototypes;
+    private readonly Dictionary<string, Node> _scriptPrototypes;
+    private readonly Dictionary<string, Node> _outputNodePrototypes;
     private readonly Canvas _viewportCanvas;
     private readonly IServiceProvider _serviceProvider;
-    private readonly Dictionary<Port, NodePort>  _nodePorts;
+    private readonly Dictionary<Port, NodePort> _nodePorts;
+    private readonly Dictionary<Port, int> _portsToNodeIds;
     private readonly GraphOverlay _backgroundOverlay; // TODO: maybe don't send the entire overlay here, but make an event supplier for NodeService that will fire every time the node graph changes
     private readonly GraphOverlay _foregroundOverlay;
     private readonly List<OutputNode> _outputNodes;
+    private readonly List<Node> _allNodes;
+    private readonly PriorityQueue<int, int> _freeNodeIds;
+    private readonly HashSet<int> _occupiedNodeIds;
     
     private Port? _currentDragPort;
     private Point? _currentDragPoint;
 
     public NodeServiceImpl(Canvas viewportCanvas, GraphOverlay backgroundOverlay, GraphOverlay foregroundOverlay, IServiceProvider serviceProvider)
     {
-        ScriptPrototypes = [];
-        OutputNodePrototypes = [];
+        _scriptPrototypes = [];
+        _outputNodePrototypes = [];
         _nodePorts = [];
         _outputNodes = [];
+        _allNodes = [];
+        _portsToNodeIds = [];
         _viewportCanvas = viewportCanvas;
         _serviceProvider = serviceProvider;
         _backgroundOverlay = backgroundOverlay;
         _foregroundOverlay = foregroundOverlay;
+        _freeNodeIds =  new PriorityQueue<int, int>([(0, 0)]);
+        _occupiedNodeIds = [];
         _serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<INodeViewportEventSupplier>(x => x.OnPointerMovement += (_, e) => HandleNodeViewportMouseMovement(e));
         LoadScripts();
         LoadOutputNodes();
     }
 
-    public int ManageAndGetUID(Node node)
-    {
-        return 0; // TODO: do something about this
-    }
-
-    public void AddNodeToCanvas(Node? node)
+    public void AddNode(Node? node)
     {
         if (node is null) return;
         
+        if (node.Id == -1)
+        {
+            node.Id = GetNextNodeId();
+        }
+        
+        _occupiedNodeIds.Add(node.Id);
+        _allNodes.Add(node);
         var builder = new NodeControlBuilder(node, _serviceProvider);
         var director = new NodeControlBuilderDirector(node, builder);
         director.Prepare();
@@ -69,6 +80,68 @@ public class NodeServiceImpl : INodeService
         {
             _outputNodes.Add(outputNode);
         }
+        
+        RegisterPorts(node.Inputs);
+        RegisterPorts(node.Outputs);
+        return;
+
+        void RegisterPorts(IEnumerable<Port> ports)
+        {
+            foreach (var port in ports)
+            {
+                _portsToNodeIds.Add(port, node.Id);
+            }
+        }
+    }
+
+    public void RemoveNode(Node? node)
+    {
+        if (node is null) return;
+        
+        if (node.Id != -1)
+        {
+            _freeNodeIds.Enqueue(node.Id, node.Id);
+        }
+        
+        _occupiedNodeIds.Remove(node.Id);
+        _allNodes.Remove(node);
+        var control = _viewportCanvas.Children.Where(x => x is NodeControl).Cast<NodeControl>().FirstOrDefault(x => x.DataContext.Node == node);
+        
+        if (control is null) return;
+        
+        _viewportCanvas.Children.Remove(control);
+        
+        if (node is OutputNode outputNode)
+        {
+            _outputNodes.Remove(outputNode);
+        }
+        
+        foreach (var input in node.Inputs)
+        {
+            foreach (var connectedOutput in input.ConnectedOutputs.ToList())
+            {
+                RemoveConnection(connectedOutput, input);
+            }
+            
+            _portsToNodeIds.Remove(input);
+            _nodePorts.Remove(input);
+        }
+        
+        foreach (var output in node.Outputs)
+        {
+            _portsToNodeIds.Remove(output);
+            _nodePorts.Remove(output);
+        }
+    }
+
+    public void RemoveConnection(Port? port1, Port? port2)
+    {
+        var input = port1 is Input ? port1 as Input : port2 is Input ? port2 as Input : null;
+        var output = port1 is Output ? port1 as Output : port2 is Output ? port2 as Output : null;
+        
+        if (input is null || output is null) return;
+        
+        input.ConnectedOutputs.Remove(output);
     }
     
     public IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background)
@@ -145,20 +218,6 @@ public class NodeServiceImpl : INodeService
         return retList;
     }
 
-    private static Expander? FindFirstRetractedExpander(NodePort outputNode)
-    {
-        var currentExpander = outputNode.FindAncestorOfType<Expander>();
-
-        if (currentExpander?.IsExpanded ?? true) return null;
-
-        while (!currentExpander.FindAncestorOfType<Expander>()?.IsExpanded ?? false)
-        {
-            currentExpander = currentExpander.FindAncestorOfType<Expander>();
-        }
-        
-        return currentExpander;
-    }
-
     public void RegisterNodePort(NodePort nodePort)
     {
         _nodePorts.Add(nodePort.Port, nodePort);
@@ -205,7 +264,7 @@ public class NodeServiceImpl : INodeService
 
     public IEnumerable<Node> GetNodes()
     {
-        return ScriptPrototypes.Concat(OutputNodePrototypes).ToImmutableList();
+        return _scriptPrototypes.Concat(_outputNodePrototypes).Select(x => x.Value);
     }
     
     public void RunGraph()
@@ -224,6 +283,89 @@ public class NodeServiceImpl : INodeService
         });
         
         graphTask.Start();
+    }
+
+    public NodeGraphData SaveGraph()
+    {
+        var graphData = new NodeGraphData();
+
+        foreach (var node in _allNodes)
+        {
+            graphData.Nodes.Add(node.Serialize(_serviceProvider));
+        }
+
+        return graphData;
+    }
+
+    public void LoadGraph(NodeGraphData data)
+    {
+        foreach (var node in _allNodes.ToList())
+        {
+            RemoveNode(node);
+        }
+        
+        var inputDict = new Dictionary<InputData, Input>();
+
+        foreach (var nodeData in data.Nodes)
+        {
+            var dict = new Dictionary<string, Node>();
+
+            switch (nodeData.Type)
+            {
+                case nameof(ScriptNode):
+                    dict = _scriptPrototypes;
+                    break;
+                case nameof(OutputNode):
+                    dict = _outputNodePrototypes;
+                    break;
+            }
+
+            var copy = dict[nodeData.UniqueIdentifier].Copy(_serviceProvider);
+            copy.Deserialize(nodeData, _serviceProvider);
+            AddNode(copy);
+            
+            foreach (var inputData in nodeData.Inputs)
+            {
+                var input = copy.Inputs.First(input => input.Name == inputData.Name);
+                
+                inputDict[inputData] = input;
+            }
+        }
+
+        // the entire graph must exist before adding connections
+        foreach (var nodeData in data.Nodes)
+        {
+            foreach (var inputData in nodeData.Inputs)
+            {
+                var input = inputDict[inputData];
+                
+                foreach (var connectedOutputData in inputData.ConnectedOutputs)
+                {
+                    var connectedOutputNode = _allNodes.First(x => x.Id == connectedOutputData.NodeId);
+                    var output = connectedOutputNode.Outputs.First(output => output.Name == connectedOutputData.OutputName);
+                    ConnectPorts(input, output);
+                }
+            }
+        }
+    }
+
+    public int GetNodeIdByPort(Port port)
+    {
+        return _portsToNodeIds[port];
+    }
+
+    private static Expander? FindFirstRetractedExpander(NodePort outputNode)
+    {
+        var currentExpander = outputNode.FindAncestorOfType<Expander>();
+
+        if (currentExpander?.IsExpanded ?? true) return null;
+
+        while (!currentExpander.FindAncestorOfType<Expander>()?.IsExpanded ?? false)
+        {
+            currentExpander = currentExpander.FindAncestorOfType<Expander>();
+        }
+        
+        return currentExpander;
     }
 
     private (bool CanConnect, Input? Input, Output? Output) CanConnectPorts(Port? port1, Port? port2)
@@ -249,12 +391,10 @@ public class NodeServiceImpl : INodeService
 
     private bool IsDifferentNode(Port port1, Port port2)
     {
-        var nodePort1 = _nodePorts[port1];
-        var nodePort2 = _nodePorts[port2];
-        var nodeControl1 = nodePort1.FindAncestorOfType<NodeControl>();
-        var nodeControl2 = nodePort2.FindAncestorOfType<NodeControl>();
-
-        return nodeControl1 != nodeControl2;
+        var id1 = _portsToNodeIds[port1];
+        var id2 = _portsToNodeIds[port2];
+        
+        return id1 != id2;
     }
 
     private void ConnectPorts(Port? port1, Port? port2)
@@ -306,7 +446,8 @@ public class NodeServiceImpl : INodeService
 
     private void LoadOutputNodes()
     {
-        OutputNodePrototypes.Add(new LoggerOutputNode());
+        var logger = new LoggerOutputNode();
+        _outputNodePrototypes.Add(logger.UniqueIdentifier, logger);
     }
 
     private void LoadScripts()
@@ -315,12 +456,28 @@ public class NodeServiceImpl : INodeService
 
         foreach (var fileInfo in dirInfo.GetFiles())
         {
-            if (fileInfo.Extension == ScriptFileExtension)
-            {
-                var script = Script.Load(fileInfo.FullName);
-                var scriptNode = ScriptParser.Parse(script, _serviceProvider);
-                ScriptPrototypes.Add(scriptNode);
-            }
+            if (fileInfo.Extension != ScriptFileExtension) continue;
+            
+            var script = Script.Load(fileInfo.FullName);
+            var scriptNode = ScriptParser.Parse(script, _serviceProvider);
+            _scriptPrototypes.Add(scriptNode.UniqueIdentifier, scriptNode);
         }
+    }
+    
+    private int GetNextNodeId()
+    {
+        int nextId;
+        
+        do
+        {
+            nextId = _freeNodeIds.Dequeue();
+            
+            if (_freeNodeIds.Count == 0)
+            {
+                _freeNodeIds.Enqueue(nextId + 1, nextId + 1);
+            }
+        } while (_occupiedNodeIds.Contains(nextId));
+        
+        return nextId;
     }
 }

@@ -95,5 +95,6 @@ public static class DataSourceControlRegistry
     {
         RegisterDataSourceControlFactory<NumberVariable>(numberVariable => new NumberVariableControl(numberVariable));
         RegisterDataSourceControlFactory<EntitySelector>(entitySelector => new EntitySelectorControl(entitySelector));
+        RegisterDataSourceControlFactory<DatasetSelector>(datasetSelector => new DatasetSelectorControl(datasetSelector));
     }
 }

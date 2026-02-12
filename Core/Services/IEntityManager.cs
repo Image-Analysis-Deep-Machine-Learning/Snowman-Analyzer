@@ -18,4 +18,5 @@ public interface IEntityManager : IService, IDrawableSource
     public IEnumerable<Entity> GetEntitiesHitByPoint(Point point);
     public IEnumerable<Entity> GetEntitiesHitBySelection(Rect selection);
     public void EvaluateHitsAt<T>(Point point);
+    Entity? GetEntityById(int id);
 }

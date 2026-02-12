@@ -26,6 +26,7 @@
                 <MenuItem Header="_Settings"/>
                 <Separator/>
                 <MenuItem Header="_Load Video File" Command="{Binding $parent[snowman:MainWindow].LoadVideoFile}"/>
+                <MenuItem Header="_Run Multi-Object Tracking" Command="{Binding $parent[snowman:MainWindow].RunMot}"/>
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding $parent[snowman:MainWindow].Close}"/>
             </MenuItem>

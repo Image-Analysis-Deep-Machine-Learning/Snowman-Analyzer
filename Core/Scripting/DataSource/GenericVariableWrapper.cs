@@ -12,8 +12,8 @@ public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChang
 
         set
         {
-            OnPropertyChanged();
             Value = value;
+            OnPropertyChanged();
         }
     }
 

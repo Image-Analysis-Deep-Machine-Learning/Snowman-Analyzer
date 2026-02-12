@@ -85,9 +85,9 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
             await _projectService.SaveProject(filePickerResult);
         }
 
-        catch (Exception)
+        catch (Exception e)
         {
-            await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+            await MessageBox.ShowAsync($"Unable to load selected file.\nError:\n{e}",  "Error", MessageBoxIcon.Error);
         }
     }
     

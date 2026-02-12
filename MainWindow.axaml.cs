@@ -34,7 +34,7 @@ public partial class MainWindow : Window
         try
         {
             var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
-            var metadataResult = await new Controls.LoadVideoWindow(serviceProvider).ShowDialog<VideoSequenceMetadata?>(this);
+            var metadataResult = await new LoadVideoWindow(serviceProvider).ShowDialog<VideoSequenceMetadata?>(this);
 
             if (metadataResult is null) return;
             
@@ -44,13 +44,27 @@ public partial class MainWindow : Window
 
         catch (Exception e)
         {
-            await MessageBox.ShowAsync("Něco se posralo " + e.Message);
+            await MessageBox.ShowAsync("Cannot load the video " + e.Message);
+        }
+    }
+
+    public async Task RunMot()
+    {
+        try
+        {
+            var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
+            await new MultiObjectTrackingWindow(serviceProvider).ShowDialog(this);
+        }
+        
+        catch (Exception e)
+        {
+            await MessageBox.ShowAsync("Cannot run mot: " + e.Message);
         }
     }
     
     private static void InitializePythonExecutionEnvironment()
     {
-        if (Avalonia.Controls.Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
+        if (Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
             
         // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
         var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
@@ -58,16 +72,6 @@ public partial class MainWindow : Window
         PythonEngine.PythonHome = pythonDir;
         PythonEngine.Initialize();
         PythonEngine.BeginAllowThreads();
-            
-        // TODO: all python projects (DeepSORT/Ultralytics YOLO/ByteTrack/YOLO JDE...) must offer a way to install all required libraries
-        // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
-        // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
-        // TODO: DEBUGGER
-        var p = new Process();
-        var exe = Path.Combine(pythonDir, "python.exe");
-        p.StartInfo.FileName = exe;
-        //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
-        p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
-        //p.Start();
+        
     }
 }
