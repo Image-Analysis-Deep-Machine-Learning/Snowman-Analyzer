@@ -41,7 +41,7 @@ public static class ProjectDataConverter
     {
         RegisterEntitySerializer<PointEntity, PointEntityData>(entity => new PointEntityData { Id = entity.Id, Position = entity.Position.ToPointData() });
         RegisterEntitySerializer<RectangleEntity, RectangleEntityData>(entity => new RectangleEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), Width = entity.Width, Height = entity.Height });
-        RegisterEntitySerializer<LineEntity, LineEntityData>(entity => new LineEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), SecondPoint = entity.Children[1].Position.ToPointData() });
+        RegisterEntitySerializer<LineEntity, LineEntityData>(entity => new LineEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), SecondPosition = entity.Children[1].Position.ToPointData() });
         RegisterEntitySerializer<PolygonEntity, PolygonEntityData>(entity => new PolygonEntityData { Id = entity.Id, Position = entity.Position.ToPointData(), Points = entity.Children.Skip(1).Select(x => x.Position.ToPointData()).ToList() });
     }
 
@@ -54,7 +54,7 @@ public static class ProjectDataConverter
             var pos2 = pos1 + new Vector(entityData.Width, entityData.Height);
             return new RectangleEntity(pos1, pos2) { Id  = entityData.Id };
         });
-        RegisterEntityDeserializer<LineEntityData, LineEntity>(entityData => new LineEntity(entityData.Position.ToPoint(), entityData.SecondPoint.ToPoint()) { Id  = entityData.Id });
+        RegisterEntityDeserializer<LineEntityData, LineEntity>(entityData => new LineEntity(entityData.Position.ToPoint(), entityData.SecondPosition.ToPoint()) { Id  = entityData.Id });
         RegisterEntityDeserializer<PolygonEntityData, PolygonEntity>(entityData =>
         {
             var newPolygonEntity = new PolygonEntity(entityData.Position.ToPoint(), entityData.Points[0].ToPoint()) { Id  = entityData.Id };

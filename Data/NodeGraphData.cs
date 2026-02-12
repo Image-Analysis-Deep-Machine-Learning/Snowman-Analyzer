@@ -14,6 +14,12 @@ public class NodeGraphData
 
 public class NodeData
 {
+    [XmlElement("UniqueIdentifier")]
+    public string UniqueIdentifier { get; set; } = string.Empty;
+    
+    [XmlElement("Type")]
+    public string Type { get; set; } = string.Empty;
+    
     [XmlElement("Id")]
     public int Id { get; set; }
     

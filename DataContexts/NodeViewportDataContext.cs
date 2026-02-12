@@ -22,7 +22,7 @@ public partial class NodeViewportDataContext
     
     public void AddNode()
     {
-        _nodeService.AddNodeToCanvas(SelectedNode?.Copy(_serviceProvider));
+        _nodeService.AddNode(SelectedNode?.Copy(_serviceProvider));
     }
 
     public void RunGraph()

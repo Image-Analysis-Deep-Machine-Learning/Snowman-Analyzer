@@ -102,10 +102,4 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
     {
         // no properties atm
     }
-
-    public override void Deserialize(XmlElement xml)
-    {
-        IsCustomPathSelected = bool.Parse(xml.GetAttribute("IsCustomPathSelected"));
-        CustomDatasetPath = xml.InnerText;
-    }
 }

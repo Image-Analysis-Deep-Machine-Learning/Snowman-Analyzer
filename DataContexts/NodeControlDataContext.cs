@@ -7,38 +7,38 @@ namespace Snowman.DataContexts;
 
 public partial class NodeControlDataContext : INotifyPropertyChanged
 {
-    private readonly Node _node;
+    public readonly Node Node;
     
     public event PropertyChangedEventHandler? PropertyChanged;
     
-    public string NodeName => _node.Name;
+    public string NodeName => Node.Name;
     
     public double X
     {
-        get => _node.X;
+        get => Node.X;
         set
         {
-            if (!(Math.Abs(_node.X - value) > 0.01)) return;
+            if (!(Math.Abs(Node.X - value) > 0.01)) return;
             
-            _node.X = value;
+            Node.X = value;
             OnPropertyChanged();
         }
     }
 
     public double Y
     {
-        get => _node.Y;
+        get => Node.Y;
         set
         {
-            if (!(Math.Abs(_node.Y - value) > 0.01)) return;
-            _node.Y = value;
+            if (!(Math.Abs(Node.Y - value) > 0.01)) return;
+            Node.Y = value;
             OnPropertyChanged();
         }
     }
 
     public NodeControlDataContext(Node node)
     {
-        _node = node;
+        Node = node;
     }
     
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -11,8 +11,9 @@ namespace Snowman.Core.Services;
 
 public interface INodeService : IService
 {
-    public int ManageAndGetId(Node node);
-    void AddNodeToCanvas(Node? node);
+    void AddNode(Node? node);
+    public void RemoveNode(Node? node);
+    public void RemoveConnection(Port? port1, Port? port2);
     IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background);
     void RegisterNodePort(NodePort nodePort);
     void NodeChangedPosition(object? sender, PropertyChangedEventArgs e);
@@ -23,4 +24,5 @@ public interface INodeService : IService
     void RunGraph();
     public NodeGraphData SaveGraph();
     public void LoadGraph(NodeGraphData data);
+    int GetNodeIdByPort(Port port);
 }

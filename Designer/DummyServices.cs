@@ -15,8 +15,9 @@ namespace Snowman.Designer;
 
 public class DummyNodeService : INodeService
 {
-    public int ManageAndGetId(Node node) => 0;
-    public void AddNodeToCanvas(Node? node) { }
+    public void AddNode(Node? node) { }
+    public void RemoveNode(Node? node) { }
+    public void RemoveConnection(Port? port1, Port? port2) { }
     public IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background) => [];
     public void RegisterNodePort(NodePort nodePort) { }
     public void NodeChangedPosition(object? sender, PropertyChangedEventArgs e) { }
@@ -25,29 +26,17 @@ public class DummyNodeService : INodeService
     public bool IsNewConnectionActive() => false;
     public IEnumerable<Node> GetNodes() => [];
     public void RunGraph() { }
+    public NodeGraphData SaveGraph() => new();
+    public void LoadGraph(NodeGraphData data) { }
+    public int GetNodeIdByPort(Port port) => 0;
 }
 
 public class DummyProjectService : IProjectService
 {
-    public Task OpenDataset(string file)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task OpenProject(IStorageFile file)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task SaveProject(IStorageFile file)
-    {
-        return Task.CompletedTask;
-    }
-
-    public DatasetData GetDatasetData()
-    {
-        return new DatasetData();
-    }
+    public Task OpenDataset(string file) => Task.CompletedTask;
+    public Task OpenProject(IStorageFile file) => Task.CompletedTask;
+    public Task SaveProject(IStorageFile file) => Task.CompletedTask;
+    public DatasetData GetDatasetData() => new();
 }
 
 public class DummyServiceProvider : IServiceProvider

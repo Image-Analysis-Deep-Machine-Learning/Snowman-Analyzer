@@ -10,6 +10,7 @@ namespace Snowman.Data;
 public class ScriptNodeDefinitionData
 {
     public string Name { get; set; } = null!;
+    public string UniqueIdentifier { get; set; } = string.Empty;
     public string Description { get; set; } = null!;
     public int Version { get; set; }
 

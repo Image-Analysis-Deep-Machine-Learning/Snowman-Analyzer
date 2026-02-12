@@ -13,7 +13,7 @@ public partial class NumberVariable
 
 public partial class EntitySelector
 {
-    public EntitySelector() : this("sample_name", Group.Default, "Sample Name", DummyServiceProvider.Instance)
+    public EntitySelector() : this("sample_name", Group.Default, "Sample Name")
     {
         
     }

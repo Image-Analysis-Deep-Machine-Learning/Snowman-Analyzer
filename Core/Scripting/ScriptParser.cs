@@ -95,6 +95,7 @@ public class ScriptParser
 
         _result.PythonScriptContent = _script.Code;
         _result.Name = _script.NodeDefinitionData.Name;
+        _result.UniqueIdentifier = _script.NodeDefinitionData.UniqueIdentifier;
     }
 
     private ScriptNode GetResult()
