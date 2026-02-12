@@ -14,8 +14,8 @@ public class LineTool : EntityEditTool<LineEntity>
     private Entity? _selectedPoint;
     
     public LineTool() : base("_Line Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
-    
-    protected LineTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+
+    private LineTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 

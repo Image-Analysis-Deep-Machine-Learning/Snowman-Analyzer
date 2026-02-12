@@ -1,0 +1,51 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" Width="480"
+        xmlns:dataContext="using:Snowman.DataContexts"
+        x:Class="Snowman.MultiObjectTrackingWindow"
+        x:DataType="dataContext:MultiObjectTrackingWindowDataContext"
+        Title="Run Multi Object Tracking And Create New Dataset"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        SizeToContent="Height">
+    <StackPanel Margin="30">
+        <Button Content="Test/Initialize Python Libraries" Command="{Binding InitializeRequiredLibraries}" Margin="10"/>
+        <Button Content="Select Video File" Command="{Binding SelectVideoFile}" Margin="10"/>
+        <TextBox Text="{Binding VideoFilePath}" IsReadOnly="True" ToolTip.Tip="{Binding VideoFilePath}" Margin="10"/>
+        
+        <Button Content="Select Output Folder" Command="{Binding SelectOutputFolder}" Margin="10"/>
+        <TextBox Text="{Binding OutputFolderPath}" IsReadOnly="True" ToolTip.Tip="{Binding OutputFolderPath}" Margin="10"/>
+        
+        <TextBlock HorizontalAlignment="Left" Margin="10">Select Detector</TextBlock>
+        <ComboBox
+            ItemsSource="{Binding AvailableDetectors}"
+            SelectedItem="{Binding SelectedDetector}"
+            Margin="10"
+            MinWidth="150">
+        </ComboBox>
+        
+        <TextBlock HorizontalAlignment="Left" Margin="10">Select Model</TextBlock>
+        <ComboBox
+            ItemsSource="{Binding AvailableModels}"
+            SelectedItem="{Binding SelectedModel}"
+            Margin="10"
+            MinWidth="150">
+        </ComboBox>
+        
+        <TextBlock HorizontalAlignment="Left" Margin="10">Select Tracker</TextBlock>
+        <ComboBox
+            ItemsSource="{Binding AvailableTrackers}"
+            SelectedItem="{Binding SelectedTracker}"
+            Margin="10"
+            MinWidth="150">
+        </ComboBox>
+        
+        <Button Content="Create Dataset"
+                Margin="5,0"
+                Background="{DynamicResource SystemAccentColorDark2}"
+                Foreground="{DynamicResource SystemAccentColorLight2}"
+                Command="{Binding StartProcess}"/>
+    </StackPanel>
+</Window>

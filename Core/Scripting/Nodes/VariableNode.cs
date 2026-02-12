@@ -4,7 +4,7 @@ namespace Snowman.Core.Scripting.Nodes;
 
 public class VariableNode : Node
 {
-    public override void Execute()
+    protected override void Execute()
     {
         IsReady = true;
     }

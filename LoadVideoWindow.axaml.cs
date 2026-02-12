@@ -2,7 +2,7 @@
 using Snowman.Core.Services;
 using Snowman.DataContexts;
 
-namespace Snowman.Controls;
+namespace Snowman;
 
 public partial class LoadVideoWindow : Window
 {

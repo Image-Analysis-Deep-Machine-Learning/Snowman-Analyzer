@@ -10,7 +10,7 @@ namespace Snowman.Core.Services;
 
 public interface INodeService : IService
 {
-    public int ManageAndGetUID(Node node);
+    public int ManageAndGetId(Node node);
     void AddNodeToCanvas(Node? node);
     IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background);
     void RegisterNodePort(NodePort nodePort);

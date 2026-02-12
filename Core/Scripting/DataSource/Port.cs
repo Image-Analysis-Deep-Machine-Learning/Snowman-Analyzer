@@ -9,10 +9,10 @@ public abstract class Port : IDataSource
     public Type Type { get; set; }
     public Group Group { get; set; }
     public string FriendlyName { get; set; }
-    public bool HasValue { get; set; }
+    public bool HasValue { get; protected set; }
     public object? Value { get; set; }
 
-    public Port(string name, Type type, Group group, string friendlyName)
+    protected Port(string name, Type type, Group group, string friendlyName)
     {
         Name = name;
         Type = type;

@@ -51,7 +51,7 @@ public class NodeServiceImpl : INodeService
         LoadOutputNodes();
     }
 
-    public int ManageAndGetUID(Node node)
+    public int ManageAndGetId(Node node)
     {
         return 0; // TODO: do something about this
     }

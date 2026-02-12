@@ -27,20 +27,7 @@ public abstract class Node
         Variables = [];
         Name = string.Empty;
         var nodeService = serviceProvider?.GetService<INodeService>();
-        UniqueId = nodeService?.ManageAndGetUID(this) ?? -1;
-    }
-
-    public virtual void Execute()
-    {
-        PrepareInputs();
-    }
-    
-    public void PrepareInputs()
-    {
-        foreach (var input in Inputs.Where(input => !input.HasValue))
-        {
-            input.AskForValue();
-        }
+        UniqueId = nodeService?.ManageAndGetId(this) ?? -1;
     }
 
     public void Reset()
@@ -55,13 +42,13 @@ public abstract class Node
         IsReady = false;
     }
     
-    public abstract Node Copy(IServiceProvider serviceProvider);
-    
     public override string ToString()
     {
         return Name;
     }
 
+    public abstract Node Copy(IServiceProvider serviceProvider);
+    
     protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
     {
         copy.Name = Name;
@@ -80,6 +67,19 @@ public abstract class Node
         foreach (var variable in Variables)
         {
             copy.Variables.Add(variable.Copy(serviceProvider));
+        }
+    }
+    
+    protected virtual void Execute()
+    {
+        PrepareInputs();
+    }
+
+    private void PrepareInputs()
+    {
+        foreach (var input in Inputs.Where(input => !input.HasValue))
+        {
+            input.AskForValue();
         }
     }
     

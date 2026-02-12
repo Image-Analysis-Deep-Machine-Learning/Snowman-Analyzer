@@ -15,7 +15,7 @@ namespace Snowman.Designer;
 
 public class DummyNodeService : INodeService
 {
-    public int ManageAndGetUID(Node node) => 0;
+    public int ManageAndGetId(Node node) => 0;
     public void AddNodeToCanvas(Node? node) { }
     public IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background) => [];
     public void RegisterNodePort(NodePort nodePort) { }

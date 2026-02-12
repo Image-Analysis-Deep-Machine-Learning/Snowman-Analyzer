@@ -11,13 +11,6 @@ public class ScriptNode : Node
 
     public ScriptNode() { }
 
-    public override void Execute()
-    {
-        base.Execute();
-        RunPythonScript();
-        IsReady = true;
-    }
-
     public override Node Copy(IServiceProvider serviceProvider)
     {
         var copy =  new ScriptNode(serviceProvider);
@@ -27,6 +20,13 @@ public class ScriptNode : Node
         copy.PythonScriptContent = PythonScriptContent;
 
         return copy;
+    }
+
+    protected override void Execute()
+    {
+        base.Execute();
+        RunPythonScript();
+        IsReady = true;
     }
 
     private void RunPythonScript()
