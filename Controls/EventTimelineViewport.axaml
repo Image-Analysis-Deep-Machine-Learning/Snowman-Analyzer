@@ -31,79 +31,92 @@
     </ctrl:UserControlWrapper.Styles>
     <ctrl:UserControlWrapper.DataContext ><dataContext:EventTimelineViewportDataContext></dataContext:EventTimelineViewportDataContext></ctrl:UserControlWrapper.DataContext>
     <Grid ColumnDefinitions="8*,Auto,2*">
-        <ScrollViewer Grid.Column="0"
-                      AllowAutoHide="True"
-                      Margin="0, 0, 2, 0">
-            <ctrl:EventTimeline></ctrl:EventTimeline>
-        </ScrollViewer>
+            <ScrollViewer Grid.Row="0" AllowAutoHide="True" HorizontalScrollBarVisibility="Auto"
+                          Margin="0, 0, 2, 0">
+                <ItemsControl ItemsSource="{Binding Timelines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ctrl:EventTimeline DataContext="{Binding}" Height="100" Width="1500">
+                            </ctrl:EventTimeline>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <!--
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <ctrl:EventTimeline Height="100" Width="1500"></ctrl:EventTimeline>
+                    <ctrl:EventTimeline Height="100" Width="1500"></ctrl:EventTimeline>
+                    <ctrl:EventTimeline Height="100" Width="1500"></ctrl:EventTimeline>
+                </StackPanel>-->
+            </ScrollViewer>
         
         <GridSplitter Grid.Column="1"
                       Background="DimGray" HorizontalAlignment="Stretch"
                       ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
         
         <ScrollViewer Grid.Column="2"
-                      AllowAutoHide="True"
-                      Name="PanelLvl1">
-            <Expander VerticalAlignment="Top">
-                <Expander.Header>
-                    Script run 1
-                </Expander.Header>
-                <StackPanel Name="PanelLvl2" Orientation="Vertical" Width="{Binding #PanelLvl1.Bounds.Width}" Spacing="2" Margin="0, 2, 0, 0">
-                    <Expander VerticalAlignment="Top">
-                        <Expander.Header>
-                            Output 1
-                        </Expander.Header>
-                        <StackPanel Orientation="Vertical" Spacing="2" Margin="0, 2, 0, 0">
-                            <StackPanel Orientation="Vertical" Spacing="1">
-                                <Label Content="Layers"/>
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <ToggleButton Classes="layer-visibility" IsChecked="True"
-                                                  Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
-                                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
-                                        <Grid>
-                                            <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
-                                            <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
-                                        </Grid>
-                                    </ToggleButton>
-                                    <Canvas Width="16" Height="16" Background="Aqua"/>
-                                    <Label Content="Bus"/>
+                      AllowAutoHide="True">
+            <StackPanel Name="PanelLvl1" Orientation="Vertical" Spacing="2" >
+                <Expander VerticalAlignment="Top">
+                    <Expander.Header>
+                        Script run 1
+                    </Expander.Header>
+                    <StackPanel Name="PanelLvl2" Orientation="Vertical" Width="{Binding #PanelLvl1.Bounds.Width}" Spacing="2" Margin="0, 2, 0, 0">
+                        <Expander VerticalAlignment="Top">
+                            <Expander.Header>
+                                Output 1
+                            </Expander.Header>
+                            <StackPanel Orientation="Vertical" Spacing="2" Margin="0, 2, 0, 0">
+                                <StackPanel Orientation="Vertical" Spacing="1">
+                                    <Label Content="Layers"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <ToggleButton Classes="layer-visibility" IsChecked="True"
+                                                      Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
+                                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                            <Grid>
+                                                <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
+                                                <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
+                                            </Grid>
+                                        </ToggleButton>
+                                        <Canvas Width="16" Height="16" Background="Aqua"/>
+                                        <Label Content="Bus"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <ToggleButton Classes="layer-visibility" IsChecked="True"
+                                                      Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
+                                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                            <Grid>
+                                                <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
+                                                <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
+                                            </Grid>
+                                        </ToggleButton>
+                                        <Canvas Width="16" Height="16" Background="Blue"/>
+                                        <Label Content="Car"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <ToggleButton Classes="layer-visibility" IsChecked="True"
+                                                      Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
+                                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                            <Grid>
+                                                <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
+                                                <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
+                                            </Grid>
+                                        </ToggleButton>
+                                        <Canvas Width="16" Height="16" Background="DarkCyan"/>
+                                        <Label Content="Moto"/>
+                                    </StackPanel>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <ToggleButton Classes="layer-visibility" IsChecked="True"
-                                                  Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
-                                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
-                                        <Grid>
-                                            <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
-                                            <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
-                                        </Grid>
-                                    </ToggleButton>
-                                    <Canvas Width="16" Height="16" Background="Blue"/>
-                                    <Label Content="Car"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <ToggleButton Classes="layer-visibility" IsChecked="True"
-                                                  Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
-                                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
-                                        <Grid>
-                                            <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
-                                            <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
-                                        </Grid>
-                                    </ToggleButton>
-                                    <Canvas Width="16" Height="16" Background="DarkCyan"/>
-                                    <Label Content="Moto"/>
+                                <StackPanel Orientation="Vertical" Spacing="1">
+                                    <Label Content="Values"/>
+                                    <Grid ColumnDefinitions="1*,1*" ColumnSpacing="5">
+                                        <NumericUpDown Grid.Column="0" InnerLeftContent="Min" ShowButtonSpinner="False"></NumericUpDown>
+                                        <NumericUpDown Grid.Column="1" InnerLeftContent="Max" ShowButtonSpinner="False"></NumericUpDown>
+                                    </Grid>
                                 </StackPanel>
                             </StackPanel>
-                            <StackPanel Orientation="Vertical" Spacing="1">
-                                <Label Content="Values"/>
-                                <Grid ColumnDefinitions="1*,1*" ColumnSpacing="5">
-                                    <NumericUpDown Grid.Column="0" InnerLeftContent="Min" ShowButtonSpinner="False"></NumericUpDown>
-                                    <NumericUpDown Grid.Column="1" InnerLeftContent="Max" ShowButtonSpinner="False"></NumericUpDown>
-                                </Grid>
-                            </StackPanel>
-                        </StackPanel>
-                    </Expander>
-                </StackPanel>
-            </Expander>
+                        </Expander>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </ctrl:UserControlWrapper>

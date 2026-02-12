@@ -6,8 +6,6 @@
                              x:Class="Snowman.Controls.EventTimeline"
                              xmlns:dataContext="using:Snowman.DataContexts"
                              xmlns:ctrl="using:Snowman.Controls"
-                             x:DataType="dataContext:EventTimelineDataContext"
-                             Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
-    <ctrl:UserControlWrapper.DataContext ><dataContext:EventTimelineDataContext></dataContext:EventTimelineDataContext></ctrl:UserControlWrapper.DataContext>
+                             x:DataType="dataContext:EventTimelineDataContext">
     <Canvas x:Name="Canvas"/>
 </ctrl:UserControlWrapper>
