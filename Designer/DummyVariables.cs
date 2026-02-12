@@ -13,7 +13,7 @@ public partial class NumberVariable
 
 public partial class EntitySelector
 {
-    public EntitySelector() : this("sample_name", Group.Default, "Sample Name")
+    public EntitySelector() : this("sample_name", Group.Default, "Sample Name", DummyServiceProvider.Instance)
     {
         
     }
@@ -21,7 +21,7 @@ public partial class EntitySelector
 
 public partial class DatasetSelector
 {
-    public DatasetSelector() : this("dataset", Group.Default, "Selected Dataset", new DummyServiceProvider())
+    public DatasetSelector() : this("dataset", Group.Default, "Selected Dataset", DummyServiceProvider.Instance)
     {
         
     }

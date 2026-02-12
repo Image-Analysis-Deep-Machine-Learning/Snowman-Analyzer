@@ -53,6 +53,7 @@ public class DummyProjectService : IProjectService
 public class DummyServiceProvider : IServiceProvider
 {
     private static readonly List<IService> Services = [new DummyProjectService()];
+    public static readonly DummyServiceProvider Instance = new();
     public T GetService<T>() where T : IService => (T)Services.FirstOrDefault(x => x.GetType().IsAssignableTo(typeof(T)))!;
     public void RegisterService<T>(T service) where T : IService { }
 }

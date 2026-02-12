@@ -89,6 +89,7 @@ public class ScriptParser
             variableInstance.Group = _groups[variable.Group];
             variableInstance.Type = variableType;
             variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
+            variableInstance.SetPropertiesFromXml(variable.Value);
             _result.Variables.Add(variableInstance);
         }
 

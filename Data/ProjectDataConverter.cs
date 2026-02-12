@@ -32,9 +32,9 @@ public static class ProjectDataConverter
         EntitySerializers[typeof(TEntity)] = entity => serializer((TEntity)entity);
     }
     
-    private static void RegisterEntityDeserializer<TEntityData, TEntity>(Func<TEntityData, TEntity> serializer) where TEntity : Entity where TEntityData : EntityData
+    private static void RegisterEntityDeserializer<TEntityData, TEntity>(Func<TEntityData, TEntity> deserializer) where TEntity : Entity where TEntityData : EntityData
     {
-        EntityDeserializers[typeof(TEntityData)] = entityData => serializer((TEntityData)entityData);
+        EntityDeserializers[typeof(TEntityData)] = entityData => deserializer((TEntityData)entityData);
     }
     
     private static void RegisterEntitySerializers()

@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Services;
+using Snowman.Data;
 
 namespace Snowman.Core.Scripting.Nodes;
 
@@ -40,6 +41,19 @@ public abstract class Node
         }
         
         IsReady = false;
+    }
+    
+    public NodeData Serialize()
+    {
+        var data = new NodeData();
+        
+        data.Id = UniqueId;
+        data.Position = new PointData { X = X, Y = Y };
+
+        foreach (var variable in Variables)
+        {
+            data.Variables.Add(variable.Serialize());
+        }
     }
     
     public override string ToString()

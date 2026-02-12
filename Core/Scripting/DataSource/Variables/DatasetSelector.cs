@@ -40,6 +40,12 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         set
         {
             field = value;
+
+            if (!string.IsNullOrWhiteSpace(field))
+            {
+                LoadSelectedDataset();
+            }
+            
             OnPropertyChanged();
         }
     }
@@ -65,19 +71,22 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
 
         try
         {
-            var datasetPath = filePickerResult[0].Path.LocalPath;
-            var fileStream = new FileStream(datasetPath, FileMode.Open);
-            using var reader = new StreamReader(fileStream);
-            var fileContent = await reader.ReadToEndAsync();
-        
-            TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
-            CustomDatasetPath = datasetPath;
+            CustomDatasetPath = filePickerResult[0].Path.LocalPath;
         }
 
         catch (Exception e)
         {
             await MessageBox.ShowAsync($"Unable to load selected file.\nMessage:\n{e.Message}",  "Error", MessageBoxIcon.Error);
         }
+    }
+
+    private void LoadSelectedDataset()
+    {
+        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
+        using var reader = new StreamReader(fileStream);
+        var fileContent = reader.ReadToEnd();
+        
+        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
     }
 
     public override Variable Copy(IServiceProvider serviceProvider)
@@ -89,13 +98,14 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         };
     }
 
-    public override void ParseValueFromXml(XmlElement xml)
+    public override void SetPropertiesFromXml(XmlElement xml)
     {
-        // TODO: make nodes save and load data
+        // no properties atm
     }
 
-    public override XmlElement ParseValueToXml()
+    public override void Deserialize(XmlElement xml)
     {
-        throw new NotImplementedException();
+        IsCustomPathSelected = bool.Parse(xml.GetAttribute("IsCustomPathSelected"));
+        CustomDatasetPath = xml.InnerText;
     }
 }

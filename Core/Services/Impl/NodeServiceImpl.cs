@@ -15,6 +15,7 @@ using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.Nodes.OutputNodes;
 using Snowman.Core.Scripting.UserInterface;
+using Snowman.Data;
 using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
@@ -24,24 +25,26 @@ public class NodeServiceImpl : INodeService
     private const string ScriptFileExtension = ".script";
     private const string ScriptsFolder = "Scripts";
 
-    private readonly List<Node> ScriptPrototypes;
-    private readonly List<Node> OutputNodePrototypes;
+    private readonly List<Node> _scriptPrototypes;
+    private readonly List<Node> _outputNodePrototypes;
     private readonly Canvas _viewportCanvas;
     private readonly IServiceProvider _serviceProvider;
-    private readonly Dictionary<Port, NodePort>  _nodePorts;
+    private readonly Dictionary<Port, NodePort> _nodePorts;
     private readonly GraphOverlay _backgroundOverlay; // TODO: maybe don't send the entire overlay here, but make an event supplier for NodeService that will fire every time the node graph changes
     private readonly GraphOverlay _foregroundOverlay;
     private readonly List<OutputNode> _outputNodes;
+    private readonly List<Node> _allNodes;
     
     private Port? _currentDragPort;
     private Point? _currentDragPoint;
 
     public NodeServiceImpl(Canvas viewportCanvas, GraphOverlay backgroundOverlay, GraphOverlay foregroundOverlay, IServiceProvider serviceProvider)
     {
-        ScriptPrototypes = [];
-        OutputNodePrototypes = [];
+        _scriptPrototypes = [];
+        _outputNodePrototypes = [];
         _nodePorts = [];
         _outputNodes = [];
+        _allNodes = [];
         _viewportCanvas = viewportCanvas;
         _serviceProvider = serviceProvider;
         _backgroundOverlay = backgroundOverlay;
@@ -60,6 +63,7 @@ public class NodeServiceImpl : INodeService
     {
         if (node is null) return;
         
+        _allNodes.Add(node);
         var builder = new NodeControlBuilder(node, _serviceProvider);
         var director = new NodeControlBuilderDirector(node, builder);
         director.Prepare();
@@ -145,20 +149,6 @@ public class NodeServiceImpl : INodeService
         return retList;
     }
 
-    private static Expander? FindFirstRetractedExpander(NodePort outputNode)
-    {
-        var currentExpander = outputNode.FindAncestorOfType<Expander>();
-
-        if (currentExpander?.IsExpanded ?? true) return null;
-
-        while (!currentExpander.FindAncestorOfType<Expander>()?.IsExpanded ?? false)
-        {
-            currentExpander = currentExpander.FindAncestorOfType<Expander>();
-        }
-        
-        return currentExpander;
-    }
-
     public void RegisterNodePort(NodePort nodePort)
     {
         _nodePorts.Add(nodePort.Port, nodePort);
@@ -205,7 +195,7 @@ public class NodeServiceImpl : INodeService
 
     public IEnumerable<Node> GetNodes()
     {
-        return ScriptPrototypes.Concat(OutputNodePrototypes).ToImmutableList();
+        return _scriptPrototypes.Concat(_outputNodePrototypes).ToImmutableList();
     }
     
     public void RunGraph()
@@ -224,6 +214,35 @@ public class NodeServiceImpl : INodeService
         });
         
         graphTask.Start();
+    }
+
+    public NodeGraphData SaveGraph()
+    {
+        var graphData = new NodeGraphData();
+
+        foreach (var node in _allNodes)
+        {
+            graphData.Nodes.Add(node.Serialize());
+        }
+    }
+
+    public void LoadGraph(NodeGraphData data)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    private static Expander? FindFirstRetractedExpander(NodePort outputNode)
+    {
+        var currentExpander = outputNode.FindAncestorOfType<Expander>();
+
+        if (currentExpander?.IsExpanded ?? true) return null;
+
+        while (!currentExpander.FindAncestorOfType<Expander>()?.IsExpanded ?? false)
+        {
+            currentExpander = currentExpander.FindAncestorOfType<Expander>();
+        }
+        
+        return currentExpander;
     }
 
     private (bool CanConnect, Input? Input, Output? Output) CanConnectPorts(Port? port1, Port? port2)
@@ -306,7 +325,7 @@ public class NodeServiceImpl : INodeService
 
     private void LoadOutputNodes()
     {
-        OutputNodePrototypes.Add(new LoggerOutputNode());
+        _outputNodePrototypes.Add(new LoggerOutputNode());
     }
 
     private void LoadScripts()
@@ -319,7 +338,7 @@ public class NodeServiceImpl : INodeService
             {
                 var script = Script.Load(fileInfo.FullName);
                 var scriptNode = ScriptParser.Parse(script, _serviceProvider);
-                ScriptPrototypes.Add(scriptNode);
+                _scriptPrototypes.Add(scriptNode);
             }
         }
     }

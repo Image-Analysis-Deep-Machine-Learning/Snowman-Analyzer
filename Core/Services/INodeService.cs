@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Snowman.Controls;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
+using Snowman.Data;
 
 namespace Snowman.Core.Services;
 
@@ -20,4 +21,6 @@ public interface INodeService : IService
     bool IsNewConnectionActive();
     IEnumerable<Node> GetNodes();
     void RunGraph();
+    public NodeGraphData SaveGraph();
+    public void LoadGraph(NodeGraphData data);
 }

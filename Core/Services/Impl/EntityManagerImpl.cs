@@ -162,8 +162,13 @@ public class EntityManagerImpl : IEntityManager, IEntityEventSupplier
 
         last?.IsHit = true;
     }
-    
-    
+
+    public Entity? GetEntityById(int id)
+    {
+        return _entities.FirstOrDefault(x => x.Id == id);
+    }
+
+
     public IEnumerable<IDrawable> GetDrawables()
     {
         return _entities.AsReadOnly();
