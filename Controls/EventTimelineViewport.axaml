@@ -86,13 +86,13 @@
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
                                                         </StackPanel>
-                                                        <!-- <StackPanel Orientation="Vertical" Spacing="1"> -->
-                                                        <!--     <Label Content="Values"/> -->
-                                                        <!--     <Grid ColumnDefinitions="1*,1*" ColumnSpacing="5"> -->
-                                                        <!--         <NumericUpDown Grid.Column="0" InnerLeftContent="Min" ShowButtonSpinner="False"></NumericUpDown> -->
-                                                        <!--         <NumericUpDown Grid.Column="1" InnerLeftContent="Max" ShowButtonSpinner="False"></NumericUpDown> -->
-                                                        <!--     </Grid> -->
-                                                        <!-- </StackPanel> -->
+                                                        <StackPanel Orientation="Vertical" Spacing="1">
+                                                             <Label Content="Values"/>
+                                                             <Grid ColumnDefinitions="1*,1*" ColumnSpacing="5">
+                                                                 <NumericUpDown Grid.Column="0" InnerLeftContent="Min" ShowButtonSpinner="False"></NumericUpDown>
+                                                                 <NumericUpDown Grid.Column="1" InnerLeftContent="Max" ShowButtonSpinner="False"></NumericUpDown>
+                                                             </Grid>
+                                                         </StackPanel>
                                                     </StackPanel>
                                                 </Expander>
                                             </DataTemplate>

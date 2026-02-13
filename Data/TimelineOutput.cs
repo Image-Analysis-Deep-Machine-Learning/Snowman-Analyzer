@@ -21,18 +21,18 @@ public class Layer : INotifyPropertyChanged
 
     private static readonly IBrush[] Palette =
     [
-        Brushes.Red,
-        Brushes.Green,
-        Brushes.Blue,
         Brushes.Orange,
-        Brushes.Gold,
-        Brushes.Purple,
-        Brushes.Cyan,
+        Brushes.GreenYellow,
         Brushes.Magenta,
+        Brushes.Gold,
+        Brushes.Cyan,
+        Brushes.LightPink,
         Brushes.Lime,
+        Brushes.LightSkyBlue,
         Brushes.Salmon,
-        Brushes.Teal,
-        Brushes.Coral
+        Brushes.LightGreen,
+        Brushes.MediumTurquoise,
+        Brushes.MediumSlateBlue
     ];
     
     public List<EventData> Events { get; set; } = [];
