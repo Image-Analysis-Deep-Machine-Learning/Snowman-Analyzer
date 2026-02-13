@@ -9,7 +9,6 @@ using Snowman.Core.Entities;
 using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.DataContexts;
-using Snowman.Utilities;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
@@ -62,6 +61,11 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
             
             foreach (var eventData in Events)
             {
+                foreach (var entityId in eventData.EntityIds)
+                {
+                    
+                }
+
                 //tempEntities.Add(eventData.Entity);
                 //tempBoundingBoxes.Add(eventData.ObjectBbox);
             }
@@ -76,10 +80,11 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     public override void Render(DrawingContext context)
     {
         var bounds = Bounds;
-        IBrush brush = _isHovered ? Brushes.Red : new SolidColorBrush(ColorGeneration.GetRandomColor());
+        IBrush brush = _isHovered ? Brushes.Red : Brush;
 
         // horizontal line
-        var lineY = bounds.Height / 2;
+        //var lineY = bounds.Height / 2;
+        var lineY = 0;
         context.DrawLine(new Pen(brush, 5), new Point(0, lineY), new Point(bounds.Width, lineY));
 
         if (Events.Count == 1)
@@ -96,7 +101,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
             // if (Events[0].IsFirstEventOfObject)
             // {
             //     // only draw the pin icon for the first event relating to the same tracked object   
-            //     DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
+                 DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
             // }
         }
         else

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -12,45 +9,54 @@ namespace Snowman.Controls;
 
 public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext>
 {
-
-    public double ZoomScale
-    {
-        get;
-        set
-        {
-            if (Math.Abs(field - value) > double.Epsilon)
-            {
-                field = value;
-            }
-        }
-    } = 1.0;
-
     public TimelineOutput TimelineOutput { get; }
 
     public EventTimeline(TimelineOutput timeline)
     {
         Height = 100;
-        Width = 1500;
+        Width = 800;
         InitializeComponent();
         Focusable = true;
         TimelineOutput = timeline;
+        DataContext.InvalidateRequested = InvalidateVisual;
     }
 
     public override void Render(DrawingContext context)
     {
-        context.DrawRectangle(Brushes.DarkSlateBlue, null, new Rect(Bounds.Size));
-        DataContext.DrawTicks(context);
+        context.DrawRectangle(Brushes.Black, null, new Rect(Bounds.Size));
+        DataContext?.DrawTicks(context);
+    }
+
+    private void Refresh()
+    {
+        DataContext.UpdateEventPins(DataContext.Zoom, DataContext.Pan);
+        InvalidateVisual();
+    }
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+        DataContext.OnPointerWheelChanged(e);
+        Refresh();
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        DataContext?.OnPointerPressed(e);
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        DataContext?.OnPointerReleased(e);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        InvalidateVisual();
-    }
 
-    private void Refresh()
-    {
-        DataContext.UpdateEventPins(DataContext.Zoom, 0);
-        InvalidateVisual();
+        DataContext.OnPointerMoved(e);
+        Refresh();
     }
 }
