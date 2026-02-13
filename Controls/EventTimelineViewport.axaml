@@ -31,9 +31,9 @@
         </Style>
     </ctrl:UserControlWrapper.Styles>
     <Grid ColumnDefinitions="8*,Auto,2*">
-            <ScrollViewer Grid.Row="0" AllowAutoHide="True" HorizontalScrollBarVisibility="Auto"
+            <ScrollViewer Grid.Row="0" AllowAutoHide="True"
                           Margin="0, 0, 2, 0">
-                <StackPanel x:Name="TimelineViewer"/>
+                <StackPanel x:Name="TimelineViewer" Spacing="5"/>
                 <!-- <ItemsControl ItemsSource="{Binding Timelines}"> -->
                 <!--     <ItemsControl.ItemTemplate> -->
                 <!--         <DataTemplate> -->
