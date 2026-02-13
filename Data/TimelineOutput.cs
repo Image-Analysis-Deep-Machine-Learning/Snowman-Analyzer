@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Avalonia.Media;
 using Snowman.DataContexts;
+using Snowman.Utilities;
 
 namespace Snowman.Data;
 
@@ -17,11 +18,28 @@ public class TimelineOutput
 public class Layer : INotifyPropertyChanged
 {
     private static int _layerCounter;
+
+    private static readonly IBrush[] Palette =
+    [
+        Brushes.Red,
+        Brushes.Green,
+        Brushes.Blue,
+        Brushes.Orange,
+        Brushes.Gold,
+        Brushes.Purple,
+        Brushes.Cyan,
+        Brushes.Magenta,
+        Brushes.Lime,
+        Brushes.Salmon,
+        Brushes.Teal,
+        Brushes.Coral
+    ];
+    
     public List<EventData> Events { get; set; } = [];
     public double Min { get; set; }
     public double Max { get; set; }
     public string Name { get; set; } = "Layer " + _layerCounter++;
-    public IBrush Brush { get; set; } = Brushes.Chocolate;
+    public IBrush Brush { get; set; } = Palette[_layerCounter % Palette.Length];
     public bool IsVisible
     {
         get;

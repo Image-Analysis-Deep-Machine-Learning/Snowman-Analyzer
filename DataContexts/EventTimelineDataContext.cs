@@ -2,6 +2,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Controls;
@@ -66,28 +67,23 @@ public partial class EventTimelineDataContext
             if (!layer.IsVisible) continue;
 
             var events = layer.Events;
+            Point? previousCenter = null;
 
             foreach (var _event in events)
             {
                 // norm + invert y (0 at the bottom)
-                double normY = canvasHeight - ((_event.Y / maxY) * usableHeight) - pinHeight;
-
+                var normY = canvasHeight - ((_event.Y / maxY) * usableHeight) - pinHeight;
                 var norm = (double)_event.FrameIndex / totalFrames;
                 var x = norm * canvasWidth * zoomScale - offset;
 
                 if (x < -50 || x > canvasWidth + 50) continue;
 
-                double width;
-                double leftX;
+                var normNext = (double)(_event.FrameIndex + 1) / totalFrames;
+                var xNext = normNext * canvasWidth * zoomScale - offset;
 
-                {
-                    var normNext = (double)(_event.FrameIndex + 1) / totalFrames;
-                    var xNext = normNext * canvasWidth * zoomScale - offset;
-
-                    width = Math.Abs(x - xNext);
-                    leftX = Math.Min(x, xNext);
-                }
-
+                var width = Math.Abs(x - xNext);
+                var leftX = Math.Min(x, xNext);
+                
                 var pin = new EventPin(_serviceProvider, events, _event.FrameIndex, (int)normY, layer.Brush)
                 {
                     Width = width,
@@ -96,8 +92,21 @@ public partial class EventTimelineDataContext
 
                 Canvas.SetLeft(pin, leftX);
                 Canvas.SetTop(pin, normY);
-
                 _canvas.Children.Add(pin);
+                
+                var center = new Point(leftX + width / 2, normY);
+                if (previousCenter is { } prev)
+                {
+                    var line = new Line
+                    {
+                        StartPoint = prev,
+                        EndPoint = center,
+                        Stroke = layer.Brush,
+                        StrokeThickness = 0.5
+                    };
+                    _canvas.Children.Add(line);
+                }
+                previousCenter = center;
             }
         }
     }
