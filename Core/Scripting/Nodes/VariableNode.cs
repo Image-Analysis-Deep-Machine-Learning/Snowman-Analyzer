@@ -1,10 +1,11 @@
 ﻿using Snowman.Core.Services;
+using Snowman.Data;
 
 namespace Snowman.Core.Scripting.Nodes;
 
 public class VariableNode : Node
 {
-    public override void Execute()
+    protected override void Execute()
     {
         IsReady = true;
     }
@@ -16,5 +17,10 @@ public class VariableNode : Node
         CopyBasicInfo(copy, serviceProvider);
         
         return copy;
+    }
+
+    protected override void FillNodeType(NodeData data)
+    {
+        data.Type = nameof(VariableNode);
     }
 }

@@ -48,6 +48,5 @@ public abstract class Variable : IDataSource
     }
     
     public abstract Variable Copy(IServiceProvider serviceProvider);
-    public abstract void ParseValueFromXml(XmlElement xml);
-    public abstract XmlElement ParseValueToXml();
+    public abstract void SetPropertiesFromXml(XmlElement xml);
 }

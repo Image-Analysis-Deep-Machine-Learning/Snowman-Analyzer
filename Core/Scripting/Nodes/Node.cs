@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Services;
+using Snowman.Data;
 
 namespace Snowman.Core.Scripting.Nodes;
 
@@ -10,7 +11,8 @@ public abstract class Node
 {
     public double X { get; set; }
     public double Y { get; set; }
-    public int UniqueId { get; protected set; }
+    public string UniqueIdentifier { get; set; }
+    public int Id { get; set; }
     public Group Group { get; protected set; }
     public ObservableCollection<Output> Outputs { get; }
     public ObservableCollection<Input> Inputs { get; }
@@ -18,7 +20,7 @@ public abstract class Node
     public bool IsReady { get; set; }
     public string Name { get; set; }
 
-    protected Node(IServiceProvider? serviceProvider = null)
+    protected Node()
     {
         Group = Group.Default;
         Outputs = [];
@@ -26,21 +28,8 @@ public abstract class Node
         Inputs = [];
         Variables = [];
         Name = string.Empty;
-        var nodeService = serviceProvider?.GetService<INodeService>();
-        UniqueId = nodeService?.ManageAndGetUID(this) ?? -1;
-    }
-
-    public virtual void Execute()
-    {
-        PrepareInputs();
-    }
-    
-    public void PrepareInputs()
-    {
-        foreach (var input in Inputs.Where(input => !input.HasValue))
-        {
-            input.AskForValue();
-        }
+        UniqueIdentifier = string.Empty;
+        Id = -1;
     }
 
     public void Reset()
@@ -55,17 +44,65 @@ public abstract class Node
         IsReady = false;
     }
     
-    public abstract Node Copy(IServiceProvider serviceProvider);
+    public NodeData Serialize(IServiceProvider serviceProvider)
+    {
+        var nodeService = serviceProvider.GetService<INodeService>();
+        var data = new NodeData();
+        
+        data.Id = Id;
+        data.UniqueIdentifier = UniqueIdentifier;
+        data.Position = new PointData { X = X, Y = Y };
+
+        foreach (var variable in Variables)
+        {
+            data.Variables.Add(NodeGraphDataConverter.Serialize(variable));
+        }
+
+        foreach (var input in Inputs)
+        {
+            var inputData = new InputData { Name = input.Name };
+
+            foreach (var connectedOutput in input.ConnectedOutputs)
+            {
+                inputData.ConnectedOutputs.Add(new ConnectedOutput { OutputName = connectedOutput.Name, NodeId = nodeService.GetNodeIdByPort(connectedOutput) });
+            }
+            
+            data.Inputs.Add(inputData);
+        }
+
+        FillNodeType(data);
+
+        return data;
+    }
     
+    public void Deserialize(NodeData nodeData, IServiceProvider serviceProvider)
+    {
+        Id = nodeData.Id;
+        UniqueIdentifier = nodeData.UniqueIdentifier;
+        X = nodeData.Position.X;
+        Y = nodeData.Position.Y;
+
+        foreach (var variableData in nodeData.Variables)
+        {
+            var variable = Variables.First(v => v.Name == variableData.Name);
+            NodeGraphDataConverter.Deserialize(variable, variableData, serviceProvider);
+        }
+    }
+
     public override string ToString()
     {
         return Name;
     }
 
+    public abstract Node Copy(IServiceProvider serviceProvider);
+
+    protected abstract void FillNodeType(NodeData data);
+    
     protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
     {
         copy.Name = Name;
         copy.Group = Group;
+        copy.UniqueIdentifier = UniqueIdentifier;
         
         foreach (var input in Inputs)
         {
@@ -80,6 +117,19 @@ public abstract class Node
         foreach (var variable in Variables)
         {
             copy.Variables.Add(variable.Copy(serviceProvider));
+        }
+    }
+    
+    protected virtual void Execute()
+    {
+        PrepareInputs();
+    }
+
+    private void PrepareInputs()
+    {
+        foreach (var input in Inputs.Where(input => !input.HasValue))
+        {
+            input.AskForValue();
         }
     }
     

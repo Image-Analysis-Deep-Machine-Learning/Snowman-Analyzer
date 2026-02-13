@@ -1,6 +1,7 @@
-﻿using Avalonia.Media;
+using Avalonia.Media;
 using Snowman.Core.Services;
 using Snowman.Data;
+using System.Linq;
 using Snowman.Designer;
 // ReSharper disable once CheckNamespace
 // This file contains all dummy parameterless constructors for DataContexts
@@ -54,8 +55,22 @@ public partial class MainWindowDataContext
 {
     public MainWindowDataContext()
     {
+        _projectService = null!;
         _datasetImagesService = null!;
         _storageProviderService = null!;
+    }
+}
+
+public partial class MultiObjectTrackingWindowDataContext
+{
+    public MultiObjectTrackingWindowDataContext()
+    {
+        _storageProviderService = null!;
+        _progressBarService = null!;
+        _projectService = null!;
+        SelectedDetector = Detectors.First().Name;
+        SelectedModel = AvailableModels.First();
+        SelectedTracker = AvailableTrackers.First();
     }
 }
 
@@ -63,7 +78,7 @@ public partial class NodeControlDataContext
 {
     public NodeControlDataContext()
     {
-        _node = null!;
+        Node = null!;
     }
 }
 

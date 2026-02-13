@@ -50,6 +50,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MultiObjectTracking\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="ffmpeg\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -75,7 +80,7 @@
       <DependentUpon>NumberVariableControl.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Controls\LoadVideoWindow.axaml.cs">
+    <Compile Update="LoadVideoWindow.axaml.cs">
       <DependentUpon>LoadVideoWindow.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>

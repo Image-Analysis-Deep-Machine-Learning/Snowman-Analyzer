@@ -1,0 +1,28 @@
+﻿<ctrl:VariableControl x:TypeArguments="dataContext:DatasetSelector"
+                      xmlns="https://github.com/avaloniaui"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                      mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                      x:Class="Snowman.Core.Scripting.UserInterface.Controls.DatasetSelectorControl"
+                      xmlns:dataContext="clr-namespace:Snowman.Core.Scripting.DataSource.Variables"
+                      xmlns:ctrl="clr-namespace:Snowman.Core.Scripting.UserInterface"
+                      x:DataType="dataContext:DatasetSelector">
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="{Binding FriendlyName}" Margin="10, 5"/>
+        <RadioButton Name="CurrentPathOption"
+                     Content="Current"
+                     IsChecked="{Binding !IsCustomPathSelected, Mode=OneWay}"
+                     GroupName="SelectedDataset"
+                     Margin="10, 5"/>
+        <RadioButton Name="CustomPathOption"
+                     Content="Custom Path"
+                     IsChecked="{Binding IsCustomPathSelected}"
+                     GroupName="SelectedDataset"
+                     Margin="10, 5"/>
+        <StackPanel IsVisible="{Binding IsCustomPathSelected}">
+            <TextBox Text="{Binding CustomDatasetPath}" IsReadOnly="True" Margin="10, 5" MaxWidth="200" ToolTip.Tip="{Binding CustomDatasetPath}"/>
+            <Button Content="Select File" Command="{Binding PickCustomDataset}" Margin="10, 5"/>
+        </StackPanel>
+    </StackPanel>
+</ctrl:VariableControl>

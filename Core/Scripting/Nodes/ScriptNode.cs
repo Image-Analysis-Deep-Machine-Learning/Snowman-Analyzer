@@ -1,4 +1,5 @@
 ﻿using Python.Runtime;
+using Snowman.Data;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
@@ -7,26 +8,27 @@ public class ScriptNode : Node
 {
     public string PythonScriptContent { get; set; } = null!;
 
-    private ScriptNode(IServiceProvider serviceProvider) : base(serviceProvider) { }
-
-    public ScriptNode() { }
-
-    public override void Execute()
-    {
-        base.Execute();
-        RunPythonScript();
-        IsReady = true;
-    }
-
     public override Node Copy(IServiceProvider serviceProvider)
     {
-        var copy =  new ScriptNode(serviceProvider);
+        var copy =  new ScriptNode();
 
         CopyBasicInfo(copy, serviceProvider);
         
         copy.PythonScriptContent = PythonScriptContent;
 
         return copy;
+    }
+
+    protected override void FillNodeType(NodeData data)
+    {
+        data.Type = nameof(ScriptNode);
+    }
+
+    protected override void Execute()
+    {
+        base.Execute();
+        RunPythonScript();
+        IsReady = true;
     }
 
     private void RunPythonScript()

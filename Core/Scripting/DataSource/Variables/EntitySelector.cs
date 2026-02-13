@@ -8,47 +8,48 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource.Variables;
 
-public class EntitySelector : GenericVariableWrapper<Entity>
+public partial class EntitySelector : GenericVariableWrapper<Entity>
 {
     public ObservableCollection<Entity> AvailableEntities { get; } = [];
-    public Type EntitySubtype { get; private set; }
+    private Type _entitySubtype;
 
     private EntitySelector(string name, Group group, string friendlyName) : base(name, group, friendlyName)
     {
-        EntitySubtype = typeof(Entity);
+        _entitySubtype = typeof(Entity);
     }
-
-    public EntitySelector() : this("sample_name", Group.Default, "Sample Name") { }
 
     public override Variable Copy(IServiceProvider serviceProvider)
     {
         var copy = new EntitySelector(Name, Group, FriendlyName)
         {
             TypedValue = TypedValue,
-            EntitySubtype = EntitySubtype
+            _entitySubtype = _entitySubtype
         };
-        
-        var currentEntities = serviceProvider.GetService<IEntityManager>().GetEntities();
 
-        foreach (var entity in currentEntities)
+        foreach (var entity in serviceProvider.GetService<IEntityManager>().GetEntities())
         {
-            copy.AvailableEntities.Add(entity);
+            if (entity.GetType().IsAssignableTo(_entitySubtype))
+            {
+                copy.AvailableEntities.Add(entity);
+            }
         }
 
         var eventManager = serviceProvider.GetService<IEventManager>();
-        eventManager.RegisterActionOnSupplier<IEntityEventSupplier>(x => x.EntityAdded += entity => copy.AvailableEntities.Add(entity));
+        eventManager.RegisterActionOnSupplier<IEntityEventSupplier>(x => x.EntityAdded += entity =>
+        {
+            if (entity.GetType().IsAssignableTo(_entitySubtype))
+            {
+                copy.AvailableEntities.Add(entity);
+            }
+        });
+        
         eventManager.RegisterActionOnSupplier<IEntityEventSupplier>(x => x.EntityRemoved += entity => copy.AvailableEntities.Remove(entity));
         
         return copy;
     }
 
-    public override void ParseValueFromXml(XmlElement xml)
+    public override void SetPropertiesFromXml(XmlElement xml)
     {
-        var entityId = int.Parse(xml.InnerText);
-    }
-
-    public override XmlElement ParseValueToXml()
-    {
-        throw new NotImplementedException();
+        _entitySubtype = Type.GetType(xml.InnerText) ?? throw new Exception($"Cannot construct type '{xml.InnerText}'");
     }
 }

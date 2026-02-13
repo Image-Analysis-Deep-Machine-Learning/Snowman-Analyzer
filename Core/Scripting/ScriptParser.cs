@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
-using Snowman.Core.Scripting.Variables;
+using Snowman.Core.Scripting.DataSource.Variables;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting;
@@ -89,11 +89,13 @@ public class ScriptParser
             variableInstance.Group = _groups[variable.Group];
             variableInstance.Type = variableType;
             variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
+            variableInstance.SetPropertiesFromXml(variable.Value);
             _result.Variables.Add(variableInstance);
         }
 
         _result.PythonScriptContent = _script.Code;
         _result.Name = _script.NodeDefinitionData.Name;
+        _result.UniqueIdentifier = _script.NodeDefinitionData.UniqueIdentifier;
     }
 
     private ScriptNode GetResult()

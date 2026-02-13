@@ -16,8 +16,8 @@ namespace Snowman.Core.Tools;
 public class PointTool : EntityEditTool<PointEntity>
 {
     public PointTool() : base("_Point Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
-    
-    protected PointTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+
+    private PointTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     {

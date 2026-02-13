@@ -1,20 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
-using Snowman.Core.Entities;
 
 namespace Snowman.Data;
 
-[XmlRoot(ElementName="data")]
+[XmlRoot(ElementName="ProjectData")]
 public class ProjectData
 {
     // TODO: being able to save nodes as well
-    [XmlElement("metadata")]
+    [XmlElement("LoadedDatasetPath")]
     public string LoadedDatasetPath { get; set; } = string.Empty;
     
-    [XmlArray("entities")]
-    [XmlArrayItem("entity")]
+    [XmlArray("Entities")]
+    [XmlArrayItem("Entity")]
     public List<EntityData> Entities { get; set; } = [];
+    
+    [XmlElement("NodeGraph")]
+    public NodeGraphData NodeGraph { get; set; } = null!;
     
     public static ProjectData? Deserialize(string data)
     {
@@ -41,10 +43,10 @@ public class ProjectData
 [XmlInclude(typeof(PolygonEntityData))]
 public abstract class EntityData
 {
-    [XmlElement("point")]
+    [XmlElement("Position")]
     public PointData Position { get; set; } = null!;
     
-    [XmlElement("id")]
+    [XmlElement("Id")]
     public int Id { get; set; }
 }
 
@@ -52,31 +54,31 @@ public class PointEntityData : EntityData;
 
 public class RectangleEntityData : EntityData
 {
-    [XmlElement("width")]
+    [XmlElement("Width")]
     public double Width { get; set; }
     
-    [XmlElement("height")]
+    [XmlElement("Height")]
     public double Height { get; set; }
 }
 
 public class LineEntityData : EntityData
 {
-    [XmlElement("second_point")]
-    public PointData SecondPoint { get; set; } = null!;
+    [XmlElement("SecondPosition")]
+    public PointData SecondPosition { get; set; } = null!;
 }
 
 public class PolygonEntityData : EntityData
 {
-    [XmlArray("points")]
-    [XmlArrayItem("point")]
+    [XmlArray("Points")]
+    [XmlArrayItem("Point")]
     public List<PointData> Points { get; set; } = [];
 }
 
 public class PointData
 {
-    [XmlAttribute("x")]
+    [XmlAttribute("X")]
     public double X { get; set; }
     
-    [XmlAttribute("y")]
+    [XmlAttribute("Y")]
     public double Y { get; set; }
 }
