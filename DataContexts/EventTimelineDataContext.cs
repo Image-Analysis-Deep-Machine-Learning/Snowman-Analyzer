@@ -207,7 +207,7 @@ public partial class EventTimelineDataContext
 
     private void ClampZoom()
     {
-        Zoom = Math.Clamp(Zoom, 1.0, 20.0);
+        Zoom = Math.Clamp(Zoom, 1.0, 50.0);
     }
 
     private void ClampPan()
