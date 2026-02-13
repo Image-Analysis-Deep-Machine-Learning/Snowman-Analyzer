@@ -6,6 +6,8 @@ namespace Snowman.Utilities;
 
 public static class ColorGeneration
 {
+    private static Random _random = new();
+    
     private static readonly List<Color> BaseColors =
     [
         Colors.DarkOrange,
@@ -15,6 +17,15 @@ public static class ColorGeneration
         Colors.MediumPurple,
         Colors.HotPink
     ];
+
+    public static Color GetRandomColor()
+    {
+        return BaseColors[_random.Next(0, BaseColors.Count)];
+        return GetIntensityColor(
+            _random.Next(50, 100),
+            100,
+            BaseColors[_random.Next(0, BaseColors.Count)]);
+    }
     
     public static (Color baseColor, Color lightColor) GetHuePair(int index)
     {

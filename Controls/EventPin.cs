@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -18,9 +17,10 @@ namespace Snowman.Controls;
 public class EventPin : UserControlWrapper<EventPinDataContext>
 {
     private List<EventData> Events { get; }
-    public int FrameIndex { get; }
+    private int FrameIndex { get; }
+    private IBrush Brush { get; }
     private readonly int _frequency;
-    private RuleData Rule { get; set; }
+    //private RuleData Rule { get; set; }
     
     private bool _isHovered;
 
@@ -28,14 +28,15 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     private const double EventPinHeight = 28;
     private const double EventPinWidth = 28;
     
-    public EventPin(/*IServiceProvider serviceProvider, */List<EventData> events, int frameIndex, RuleData rule, int frequency)
+    public EventPin(IServiceProvider serviceProvider, List<EventData> events, int frameIndex, /*RuleData rule,*/ int frequency, IBrush brush)
     {
-        /*var datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();*/
+        var datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Events = events;
         FrameIndex = frameIndex;
-        Rule = rule;
+        //Rule = rule;
         _frequency = frequency;
-        
+        Brush = brush;
+
         Width = Height = WidthHeight;
         
         IsHitTestVisible = true;
@@ -54,7 +55,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
 
         PointerPressed += (s, e) =>
         {
-            /*datasetImagesService.SkipToFrame(FrameIndex);*/
+            datasetImagesService.SkipToFrame(FrameIndex);
             
             var tempEntities = new HashSet<Entity>();
             var tempBoundingBoxes = new HashSet<IDrawable>();
@@ -75,22 +76,23 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     public override void Render(DrawingContext context)
     {
         var bounds = Bounds;
-        var colorByIntensity = ColorGeneration.GetIntensityColor(_frequency, Rule.MaxFrequency, Colors.BlueViolet);
-        var brush = new SolidColorBrush(_isHovered ? Colors.Red : colorByIntensity);
+        IBrush brush = _isHovered ? Brushes.Red : new SolidColorBrush(ColorGeneration.GetRandomColor());
 
         // horizontal line
         var lineY = bounds.Height / 2;
-        context.DrawLine(new Pen(brush, 1), new Point(0, lineY), new Point(bounds.Width + 5, lineY + 5));
+        context.DrawLine(new Pen(brush, 5), new Point(0, lineY), new Point(bounds.Width, lineY));
 
         if (Events.Count == 1)
         {
             // the pin represents only one event
             ToolTip.SetTip(this,
                 "Single event\n" +
+                $"Value: {Events[0].Y}\n" +
                 $"Frame: {FrameIndex + 1}\n" +
-                Events[0] +
-                $"Rule {Rule.Id + 1}: {Rule.Name}");
-            
+                $"Entities: {string.Join(", ", Events[0].EntityIds.ToArray())}\n" +
+                $"Objects (track IDs): {string.Join(", ", Events[0].TrackIds.ToArray())}\n"
+                );
+
             // if (Events[0].IsFirstEventOfObject)
             // {
             //     // only draw the pin icon for the first event relating to the same tracked object   
@@ -104,7 +106,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
                 "Multiple events\n" +
                 $"Frame: {FrameIndex + 1}\n" +
                 $"Number of events: {_frequency}\n" +
-                $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
+               // $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
                 "Click for more info");
             
             // var containsFirst = Events.Any(eventData => eventData.IsFirstEventOfObject);
@@ -143,7 +145,7 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
         var sb = new StringBuilder();
         sb.AppendLine("Details of multiple events");
         sb.AppendLine($"Frame: {FrameIndex + 1}");
-        sb.AppendLine($"Rule {Rule.Id + 1}: {Rule.Name}\n");
+        //sb.AppendLine($"Rule {Rule.Id + 1}: {Rule.Name}\n");
         
         for (var i = 0; i < Events.Count; i++)
         {

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Controls;
@@ -26,14 +26,27 @@ public partial class EventTimelineViewportDataContext
 
     public void SelectedScriptRun(ScriptRun scriptRun)
     {
+        foreach (var t in _timelines)
+            foreach (var layer in t.Layers)
+                layer.PropertyChanged -= OnLayerPropertyChanged;
+
         _timelines.Clear();
 
         foreach (var output in scriptRun.Outputs)
         {
             _timelines.Add(output);
+            foreach (var layer in output.Layers)
+                layer.PropertyChanged += OnLayerPropertyChanged;
         }
 
         UpdateTimelines();
+    }
+
+
+    private void OnLayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Layer.IsVisible))
+            UpdateTimelines();
     }
 
     private void UpdateTimelines()
@@ -66,4 +79,3 @@ public partial class EventTimelineViewportDataContext
     //         t.OnPanChanged(Pan);
     // }
 }
-

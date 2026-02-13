@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Snowman.Controls;
 using Snowman.Core.Services;
 using Snowman.Data;
-using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -24,6 +21,7 @@ public partial class EventTimelineDataContext
     private static readonly Pen PenMinor = new(TickBrush, 0.5);
     private static readonly Typeface Font = new("Arial");
 
+    private readonly IServiceProvider _serviceProvider;
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly Canvas _canvas;
 
@@ -35,6 +33,7 @@ public partial class EventTimelineDataContext
 
     public EventTimelineDataContext(IServiceProvider serviceProvider, Canvas canvas, TimelineOutput timelineOutput, Rect bounds)
     {
+        _serviceProvider = serviceProvider;
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         _canvas = canvas;
         _timelineOutput = timelineOutput;
@@ -45,64 +44,61 @@ public partial class EventTimelineDataContext
         _canvas.Children.Clear();
 
         var totalFrames = _datasetImagesService.MaxFrameIndex() + 1;
-        //var totalFrames = 150;
         var canvasWidth = _bounds.Width;
-        //var rules = SnowmanApp.Instance.Project.Rules;
 
-        var startY = _bounds.Height / 2.0;
-        
-        // access all events triggered by the rule
-        var ruleTimelineY = startY + BaseHeight;
-        var events = (_timelineOutput.Layers.FirstOrDefault() ?? new Layer()).Events;
-
-        foreach (var _event in events)
+        foreach (var layer in _timelineOutput.Layers)
         {
-            var frequency = events.Count;
-            
-            var norm = (double)_event.FrameIndex / totalFrames;
-            var x = norm * canvasWidth * zoomScale - offset;
+            if (!layer.IsVisible) continue;
+            // access all events triggered by the rule
+            var events = layer.Events;
 
-            // out of control bounds
-            if (x < -50 || x > canvasWidth + 50) continue;
-
-            double width;
-            double leftX;
-    
+            foreach (var _event in events)
             {
-                var normNext = (double)(_event.FrameIndex + 1) / totalFrames;
-                var xNext = normNext * canvasWidth * zoomScale - offset;
+                var y = _event.Y;
 
-                // line width .. from current to next
-                width = Math.Abs(x - xNext);
-                leftX = Math.Min(x, xNext);
-            }
+                var norm = (double)_event.FrameIndex / totalFrames;
+                var x = norm * canvasWidth * zoomScale - offset;
 
-            RuleData rule = new RuleData(1, "aaa", 15);
+                // out of control bounds
+                if (x < -50 || x > canvasWidth + 50) continue;
 
-            var pin = new EventPin(/*ServiceProvider, */events, _event.FrameIndex, rule, frequency)
-            {
-                Width = width,
-                Height = 28
-            };
-            
-            /*
-            pin.PointerPressed += (s, e) =>
-            {
-                UIEventBus.RaiseInfo(string.Empty);
-            };
+                double width;
+                double leftX;
 
-            if (events.Count > 1)
-            {
+                {
+                    var normNext = (double)(_event.FrameIndex + 1) / totalFrames;
+                    var xNext = normNext * canvasWidth * zoomScale - offset;
+
+                    // line width .. from current to next
+                    width = Math.Abs(x - xNext);
+                    leftX = Math.Min(x, xNext);
+                }
+
+                var pin = new EventPin(_serviceProvider, events, _event.FrameIndex, /*rule,*/ (int)y, layer.Brush)
+                {
+                    Width = width,
+                    Height = 28
+                };
+
+                /*
                 pin.PointerPressed += (s, e) =>
                 {
-                    UIEventBus.RaiseInfo(pin.GetInfo());
+                    UIEventBus.RaiseInfo(string.Empty);
                 };
-            }*/
 
-            Canvas.SetLeft(pin, leftX);
-            Canvas.SetTop(pin, ruleTimelineY - pin.Height / 2);
+                if (events.Count > 1)
+                {
+                    pin.PointerPressed += (s, e) =>
+                    {
+                        UIEventBus.RaiseInfo(pin.GetInfo());
+                    };
+                }*/
 
-            _canvas.Children.Add(pin);
+                Canvas.SetLeft(pin, leftX);
+                Canvas.SetTop(pin, y);
+
+                _canvas.Children.Add(pin);
+            }
         }
     }
 
@@ -189,25 +185,4 @@ public partial class EventTimelineDataContext
         
         return (int)(10 * magnitude);
     }
-
-    public void AttachToViewport(EventTimelineViewportDataContext viewport)
-    {
-        //_viewport = viewport;
-        Zoom = viewport.Zoom;
-        Pan = viewport.Pan;
-    }
-    
-    public void OnZoomChanged(double zoom)
-    {
-        Zoom = zoom;
-        RequestRedraw?.Invoke();
-    }
-
-    public void OnPanChanged(double pan)
-    {
-        Pan = pan;
-        RequestRedraw?.Invoke();
-    }
-    
-    public event Action? RequestRedraw;
 }
