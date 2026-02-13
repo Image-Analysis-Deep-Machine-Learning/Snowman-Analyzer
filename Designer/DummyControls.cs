@@ -3,6 +3,11 @@
 // ReSharper disable once CheckNamespace
 namespace Snowman.Controls
 {
+    public partial class EventTimeline
+    {
+
+    }
+
     public partial class NodeControl
     {
         public NodeControl()
