@@ -92,6 +92,10 @@
       <DependentUpon>EventTimeline.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Controls\EventTimelineView.axaml.cs">
+      <DependentUpon>EventTimelineView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets\" />

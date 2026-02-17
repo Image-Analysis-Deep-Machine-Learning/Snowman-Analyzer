@@ -19,7 +19,6 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     private int FrameIndex { get; }
     private IBrush Brush { get; }
     private readonly int _frequency;
-    //private RuleData Rule { get; set; }
     
     private bool _isHovered;
 
@@ -29,10 +28,10 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     
     public EventPin(IServiceProvider serviceProvider, List<EventData> events, int frameIndex, /*RuleData rule,*/ int frequency, IBrush brush)
     {
+        Height = 28;
         var datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
         Events = events;
         FrameIndex = frameIndex;
-        //Rule = rule;
         _frequency = frequency;
         Brush = brush;
 
@@ -80,12 +79,12 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
     public override void Render(DrawingContext context)
     {
         var bounds = Bounds;
-        IBrush brush = _isHovered ? Brushes.Red : Brush;
+        var brush = _isHovered ? Brushes.Red : Brush;
 
         // horizontal line
         //var lineY = bounds.Height / 2;
         var lineY = 0;
-        context.DrawLine(new Pen(brush, 5), new Point(0, lineY), new Point(bounds.Width, lineY));
+        context.DrawLine(new Pen(brush, 10), new Point(0, lineY), new Point(bounds.Width, lineY));
 
         if (Events.Count == 1)
         {
@@ -97,12 +96,6 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
                 $"Entities: {string.Join(", ", Events[0].EntityIds.ToArray())}\n" +
                 $"Objects (track IDs): {string.Join(", ", Events[0].TrackIds.ToArray())}\n"
                 );
-
-            // if (Events[0].IsFirstEventOfObject)
-            // {
-            //     // only draw the pin icon for the first event relating to the same tracked object   
-                 DrawGeom(context, bounds, lineY, brush, "EventPinIcon");
-            // }
         }
         else
         {
@@ -111,38 +104,8 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
                 "Multiple events\n" +
                 $"Frame: {FrameIndex + 1}\n" +
                 $"Number of events: {_frequency}\n" +
-               // $"Rule {Rule.Id + 1}: {Rule.Name}\n" +
                 "Click for more info");
-            
-            // var containsFirst = Events.Any(eventData => eventData.IsFirstEventOfObject);
-            // // only draw filled pin icon if at least one event is the first event
-            // if (containsFirst) DrawGeom(context, bounds, lineY, brush, "MultipleEventPinIcon");
         }
-    }
-
-    private static void DrawGeom(DrawingContext context, Rect bounds, double lineY, IBrush brush, string geomResource)
-    {
-        // only draw the pin icon for the first event relating to the same tracked object   
-        var resource = Application.Current?.FindResource(geomResource);
-        if (resource is not PathGeometry geometry) return;
-
-        var scaleFactor = Math.Min(
-            EventPinWidth / geometry.Bounds.Width,
-            EventPinHeight / geometry.Bounds.Height
-        );
-
-        var scaledSize = geometry.Bounds.Size * scaleFactor;
-
-        // center the pin icon
-        var iconX = (bounds.Width - scaledSize.Width) / 2;
-        var iconY = lineY - scaledSize.Height;
-
-        var transform =
-            Matrix.CreateTranslation(-geometry.Bounds.X, -geometry.Bounds.Y) *
-            Matrix.CreateScale(scaleFactor, scaleFactor) *
-            Matrix.CreateTranslation(iconX, iconY);
-
-        using (context.PushTransform(transform)) context.DrawGeometry(brush, null, geometry);
     }
 
     public string GetInfo()
@@ -150,7 +113,6 @@ public class EventPin : UserControlWrapper<EventPinDataContext>
         var sb = new StringBuilder();
         sb.AppendLine("Details of multiple events");
         sb.AppendLine($"Frame: {FrameIndex + 1}");
-        //sb.AppendLine($"Rule {Rule.Id + 1}: {Rule.Name}\n");
         
         for (var i = 0; i < Events.Count; i++)
         {

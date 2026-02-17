@@ -48,7 +48,8 @@ public class Layer : INotifyPropertyChanged
             if (field != value)
             {
                 field = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+                //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+                OnPropertyChanged();
             }
         }
     } = true;

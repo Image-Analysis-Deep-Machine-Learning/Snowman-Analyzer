@@ -26,22 +26,21 @@ public partial class EventTimelineDataContext
     private readonly IServiceProvider _serviceProvider;
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly Canvas _canvas;
-
-    public double Zoom { get; private set; } = 1.0;
-    public double Pan { get; private set; } = 0.0;
-
-    private readonly TimelineOutput _timelineOutput;
-
+    
     private double _lastPointerX;
     private bool _isDragging;
+
+    private double Zoom { get; set; } = 1.0;
+    private double Pan { get; set; } = 0.0;
+
+    private readonly TimelineOutput _timelineOutput;
 
     public Action? InvalidateRequested { get; set; }
 
     public EventTimelineDataContext(
         IServiceProvider serviceProvider,
         Canvas canvas,
-        TimelineOutput timelineOutput,
-        Rect bounds // kept for compatibility, but not used anymore
+        TimelineOutput timelineOutput
     )
     {
         _serviceProvider = serviceProvider;
@@ -50,7 +49,7 @@ public partial class EventTimelineDataContext
         _timelineOutput = timelineOutput;
     }
 
-    public void UpdateEventPins(double zoomScale, double offset)
+    public void UpdateEventPins()
     {
         _canvas.Children.Clear();
 
@@ -59,7 +58,7 @@ public partial class EventTimelineDataContext
         var canvasHeight = _canvas.Bounds.Height;
         
         var maxY = GetMaxEventY();
-        var pinHeight = 28;
+        const int pinHeight = 28;
         var usableHeight = canvasHeight - pinHeight;
 
         foreach (var layer in _timelineOutput.Layers)
@@ -72,14 +71,14 @@ public partial class EventTimelineDataContext
             foreach (var _event in events)
             {
                 // norm + invert y (0 at the bottom)
-                var normY = canvasHeight - ((_event.Y / maxY) * usableHeight) - pinHeight;
+                var normY = canvasHeight - (_event.Y / maxY) * usableHeight - pinHeight;
                 var norm = (double)_event.FrameIndex / totalFrames;
-                var x = norm * canvasWidth * zoomScale - offset;
+                var x = norm * canvasWidth * Zoom - Pan;
 
                 if (x < -50 || x > canvasWidth + 50) continue;
 
                 var normNext = (double)(_event.FrameIndex + 1) / totalFrames;
-                var xNext = normNext * canvasWidth * zoomScale - offset;
+                var xNext = normNext * canvasWidth * Zoom - Pan;
 
                 var width = Math.Abs(x - xNext);
                 var leftX = Math.Min(x, xNext);
@@ -87,7 +86,7 @@ public partial class EventTimelineDataContext
                 var pin = new EventPin(_serviceProvider, events, _event.FrameIndex, (int)normY, layer.Brush)
                 {
                     Width = width,
-                    Height = 28
+                    Height = pinHeight
                 };
 
                 Canvas.SetLeft(pin, leftX);
@@ -126,15 +125,12 @@ public partial class EventTimelineDataContext
 
         return Math.Max(maxY, 1);
     }
-
-
+    
     public void DrawTicks(DrawingContext context)
     {
         var bounds = _canvas.Bounds;
         var lineY = bounds.Height - 15;
-
         var totalFrames = _datasetImagesService.MaxFrameIndex() + 1;
-
         var (majorInterval, minorInterval) = GetTickIntervals(bounds.Width, totalFrames);
 
         // minor ticks
@@ -216,7 +212,7 @@ public partial class EventTimelineDataContext
 
     private void ClampZoom()
     {
-        Zoom = Math.Clamp(Zoom, 1.0, 50.0);
+        Zoom = Math.Clamp(Zoom, 1.0, 100.0);
     }
 
     private void ClampPan()
@@ -229,7 +225,7 @@ public partial class EventTimelineDataContext
 
     private void Redraw()
     {
-        UpdateEventPins(Zoom, Pan);
+        UpdateEventPins();
         InvalidateRequested?.Invoke();
     }
 

@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Data;
@@ -14,7 +13,7 @@ public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext
     public EventTimeline(TimelineOutput timeline)
     {
         Height = 100;
-        Width = 800;
+        Width = 1100;
         InitializeComponent();
         Focusable = true;
         TimelineOutput = timeline;
@@ -29,7 +28,7 @@ public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext
 
     private void Refresh()
     {
-        DataContext.UpdateEventPins(DataContext.Zoom, DataContext.Pan);
+        DataContext.UpdateEventPins();
         InvalidateVisual();
     }
 
@@ -43,13 +42,13 @@ public partial class EventTimeline : UserControlWrapper<EventTimelineDataContext
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        DataContext?.OnPointerPressed(e);
+        DataContext.OnPointerPressed(e);
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        DataContext?.OnPointerReleased(e);
+        DataContext.OnPointerReleased(e);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)

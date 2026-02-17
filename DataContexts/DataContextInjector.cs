@@ -45,8 +45,13 @@ public static class DataContextInjector
     {
         RegisterDataContextFactory<EventTimeline>((control, serviceProvider) =>
         {
-            var dataContext =  new EventTimelineDataContext(serviceProvider, control.Canvas, control.TimelineOutput, control.Bounds);
-            dataContext.UpdateEventPins(dataContext.Zoom, 0);
+            var dataContext =  new EventTimelineDataContext(serviceProvider, control.Canvas, control.TimelineOutput);
+            dataContext.UpdateEventPins();
+            return dataContext;
+        });
+        RegisterDataContextFactory<EventTimelineView>((control, serviceProvider) =>
+        {
+            var dataContext =  new EventTimelineViewDataContext(serviceProvider);
             return dataContext;
         });
         RegisterDataContextFactory<EventTimelineViewport>((control, serviceProvider) =>

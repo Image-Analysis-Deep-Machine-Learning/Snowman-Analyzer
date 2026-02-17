@@ -13,7 +13,7 @@ namespace Snowman.DataContexts;
 public partial class EventTimelineViewportDataContext
 {
     private readonly StackPanel _scrollViewer;
-    private List<TimelineOutput> _timelines = [];
+    private readonly List<TimelineOutput> _timelines = [];
 
     public ObservableCollection<ScriptRun> ScriptRuns { get; } = [];
 
@@ -61,7 +61,7 @@ public partial class EventTimelineViewportDataContext
                 });
             
             _scrollViewer.Children.Add(
-                new EventTimeline(timeline)
+                new EventTimelineView(timeline)
                 {
                     Background = Brushes.Transparent
                 });

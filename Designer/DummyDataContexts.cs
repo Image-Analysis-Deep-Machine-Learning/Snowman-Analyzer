@@ -1,5 +1,4 @@
 using Avalonia.Media;
-using Snowman.Core.Services;
 using Snowman.Data;
 using System.Linq;
 using Snowman.Designer;
@@ -12,6 +11,14 @@ namespace Snowman.DataContexts;
 public partial class EventTimelineDataContext
 {
     public EventTimelineDataContext()
+    {
+        
+    }
+}
+
+public partial class EventTimelineViewDataContext
+{
+    public EventTimelineViewDataContext()
     {
         
     }
