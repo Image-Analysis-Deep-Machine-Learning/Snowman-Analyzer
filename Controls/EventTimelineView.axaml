@@ -1,0 +1,12 @@
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:EventTimelineViewDataContext" xmlns="https://github.com/avaloniaui"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                             x:Class="Snowman.Controls.EventTimelineView"
+                             xmlns:dataContext="using:Snowman.DataContexts"
+                             xmlns:ctrl="using:Snowman.Controls"
+                             xmlns:snowman="clr-namespace:Snowman"
+                             x:DataType="dataContext:EventTimelineViewDataContext">
+    <Canvas x:Name="Canvas"/>
+</ctrl:UserControlWrapper>
