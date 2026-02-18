@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,12 +12,14 @@ namespace Snowman.Controls;
 
 public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDataContext>
 {
-    private const double PinHeight = 28;
-    private const double PinWidth = 28;
+    public const int XAxisHeight = 20;
+    
+    private const double PinRadius = 3;
     private const double BaseHeight = 1;
     private const double MinorTickHeight = 20;
     private const double MajorTickHeight = 100;
 
+    private static readonly IBrush BackgroundBrush = new BrushConverter().ConvertFrom("#111114") as IBrush ?? Brushes.Black;
     private static readonly IBrush TickBrush = Brushes.Gray;
     private static readonly Pen PenMajor = new(TickBrush, 1);
     private static readonly Pen PenMinor = new(TickBrush, 0.5);
@@ -29,23 +32,27 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
     public EventTimelineView(TimelineOutput timeline)
     {
-        Height = 100;
-        Width = 1100;
         Focusable = true;
-
         TimelineOutput = timeline;
-
+        TimelineOutput.PropertyChanged += TimelineOutputChanged;
+        foreach (var layer in TimelineOutput.Layers)
+        {
+            layer.PropertyChanged += LayerChanged;
+        }
         InitializeComponent();
         InvalidateVisual();
     }
-
+    
     public override void Render(DrawingContext context)
     {
-        context.DrawRectangle(Brushes.Black, null, new Rect(Bounds.Size));
-
-        var totalFrames = DataContext.GetTotalFrames();
-        var maxY = GetMaxEventY();
-        var usableHeight = Bounds.Height - PinHeight;
+        var totalFrames = DataContext.TotalFrames;
+        var maxY = TimelineOutput.MaxY;
+        var usableHeight = Bounds.Height - XAxisHeight;
+        
+        context.DrawRectangle(BackgroundBrush, null, new Rect(0, 0, Bounds.Width, Bounds.Height - XAxisHeight));
+        
+        (_, double minorTickInterval) = DataContext.GetTickIntervals(Bounds.Width);
+        var intervalWidth = minorTickInterval / totalFrames * Bounds.Width * DataContext.Zoom;
 
         foreach (var layer in TimelineOutput.Layers)
         {
@@ -55,16 +62,18 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
             foreach (var ev in layer.Events)
             {
+                if (!ev.IsWithinMinMax) continue;
+                
                 var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
-                if (x < -50 || x > Bounds.Width + 50) continue;
+                if (x < -PinRadius || x > Bounds.Width + PinRadius) continue;
 
-                var y = Bounds.Height - (ev.Y / maxY) * usableHeight - PinHeight;
+                var y = usableHeight - ev.Y / maxY * usableHeight;
 
                 var brush = ev == DataContext.HoveredEvent ? Brushes.Red : layer.Brush;
 
-                context.DrawLine(new Pen(brush, 10), new Point(x, y), new Point(x + PinWidth, y));
+                context.DrawEllipse(brush, new Pen(brush, 10), new Point(x + intervalWidth / 2, y), PinRadius, PinRadius);
 
-                var center = new Point(x + PinWidth / 2, y);
+                var center = new Point(x + intervalWidth / 2, y);
 
                 if (prev is { } p)
                     context.DrawLine(new Pen(layer.Brush, 0.5), p, center);
@@ -78,6 +87,8 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
+        e.Handled = true;
+        
         var pos = e.GetPosition(this);
         var logicalX = (pos.X + DataContext.Pan) / DataContext.Zoom;
 
@@ -131,32 +142,41 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
         InvalidateVisual();
     }
+    
+    private void TimelineOutputChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        InvalidateVisual();
+    }
+    
+    private void LayerChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        InvalidateVisual();
+    }
 
     private EventData? HitTest(Point position)
     {
-        var totalFrames = DataContext.GetTotalFrames();
-        var width = Bounds.Width;
-        var height = Bounds.Height;
-
-        var maxY = GetMaxEventY();
-        var usableHeight = height - PinHeight;
-
-        // IMPORTANT: check layers from topmost to bottommost
-        for (int layerIndex = TimelineOutput.Layers.Count - 1; layerIndex >= 0; layerIndex--)
+        var totalFrames = DataContext.TotalFrames;
+        var usableHeight = Bounds.Height - XAxisHeight;
+        var maxY = TimelineOutput.MaxY;
+        (_, double minorTickInterval) = DataContext.GetTickIntervals(Bounds.Width);
+        var intervalWidth = minorTickInterval / totalFrames * Bounds.Width * DataContext.Zoom;
+        
+        for (var layerIndex = TimelineOutput.Layers.Count - 1; layerIndex >= 0; layerIndex--)
         {
             var layer = TimelineOutput.Layers[layerIndex];
             if (!layer.IsVisible) continue;
 
             foreach (var ev in layer.Events)
             {
-                var x = (double)ev.FrameIndex / totalFrames * width * DataContext.Zoom - DataContext.Pan;
-                if (x < -PinWidth || x > width + PinWidth)
+                var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
+                var centerX = x + intervalWidth / 2;
+                if (centerX < -(PinRadius) || centerX > Bounds.Width + PinRadius)
                     continue;
 
-                var y = height - (ev.Y / maxY) * usableHeight - PinHeight;
+                var y = usableHeight - ev.Y / maxY * usableHeight;
 
-                if (position.X >= x && position.X <= x + PinWidth &&
-                    position.Y >= y && position.Y <= y + PinHeight)
+                if (position.X >= centerX - PinRadius * 3 && position.X <= centerX + PinRadius * 3 &&
+                    position.Y >= y - PinRadius * 3 && position.Y <= y + PinRadius * 3)
                 {
                     return ev;
                 }
@@ -176,26 +196,27 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
     private void DrawTicks(DrawingContext context, int totalFrames)
     {
-        var bounds = Bounds;
-        var lineY = bounds.Height - 15;
-        var (majorInterval, minorInterval) = GetTickIntervals(bounds.Width, totalFrames);
+        var lineY = Bounds.Height - XAxisHeight;
+        var (majorInterval, minorInterval) = DataContext.GetTickIntervals(Bounds.Width);
 
+        // minor ticks
         for (var frame = 0; frame < totalFrames; frame += minorInterval)
         {
             var norm = (double)frame / totalFrames;
-            var x = norm * bounds.Width * DataContext.Zoom - DataContext.Pan;
+            var x = norm * Bounds.Width * DataContext.Zoom - DataContext.Pan;
 
-            if (x < 0 || x > bounds.Width) continue;
+            if (x < 0 || x > Bounds.Width) continue;
 
             context.DrawLine(PenMinor, new Point(x, lineY - MinorTickHeight), new Point(x, lineY));
         }
 
+        // major ticks + labels
         for (var frame = 0; frame < totalFrames; frame += majorInterval)
         {
             var norm = (double)frame / totalFrames;
-            var x = norm * bounds.Width * DataContext.Zoom - DataContext.Pan;
+            var x = norm * Bounds.Width * DataContext.Zoom - DataContext.Pan;
 
-            if (x < 0 || x > bounds.Width) continue;
+            if (x < 0 || x > Bounds.Width) continue;
 
             context.DrawLine(PenMajor, new Point(x, lineY - MajorTickHeight), new Point(x, lineY));
 
@@ -207,64 +228,12 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
                 10,
                 TickBrush);
 
-            context.DrawText(label, new Point(x, lineY - BaseHeight / 2 - BaseHeight * 3 + 5));
+            context.DrawText(label, new Point(x, Bounds.Height - label.Height));
         }
 
+        // timeline base line (x axis)
         context.DrawLine(new Pen(new SolidColorBrush(Colors.Gray), BaseHeight),
             new Point(0, lineY),
-            new Point(bounds.Width, lineY));
-    }
-
-    private (int majorInterval, int minorInterval) GetTickIntervals(double timelineWidthPixels, int totalFrames)
-    {
-        const int minMajorTickSpacingPx = 50;
-        const int minMinorTickSpacingPx = 15;
-
-        var pxPerFrame = timelineWidthPixels * DataContext.Zoom / totalFrames;
-
-        var framesPerMajorTick = minMajorTickSpacingPx / pxPerFrame;
-        var framesPerMinorTick = minMinorTickSpacingPx / pxPerFrame;
-
-        var majorInterval = RoundToInterval(framesPerMajorTick);
-        var minorInterval = RoundToInterval(framesPerMinorTick);
-
-        if (minorInterval >= majorInterval)
-            minorInterval = majorInterval / 2;
-
-        if (minorInterval < 5) minorInterval = 1;
-        if (majorInterval < 5) majorInterval = 5;
-
-        return (majorInterval, minorInterval);
-    }
-
-    private static int RoundToInterval(double raw)
-    {
-        int[] steps = { 1, 5, 10 };
-        var magnitude = Math.Pow(10, Math.Floor(Math.Log10(raw)));
-
-        foreach (var step in steps)
-        {
-            var interval = step * magnitude;
-            if (interval >= raw)
-                return (int)interval;
-        }
-
-        return (int)(10 * magnitude);
-    }
-
-    private double GetMaxEventY()
-    {
-        double maxY = 0;
-
-        foreach (var layer in TimelineOutput.Layers)
-        {
-            foreach (var ev in layer.Events)
-            {
-                if (ev.Y > maxY)
-                    maxY = ev.Y;
-            }
-        }
-
-        return Math.Max(maxY, 1);
+            new Point(Bounds.Width, lineY));
     }
 }

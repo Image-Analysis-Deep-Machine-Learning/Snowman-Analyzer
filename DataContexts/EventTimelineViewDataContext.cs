@@ -1,5 +1,6 @@
 ﻿using System;
-using Avalonia;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Snowman.Core.Services;
 using Snowman.Data;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
@@ -11,8 +12,10 @@ public partial class EventTimelineViewDataContext
     private readonly IDatasetImagesService _datasetImagesService;
 
     public EventData? HoveredEvent { get; private set; }
+
     public double Zoom { get; private set; } = 1.0;
     public double Pan { get; set; } = 0.0;
+    public int TotalFrames => _datasetImagesService.MaxFrameIndex() + 1;
 
     public EventTimelineViewDataContext(
         IServiceProvider serviceProvider
@@ -42,8 +45,40 @@ public partial class EventTimelineViewDataContext
             _datasetImagesService.SkipToFrame(hit.FrameIndex);
     }
 
-    public int GetTotalFrames()
+    public (int majorInterval, int minorInterval) GetTickIntervals(double timelineWidthPixels)
     {
-        return _datasetImagesService.MaxFrameIndex() + 1;
+        const int minMajorTickSpacingPx = 50;
+        const int minMinorTickSpacingPx = 15;
+
+        var pxPerFrame = timelineWidthPixels * Zoom / (_datasetImagesService.MaxFrameIndex() + 1);
+
+        var framesPerMajorTick = minMajorTickSpacingPx / pxPerFrame;
+        var framesPerMinorTick = minMinorTickSpacingPx / pxPerFrame;
+
+        var majorInterval = RoundToInterval(framesPerMajorTick);
+        var minorInterval = RoundToInterval(framesPerMinorTick);
+
+        if (minorInterval >= majorInterval)
+            minorInterval = majorInterval / 2;
+
+        if (minorInterval < 5) minorInterval = 1;
+        if (majorInterval < 5) majorInterval = 5;
+
+        return (majorInterval, minorInterval);
+    }
+
+    private static int RoundToInterval(double raw)
+    {
+        int[] steps = [1, 5, 10];
+        var magnitude = Math.Pow(10, Math.Floor(Math.Log10(raw)));
+
+        foreach (var step in steps)
+        {
+            var interval = step * magnitude;
+            if (interval >= raw)
+                return (int)interval;
+        }
+
+        return (int)(10 * magnitude);
     }
 }

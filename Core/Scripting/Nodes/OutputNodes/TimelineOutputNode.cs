@@ -33,6 +33,8 @@ public class TimelineOutputNode : OutputNode
         {
             output.Layers.Add(layerItem);
         }
+
+        output.InitFilters();
         
         _timelineService.AddOutput(output);
     }

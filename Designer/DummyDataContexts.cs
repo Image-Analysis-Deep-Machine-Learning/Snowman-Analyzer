@@ -20,7 +20,7 @@ public partial class EventTimelineViewDataContext
 {
     public EventTimelineViewDataContext()
     {
-        
+        _datasetImagesService = null!;
     }
 }
 
@@ -28,7 +28,7 @@ public partial class EventTimelineViewportDataContext
 {
     public EventTimelineViewportDataContext()
     {
-        ScriptRuns = [new ScriptRun() {Name = "ja neviem", Outputs = { new TimelineOutput() {Name = "bude mat name", Layers = [new Layer() {Name = "AVTOBUS", Brush = Brushes.Aqua}]} }}, new ScriptRun() {Name = "ja neviem2"}];
+        _timelineViewer = null!;
     }
 }
 

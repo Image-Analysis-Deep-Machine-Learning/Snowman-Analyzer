@@ -6,7 +6,5 @@
                              x:Class="Snowman.Controls.EventTimelineView"
                              xmlns:dataContext="using:Snowman.DataContexts"
                              xmlns:ctrl="using:Snowman.Controls"
-                             xmlns:snowman="clr-namespace:Snowman"
                              x:DataType="dataContext:EventTimelineViewDataContext">
-    <Canvas x:Name="Canvas"/>
 </ctrl:UserControlWrapper>
