@@ -77,7 +77,7 @@ public class RectangleEntity : Entity
 
         if (Parent is null)
         {
-            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, Brushes.DarkOrange), Position + new Vector(-7, -17));
+            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, GetBrush(1)), Position + new Vector(-7, -17));
         }
     }
     

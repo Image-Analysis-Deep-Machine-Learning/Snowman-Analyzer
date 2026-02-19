@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEntityManager _entityManager;
+    private readonly HashSet<BoundingBox> _highlightedBoxes = [];
     private INodeService? _nodeService;
     private DatasetData _datasetData;
     private string _currentXmlPath;
@@ -32,6 +34,10 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         _entityManager = _serviceProvider.GetService<IEntityManager>();
         _serviceProvider.GetService<IDrawingService>().RegisterDrawableSource(this);
         _serviceProvider.GetService<IEventManager>().RegisterEventSupplier<IProjectEventSupplier>(this);
+        _serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(supplier =>
+        {
+            supplier.SelectedFrameChanged += ClearHighlights;
+        });
         _datasetData = new DatasetData();
         _currentXmlPath = string.Empty;
         ProjectLoaded?.Invoke();
@@ -40,10 +46,27 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
     public IEnumerable<IDrawable> GetDrawables()
     {
         var ret = new List<IDrawable>();
-        ret.AddRange(_datasetData.Images.Count > _datasetImagesService.CurrentFrameIndex() ? _datasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes.Select(x => new BoundingBoxWrapper(x) as IDrawable) : []);
+        ret.AddRange(_datasetData.Images.Count > _datasetImagesService.CurrentFrameIndex() ? _datasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes.Select(x => new BoundingBoxWrapper(x, _highlightedBoxes.Contains(x)) as IDrawable) : []);
         ret.AddRange(_entityManager.GetDrawables());
         
         return ret;
+    }
+
+    public void HighlightByTrackId(int trackId)
+    {
+        if (_datasetImagesService.CurrentFrameIndex() >= _datasetData.Images.Count) return;
+
+        foreach (var bb in _datasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes)
+        {
+            if (bb.ClassName.TrackId == trackId)
+                _highlightedBoxes.Add(bb);
+        }
+    }
+
+    public void ClearHighlights()
+    {
+        _highlightedBoxes.Clear();
+        foreach (var entity in _entityManager.GetEntities()) entity.IsHighlighted = false;
     }
 
     public async Task OpenDataset(string datasetPath)
@@ -111,21 +134,33 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         DatasetLoaded?.Invoke();
     }
 
-    private readonly struct BoundingBoxWrapper(BoundingBox bb) : IDrawable
+    private readonly struct BoundingBoxWrapper(BoundingBox bb, bool isHighlighted) : IDrawable
     {
-        private static readonly Pen BoundingBoxPen = new(Brushes.Cyan);
-        //private static readonly Pen TempBoundingBoxPen = new(Brushes.Purple, 2);
+        private static readonly IBrush Brush                    = Brushes.Cyan;
+        private static readonly IBrush BrushWhenHighlighted     = Brushes.Purple;
+        private static readonly IBrush TextBrush                = Brushes.Black;
+        private static readonly IBrush TextBrushWhenHighlighted = Brushes.White;
         
         public void Render(DrawingContext context)
         {
-            var bboxPen = BoundingBoxPen;
-        
-            // var tempVisuals = SnowmanApp.Instance.GetTempViewportVisuals();
-            // if (tempVisuals != null && tempVisuals.CurrentAnnotations.Contains(boundingBox))
-            // {
-            //     bboxPen = TempBoundingBoxPen;
-            // }
-         
+            var brush = isHighlighted ? BrushWhenHighlighted : Brush;
+            var textBrush = isHighlighted ? TextBrushWhenHighlighted : TextBrush;
+
+            var label = new FormattedText(
+                bb.ClassName.TrackId.ToString(),
+                CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                Typeface.Default,
+                10,
+                textBrush);
+
+            const int padding = 2;
+            
+            var labelRectangle = new Rect(bb.XLeftTop, bb.YLeftTop, label.Width + padding * 2, label.Height + padding * 2);
+            context.FillRectangle(brush, labelRectangle);
+            context.DrawText(label, new Point(labelRectangle.X + padding, labelRectangle.Y + padding));
+            
+            var bboxPen = new Pen(brush);
             var boundingBoxRectangle = new Rect(bb.XLeftTop, bb.YLeftTop, bb.Width, bb.Height);
             context.DrawRectangle(bboxPen, boundingBoxRectangle);
         }

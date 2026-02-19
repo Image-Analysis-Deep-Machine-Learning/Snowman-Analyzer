@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
+using Snowman.Events.Suppliers;
 using Snowman.Utilities;
 using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
@@ -22,7 +23,10 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
     public bool FrameTimelineActive => ActiveTimeline == TimelineMode.Frame;
     public bool EventTimelineActive => ActiveTimeline == TimelineMode.Event;
-    
+
+    public string CurrentFrame =>
+        $"Frame {_datasetImagesService.CurrentFrameIndex() + 1}";
+
     private TimelineMode ActiveTimeline
     {
         get;
@@ -37,6 +41,10 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
     public MainWindowDataContext(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(supplier =>
+        {
+            supplier.SelectedFrameChanged += () => { OnPropertyChanged(nameof(CurrentFrame)); };
+        });
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
         _projectService = serviceProvider.GetService<IProjectService>();
     }

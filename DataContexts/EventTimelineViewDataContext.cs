@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Snowman.Core.Services;
 using Snowman.Data;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
@@ -9,7 +7,9 @@ namespace Snowman.DataContexts;
 
 public partial class EventTimelineViewDataContext
 {
+    private readonly IEntityManager _entityManager;
     private readonly IDatasetImagesService _datasetImagesService;
+    private readonly IProjectService _projectService;
 
     public EventData? HoveredEvent { get; private set; }
 
@@ -17,11 +17,11 @@ public partial class EventTimelineViewDataContext
     public double Pan { get; set; } = 0.0;
     public int TotalFrames => _datasetImagesService.MaxFrameIndex() + 1;
 
-    public EventTimelineViewDataContext(
-        IServiceProvider serviceProvider
-    )
+    public EventTimelineViewDataContext(IServiceProvider serviceProvider)
     {
+        _entityManager = serviceProvider.GetService<IEntityManager>();
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        _projectService = serviceProvider.GetService<IProjectService>();
     }
 
     public void ApplyZoom(double logicalX, double deltaY)
@@ -41,8 +41,20 @@ public partial class EventTimelineViewDataContext
 
     public void Click(EventData? hit)
     {
-        if (hit != null)
-            _datasetImagesService.SkipToFrame(hit.FrameIndex);
+        if (hit == null) return;
+
+        _datasetImagesService.SkipToFrame(hit.FrameIndex);
+        
+        foreach (var entityId in hit.EntityIds)
+        {
+            var entity = _entityManager.GetEntityById(entityId);
+            entity?.IsHighlighted = true;
+        }
+
+        foreach (var trackId in hit.TrackIds)
+        {
+            _projectService.HighlightByTrackId(trackId);
+        }
     }
 
     public (int majorInterval, int minorInterval) GetTickIntervals(double timelineWidthPixels)

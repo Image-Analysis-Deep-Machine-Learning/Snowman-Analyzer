@@ -1,5 +1,3 @@
-using Avalonia.Media;
-using Snowman.Data;
 using System.Linq;
 using Snowman.Designer;
 // ReSharper disable once CheckNamespace
@@ -12,7 +10,6 @@ public partial class EventTimelineDataContext
 {
     public EventTimelineDataContext()
     {
-        
     }
 }
 
@@ -20,7 +17,9 @@ public partial class EventTimelineViewDataContext
 {
     public EventTimelineViewDataContext()
     {
+        _entityManager = null!;
         _datasetImagesService = null!;
+        _projectService = null!;
     }
 }
 

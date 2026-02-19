@@ -13,7 +13,6 @@ namespace Snowman.DataContexts;
 
 public partial class EventTimelineViewportDataContext
 {
-    private const int EventTimelineHeight = 100 + EventTimelineView.XAxisHeight;
     private readonly StackPanel _timelineViewer;
     private readonly List<TimelineOutput> _timelines = [];
 
@@ -45,13 +44,14 @@ public partial class EventTimelineViewportDataContext
                 {
                     Content = timeline.Name,
                     HorizontalAlignment =  HorizontalAlignment.Right,
-                    Margin = new Thickness(0, 0, 10, 0)
+                    Margin = new Thickness(0, 0, 10, 0),
+                    Foreground = Brushes.Gray
                 });
             
             var grid = new Grid
             {
                 ColumnDefinitions = new ColumnDefinitions("20, *"),
-                Height = EventTimelineHeight,
+                Height = EventTimelineView.EventTimelineHeight,
                 Margin = new Thickness(0, 0, 10, 0)
             };
             
@@ -67,9 +67,9 @@ public partial class EventTimelineViewportDataContext
             {
                 MaxY = timeline.MaxY,
                 MinY = timeline.MinY,
-                Height = EventTimelineHeight - EventTimelineView.XAxisHeight,
+                Height = EventTimelineView.EventTimelineHeight - EventTimelineView.XAxisHeight + EventTimelineView.TopPadding,
                 VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 0, 5, 0)
+                Margin = new Thickness(0, -1, 5, 0)
             };
             
             grid.Children.Add(yAxisPanel);

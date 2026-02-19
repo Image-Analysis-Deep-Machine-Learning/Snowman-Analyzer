@@ -6,7 +6,7 @@ namespace Snowman.Utilities;
 
 public static class ColorGeneration
 {
-    private static readonly Random _random = new();
+    private static readonly Random Random = new();
     
     public static readonly IBrush[] Palette =
     [
@@ -51,7 +51,7 @@ public static class ColorGeneration
 
     public static Color GetRandomColor()
     {
-        return BaseColors[_random.Next(0, BaseColors.Count)];
+        return BaseColors[Random.Next(0, BaseColors.Count)];
     }
     
     public static (Color baseColor, Color lightColor) GetHuePair(int index)

@@ -12,18 +12,19 @@ namespace Snowman.Controls;
 
 public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDataContext>
 {
+    public const int EventTimelineHeight = 80 + XAxisHeight;
     public const int XAxisHeight = 20;
+    public const double TopPadding = PinRadius * 12;
     
-    private const double PinRadius = 3;
+    private const double PinRadius = 0.5;
     private const double BaseHeight = 1;
     private const double MinorTickHeight = 20;
-    private const double MajorTickHeight = 100;
+    private const double MajorTickHeight = EventTimelineHeight - XAxisHeight - TopPadding;
 
     private static readonly IBrush BackgroundBrush = new BrushConverter().ConvertFrom("#111114") as IBrush ?? Brushes.Black;
     private static readonly IBrush TickBrush = Brushes.Gray;
     private static readonly Pen PenMajor = new(TickBrush, 1);
     private static readonly Pen PenMinor = new(TickBrush, 0.5);
-    private static readonly Typeface Font = new("Arial");
 
     private bool _isDragging;
     private Point _lastPoint;
@@ -49,7 +50,7 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
         var maxY = TimelineOutput.MaxY;
         var usableHeight = Bounds.Height - XAxisHeight;
         
-        context.DrawRectangle(BackgroundBrush, null, new Rect(0, 0, Bounds.Width, Bounds.Height - XAxisHeight));
+        context.DrawRectangle(BackgroundBrush, null, new Rect(0, TopPadding, Bounds.Width, EventTimelineHeight - TopPadding - XAxisHeight));
         
         (_, double minorTickInterval) = DataContext.GetTickIntervals(Bounds.Width);
         var intervalWidth = minorTickInterval / totalFrames * Bounds.Width * DataContext.Zoom;
@@ -60,14 +61,16 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
 
             Point? prev = null;
 
-            foreach (var ev in layer.Events)
+            for (var i = layer.Events.Count - 1; i >= 0; i--)
             {
+                var ev = layer.Events[i];
+                
                 if (!ev.IsWithinMinMax) continue;
                 
                 var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
                 if (x < -PinRadius || x > Bounds.Width + PinRadius) continue;
 
-                var y = usableHeight - ev.Y / maxY * usableHeight;
+                var y = TopPadding + (usableHeight - TopPadding) * (1 - ev.Y / maxY);
 
                 var brush = ev == DataContext.HoveredEvent ? Brushes.Red : layer.Brush;
 
@@ -132,8 +135,8 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
             ToolTip.SetTip(this,
                 $"Frame: {updated.FrameIndex + 1}\n" +
                 $"Value: {updated.Y}\n" +
-                $"Entities: {string.Join(", ", updated.EntityIds)}\n" +
-                $"Tracks: {string.Join(", ", updated.TrackIds)}");
+                $"Entity IDs: {string.Join(", ", updated.EntityIds)}\n" +
+                $"Track IDs: {string.Join(", ", updated.TrackIds)}");
         }
         else
         {
@@ -170,13 +173,13 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
             {
                 var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
                 var centerX = x + intervalWidth / 2;
-                if (centerX < -(PinRadius) || centerX > Bounds.Width + PinRadius)
+                if (centerX < -PinRadius || centerX > Bounds.Width + PinRadius)
                     continue;
 
-                var y = usableHeight - ev.Y / maxY * usableHeight;
+                var y = TopPadding + (usableHeight - TopPadding) * (1 - ev.Y / maxY);
 
-                if (position.X >= centerX - PinRadius * 3 && position.X <= centerX + PinRadius * 3 &&
-                    position.Y >= y - PinRadius * 3 && position.Y <= y + PinRadius * 3)
+                if (position.X >= centerX - PinRadius * 6 && position.X <= centerX + PinRadius * 6 &&
+                    position.Y >= y - PinRadius * 6 && position.Y <= y + PinRadius * 6)
                 {
                     return ev;
                 }
@@ -224,7 +227,7 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
                 (frame + 1).ToString(),
                 CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
-                Font,
+                Typeface.Default,
                 10,
                 TickBrush);
 

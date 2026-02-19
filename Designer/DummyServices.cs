@@ -37,6 +37,8 @@ public class DummyProjectService : IProjectService
     public Task OpenProject(IStorageFile file) => Task.CompletedTask;
     public Task SaveProject(IStorageFile file) => Task.CompletedTask;
     public DatasetData GetDatasetData() => new();
+    public void HighlightByTrackId(int trackId) { }
+    public void ClearHighlights() { }
 }
 
 public class DummyServiceProvider : IServiceProvider

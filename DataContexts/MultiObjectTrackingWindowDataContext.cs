@@ -28,6 +28,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
     private readonly IStorageProviderService _storageProviderService;
     private readonly IProgressBarService _progressBarService;
     private readonly IProjectService _projectService;
+    private readonly ILoggerService _loggerService;
 
     public static IEnumerable<string> AvailableDetectors => Detectors.Select(x => x.Name);
     public static IEnumerable<string> AvailableTrackers => ["botsort", "bytetrack"];
@@ -94,6 +95,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
         _progressBarService = serviceProvider.GetService<IProgressBarService>();
         _projectService = serviceProvider.GetService<IProjectService>();
+        _loggerService = serviceProvider.GetService<ILoggerService>();
         SelectedDetector = Detectors.First().Name;
         SelectedModel = AvailableModels.First();
         SelectedTracker = AvailableTrackers.First();
@@ -175,7 +177,9 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         process.OutputDataReceived += (_, args) =>
         {
             if (args.Data == null) return;
-
+            
+            _loggerService.LogMessage(args.Data);
+            
             var initializingMatch = new Regex(@" Initializing .* engine...").Match(args.Data);
             
             if (initializingMatch.Success)
@@ -213,6 +217,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         // TODO: GPU ACCELERATION
         process.Start();
         process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
 
         Dispatcher.UIThread.Post(async void () =>
         {

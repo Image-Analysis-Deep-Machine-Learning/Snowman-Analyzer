@@ -44,9 +44,7 @@
                 <!-- </ItemsControl> -->
             </ScrollViewer>
         
-        <GridSplitter Grid.Column="1"
-                      Background="DimGray" HorizontalAlignment="Stretch"
-                      ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
         
         <ScrollViewer Grid.Column="2"
                       AllowAutoHide="True">
@@ -67,7 +65,7 @@
                                                 <Expander Header="{Binding Name}" VerticalAlignment="Top">
                                                     <StackPanel Orientation="Vertical" Spacing="2" Margin="0, 2, 0, 0">
                                                         <StackPanel Orientation="Vertical" Spacing="1">
-                                                            <Label Content="Layers"/>
+                                                            <Label Content="Layers" FontWeight="DemiBold"/>
                                                             <ItemsControl ItemsSource="{Binding Layers}">
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
@@ -88,7 +86,7 @@
                                                             </ItemsControl>
                                                         </StackPanel>
                                                         <StackPanel Orientation="Vertical" Spacing="1">
-                                                             <Label Content="Values"/>
+                                                             <Label Content="Values" FontWeight="DemiBold"/>
                                                              <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch" Margin="0">
                                                                  <TextBlock Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                                      <Run Text="Min"/>

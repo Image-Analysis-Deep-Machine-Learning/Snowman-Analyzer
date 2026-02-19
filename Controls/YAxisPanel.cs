@@ -42,7 +42,7 @@ public class YAxisPanel : UserControlWrapper<YAxisPanelDataContext>
             value.ToString(CultureInfo.InvariantCulture),
             CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight,
-            new Typeface("Arial"),
+            Typeface.Default,
             10,
             Brushes.Gray);
 

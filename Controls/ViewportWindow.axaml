@@ -10,9 +10,13 @@
                          x:DataType="dataContext:ViewportWindowDataContext"
                          x:Name="Root">
     <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
-        <ctrl:ToolBar Grid.Row="0" Name="ToolBar"/>
-        <Panel Grid.Row="1">
-            <ctrl:Viewport Name="Viewport" Background="Transparent"/>
-        </Panel>
+        <ctrl:ToolBar Margin="0, 0, 0, 5" Grid.Row="0" Name="ToolBar"/>
+        <Border Grid.Row="1" BorderBrush="{DynamicResource ButtonBackground}"
+                BorderThickness="4"
+                CornerRadius="3">
+            <Panel>
+                <ctrl:Viewport Name="Viewport" Background="Transparent"/>
+            </Panel>
+        </Border>
     </Grid>
 </ctrl:UserControlWrapper>
