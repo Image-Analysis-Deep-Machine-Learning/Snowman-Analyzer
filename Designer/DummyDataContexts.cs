@@ -1,6 +1,3 @@
-using Avalonia.Media;
-using Snowman.Core.Services;
-using Snowman.Data;
 using System.Linq;
 using Snowman.Designer;
 // ReSharper disable once CheckNamespace
@@ -13,7 +10,16 @@ public partial class EventTimelineDataContext
 {
     public EventTimelineDataContext()
     {
-        
+    }
+}
+
+public partial class EventTimelineViewDataContext
+{
+    public EventTimelineViewDataContext()
+    {
+        _entityManager = null!;
+        _datasetImagesService = null!;
+        _projectService = null!;
     }
 }
 
@@ -21,7 +27,7 @@ public partial class EventTimelineViewportDataContext
 {
     public EventTimelineViewportDataContext()
     {
-        ScriptRuns = [new ScriptRun() {Name = "ja neviem", Outputs = { new TimelineOutput() {Name = "bude mat name", Layers = [new Layer() {Name = "AVTOBUS", Brush = Brushes.Aqua}]} }}, new ScriptRun() {Name = "ja neviem2"}];
+        _timelineViewer = null!;
     }
 }
 

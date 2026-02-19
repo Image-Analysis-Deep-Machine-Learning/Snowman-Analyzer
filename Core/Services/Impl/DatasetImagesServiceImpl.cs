@@ -181,7 +181,7 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
             _cachedThumbnails[i] = null;
         }
     }
-
+    
     private readonly struct BitmapWrapper(Bitmap image) : IDrawable
     {
         public void Render(DrawingContext context)

@@ -23,7 +23,7 @@
                 <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
             </Style>
         </Grid.Styles>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5" Margin="0, 0, 0, 5">
             <ComboBox ItemsSource="{Binding AvailableScripts}"
                       SelectedItem="{Binding SelectedNode}"/>
             <Button Content="Add Node" Command="{Binding AddNode}"/>

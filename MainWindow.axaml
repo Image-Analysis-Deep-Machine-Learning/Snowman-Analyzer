@@ -15,7 +15,7 @@
         <StreamGeometry x:Key="ArrowLeftRegular">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
         <StreamGeometry x:Key="ArrowRightRegular">M15.2685,4.20949 C14.97,3.92233 14.4952,3.93153 14.208,4.23005 C13.9209,4.52857 13.9301,5.00335 14.2286,5.29051 L22.5028,13.25 L3.75,13.25 C3.33579,13.25 3,13.5858 3,13.9999982 C3,14.4142 3.33579,14.75 3.75,14.75 L22.5018,14.75 L14.2286,22.7085 C13.9301,22.9957 13.9209,23.4705 14.208,23.769 C14.4952,24.0675 14.97,24.0767 15.2685,23.7896 L24.6965,14.7202 C25.1054,14.3268 25.1054,13.6723 24.6965,13.2788 L15.2685,4.20949 Z</StreamGeometry>
     </Window.Resources>
-    <Grid RowDefinitions="Auto, *, Auto">
+    <Grid RowDefinitions="Auto, *, Auto, Auto">
         <!-- menu -->
         <Menu Grid.Row="0">
             <MenuItem Header="_File">
@@ -34,23 +34,20 @@
         
         <!-- main display window -->
         <Grid Grid.Row="1"
-              RowDefinitions="7*,3*"
-              ColumnDefinitions="7*,3*"
+              RowDefinitions="7*, Auto, 3*"
+              ColumnDefinitions="7*, 3*"
               Margin="5, 5"
               HorizontalAlignment="Stretch">
             <!-- viewport -->
-            <Border Grid.Row="0"
-                    Grid.Column="0"
-                    BorderBrush="{StaticResource ButtonBackground}"
-                    BorderThickness="4"
-                    CornerRadius="3">
+            <Grid Grid.Row="0" Grid.Column="0">
                 <ctrl:ViewportWindow HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-            </Border>
+                <Button IsHitTestVisible="False" Foreground="White" Opacity="0.7" Background="#454548" Content="{Binding CurrentFrame}" Margin="7" HorizontalAlignment="Left" VerticalAlignment="Bottom" ZIndex="100">
+                </Button>
+            </Grid>
             
             <!-- timeline container -->
-            <Grid Grid.Row="1"
+            <Grid Grid.Row="2"
                   Grid.Column="0"
-                  Margin="0, 5, 0, 0"
                   Classes.FrameActive="{Binding FrameTimelineActive}"
                   Classes.EventActive="{Binding EventTimelineActive}">
                 <Grid.Styles>
@@ -153,10 +150,12 @@
             <!-- node viewport -->
             <ctrl:NodeViewport Grid.Row="0" Grid.Column="1" Margin="5, 0, 0, 0"/>
             
+            <GridSplitter Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0, 5"></GridSplitter>
+            
             <!-- logging console -->
-            <TextBox Grid.Row="1"
+            <TextBox Grid.Row="2"
                      Grid.Column="1"
-                     Margin="5, 5, 0, 0"
+                     Margin="5, 0, 0, 0"
                      Padding="2"
                      AcceptsReturn="True"
                      IsReadOnly="True"
