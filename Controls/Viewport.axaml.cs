@@ -1,8 +1,11 @@
 ﻿using Avalonia.Input;
 using Avalonia.Media;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
 using Snowman.Events;
+using Snowman.Events.Suppliers;
 using Snowman.Events.Viewport;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
@@ -63,5 +66,12 @@ public partial class Viewport : UserControlWrapper<ViewportDataContext>
         var args = new ViewportKeyDownEventArgs(e);
         KeyDown?.Invoke(DataContext, args);
         InvalidateVisual();
+    }
+
+    protected override ViewportDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += InvalidateVisual);
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += InvalidateVisual);
+        return new ViewportDataContext(serviceProvider);
     }
 }

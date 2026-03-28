@@ -7,7 +7,7 @@ namespace Snowman.Core.Scripting.Nodes.OutputNodes;
 
 public class TimelineOutputNode : OutputNode
 {
-    private readonly ITimelineService _timelineService;
+    private readonly ITimelineService _timelineService = null!;
     private readonly Input _input;
 
     private TimelineOutputNode(IServiceProvider serviceProvider) : this()

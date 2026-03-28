@@ -1,4 +1,5 @@
 ﻿using Avalonia.Media;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
 
 namespace Snowman.Controls;
@@ -11,5 +12,10 @@ public class GraphOverlay : UserControlWrapper<GraphOverlayDataContext>
     {
         base.Render(context);
         DataContext.RenderOverlay(context, BackgroundOverlay);
+    }
+
+    protected override GraphOverlayDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return new GraphOverlayDataContext(serviceProvider);
     }
 }

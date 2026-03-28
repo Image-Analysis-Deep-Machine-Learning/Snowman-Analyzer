@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Data;
 using Snowman.DataContexts;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
@@ -110,6 +111,11 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
     {
         _isDragging = false;
         DataContext.Click(HitTest(e.GetPosition(this)));
+    }
+
+    protected override EventTimelineViewDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return new EventTimelineViewDataContext(serviceProvider);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)

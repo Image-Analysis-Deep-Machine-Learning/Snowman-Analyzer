@@ -28,7 +28,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
     private readonly IStorageProviderService _storageProviderService;
     private readonly IProgressBarService _progressBarService;
     private readonly IProjectService _projectService;
-    private readonly ILoggerService _loggerService;
+    private readonly ILoggerService _loggerService = null!;
 
     public static IEnumerable<string> AvailableDetectors => Detectors.Select(x => x.Name);
     public static IEnumerable<string> AvailableTrackers => ["botsort", "bytetrack"];
@@ -228,7 +228,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         
             _progressBarService.FinishProgress("Finished: Multi Object Tracking");
             // TODO: get the path from the output of the script
-            await _projectService.OpenDataset(Path.Combine(outputPath, "frames/_test_video_cut_metadata.xml"));
+            await _projectService.OpenDataset(Path.Combine(outputPath, $"frames/_{Path.GetFileNameWithoutExtension(VideoFilePath)}_metadata.xml"));
         });
         
         DialogCloseRequested?.Invoke();

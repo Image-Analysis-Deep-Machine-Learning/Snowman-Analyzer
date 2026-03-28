@@ -1,4 +1,5 @@
 ﻿using Snowman.DataContexts;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
@@ -13,5 +14,10 @@ public partial class ViewportWindow : UserControlWrapper<ViewportWindowDataConte
         Viewport.PointerMoved += (sender, e) => ToolBar.DataContext.ActiveTool.PointerMovedAction(sender, e);
         Viewport.PointerWheelChanged += (sender, e) => ToolBar.DataContext.ActiveTool.PointerWheelChangedAction(sender, e);
         Viewport.KeyDown += (sender, e) => ToolBar.DataContext.ActiveTool.KeyDownAction(sender, e);
+    }
+
+    protected override ViewportWindowDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return new ViewportWindowDataContext();
     }
 }

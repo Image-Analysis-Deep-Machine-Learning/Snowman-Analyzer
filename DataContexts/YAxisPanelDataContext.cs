@@ -1,6 +1,3 @@
 ﻿namespace Snowman.DataContexts;
 
-public class YAxisPanelDataContext
-{
-    
-}
+public class YAxisPanelDataContext;

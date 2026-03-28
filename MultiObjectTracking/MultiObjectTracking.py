@@ -1,4 +1,5 @@
 ﻿import os
+import sys
 import cv2
 import torch
 import argparse
@@ -98,7 +99,7 @@ def process_video(args):
         video_writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), target_fps, (target_w, target_h))
 
     # Progress Bar
-    pbar = tqdm(total=total_input_frames, desc="🎥 Processing Video", unit="frame")
+    pbar = tqdm(total=total_input_frames, desc="🎥 Processing Video", unit="frame", file=sys.stdout, ascii=True, dynamic_ncols=False, mininterval=0.1)
 
     frame_idx = 0
 

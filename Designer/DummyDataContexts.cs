@@ -74,6 +74,7 @@ public partial class MultiObjectTrackingWindowDataContext
         _storageProviderService = null!;
         _progressBarService = null!;
         _projectService = null!;
+        _loggerService = null!;
         SelectedDetector = Detectors.First().Name;
         SelectedModel = AvailableModels.First();
         SelectedTracker = AvailableTrackers.First();

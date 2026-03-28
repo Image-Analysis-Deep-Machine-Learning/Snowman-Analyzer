@@ -56,7 +56,12 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
         e.Pointer.Capture(null);
         e.Handled = true;
     }
-    
+
+    protected override NodeControlDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return DataContext;
+    }
+
     private bool IsInteractiveElement(Visual? visual)
     {
         while (visual != null && visual != this)

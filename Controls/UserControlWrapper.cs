@@ -2,7 +2,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Snowman.Core.Services;
-using Snowman.DataContexts;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
@@ -28,10 +27,13 @@ public abstract class UserControlWrapper<T> : UserControl where T : class, new()
     {
         ServiceProviderAttachedProperty.ProviderProperty.Changed.AddClassHandler<UserControlWrapper<T>>((control, args) =>
         {
-            if (args.NewValue is IServiceProvider serviceProvider)
-            {
-                DataContextInjector.TryInjectDataContext(control, serviceProvider);
-            }
+            if (args.NewValue is not IServiceProvider serviceProvider) return;
+            
+            var dataContext = control.GetDataContext(serviceProvider);
+
+            if (control.DataContext == dataContext) return;
+
+            control.DataContext = dataContext;
         });
     }
     
@@ -39,4 +41,11 @@ public abstract class UserControlWrapper<T> : UserControl where T : class, new()
     {
         DataContext = new T();
     }
+
+    /// <summary>
+    /// Constructs the DataContext that is to be used by this control, essentially acting as an extension of the constructor.
+    /// This method can also be used to access services.
+    /// If the DataContext is set from the contructor (in procedurally generated controls) return existing DataContext.
+    /// </summary>
+    protected abstract T GetDataContext(IServiceProvider serviceProvider);
 }

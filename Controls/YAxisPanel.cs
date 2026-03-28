@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.DataContexts;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
@@ -48,5 +49,10 @@ public class YAxisPanel : UserControlWrapper<YAxisPanelDataContext>
 
         var x = Bounds.Width - text.Width;
         ctx.DrawText(text, new Point(x, y));
+    }
+
+    protected override YAxisPanelDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return new YAxisPanelDataContext();
     }
 }
