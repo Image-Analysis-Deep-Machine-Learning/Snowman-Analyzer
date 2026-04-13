@@ -10,8 +10,10 @@ public class Input(string name, Type type, Group group, string friendlyName) : P
 {
     public List<Output> ConnectedOutputs { get; } = [];
 
-    public bool MultipleConnectionsAllowed { get; } = typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string);
-    
+    public bool MultipleConnectionsAllowed { get; } = type.IsGenericType &&
+                                                      type.GetGenericTypeDefinition() == typeof(IEnumerable<>) &&
+                                                      type != typeof(string);
+
     public override void AskForValue()
     {
         foreach (var connectedOutput in ConnectedOutputs)

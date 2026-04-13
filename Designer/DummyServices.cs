@@ -29,6 +29,8 @@ public class DummyNodeService : INodeService
     public NodeGraphData SaveGraph() => new();
     public void LoadGraph(NodeGraphData data) { }
     public int GetNodeIdByPort(Port port) => 0;
+    public void SelectNode(Node node) { }
+    public void RemoveSelectedNode() { }
 }
 
 public class DummyProjectService : IProjectService

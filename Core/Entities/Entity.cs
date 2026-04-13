@@ -38,7 +38,7 @@ public abstract class Entity : IDrawable
     
     private Point _pos;
     protected internal bool _selected;
-    protected List<Entity> _children = [];
+    protected internal List<Entity> _children = [];
     
     public int Id { get; set; }
     public event EventHandler<Entity, Point>? PositionChanges;

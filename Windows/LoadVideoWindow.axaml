@@ -5,7 +5,7 @@
         mc:Ignorable="d" Width="480"
         xmlns:dataContext="using:Snowman.DataContexts"
         xmlns:controls="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
-        x:Class="Snowman.LoadVideoWindow"
+        x:Class="Snowman.Windows.LoadVideoWindow"
         x:DataType="dataContext:LoadVideoWindowDataContext"
         Title="Load Video File"
         WindowStartupLocation="CenterOwner"

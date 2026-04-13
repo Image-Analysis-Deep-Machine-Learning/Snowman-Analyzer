@@ -1,14 +1,18 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Services;
 using Snowman.Data;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 
 public abstract class Node
 {
+    private bool _executed;
+    
     public double X { get; set; }
     public double Y { get; set; }
     public string UniqueIdentifier { get; set; }
@@ -122,7 +126,11 @@ public abstract class Node
     
     protected virtual void Execute()
     {
+        if (_executed) throw new InvalidOperationException($"Attempted to execute node '{this}' more than once, this indicates a cycle.");
+        
+        _executed = true;
         PrepareInputs();
+        _executed = false;
     }
 
     private void PrepareInputs()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Snowman.Events;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
@@ -9,6 +10,8 @@ public class Output(string name, Type type, Group group, string friendlyName)
 {
     public event SignalEventHandler? ValueRequested;
     public event SignalEventHandler? ResetRequested;
+    
+    public List<Input> ConnectedInputs { get; } = []; // used to remove nodes
 
     public override void AskForValue()
     {

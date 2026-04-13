@@ -66,7 +66,7 @@ public class VariableDefinition
 {
     public string Name { get; set; } = null!;
     public string? FriendlyName { get; set; }
-    public string Group { get; set; } = null!;
+    public string Group { get; set; } = string.Empty;
     public string VariableType { get; set; } = null!;
 
     [XmlAnyElement("Value")]

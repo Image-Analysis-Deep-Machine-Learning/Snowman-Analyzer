@@ -6,7 +6,8 @@
         xmlns:dataContext="using:Snowman.DataContexts"
         xmlns:ctrl="using:Snowman.Controls"
         xmlns:snowman="using:Snowman"
-        x:Class="Snowman.MainWindow"
+        xmlns:windows="clr-namespace:Snowman.Windows"
+        x:Class="Snowman.Windows.MainWindow"
         x:DataType="dataContext:MainWindowDataContext"
         Title="Snowman"
         WindowState="Maximized"
@@ -23,12 +24,14 @@
                 <MenuItem Header="_Open Project" Command ="{Binding OpenProject}"/>
                 <MenuItem Header="_Save Project" Command ="{Binding SaveProject}"/>
                 <MenuItem Header="_Open Dataset" Command="{Binding OpenDataset}"/>
-                <MenuItem Header="_Settings"/>
+                <MenuItem Header="_Settings" Command="{Binding OpenSettings}"/>
                 <Separator/>
-                <MenuItem Header="_Load Video File" Command="{Binding $parent[snowman:MainWindow].LoadVideoFile}"/>
-                <MenuItem Header="_Run Multi-Object Tracking" Command="{Binding $parent[snowman:MainWindow].RunMot}"/>
-                <Separator/>
-                <MenuItem Header="_Exit" Command="{Binding $parent[snowman:MainWindow].Close}"/>
+                <MenuItem Header="_Exit" Command="{Binding $parent[windows:MainWindow].Close}"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Load Video File" Command="{Binding $parent[windows:MainWindow].LoadVideoFile}"/>
+                <MenuItem Header="_Run Multi-Object Tracking" Command="{Binding $parent[windows:MainWindow].RunMot}"/>
+                <MenuItem Header="_Chat" Command="{Binding $parent[windows:MainWindow].OpenChat}"/>
             </MenuItem>
         </Menu>
         
@@ -119,7 +122,7 @@
                     <!-- frame timeline button -->
                     <Button Width="24" Height="24" MinWidth="24" MinHeight="24"
                             Padding="0"
-                            Command="{Binding SetTimelineMode}" CommandParameter="Frame" 
+                            Command="{Binding SetTimelineMode}" CommandParameter="Frame"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             ToolTip.Tip="Frame Timeline">
                         <Path Classes="FrameTimelinePath"

@@ -1,7 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Services;
+using Ursa.Controls;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
@@ -27,6 +32,23 @@ public partial class NodeViewportDataContext
 
     public void RunGraph()
     {
-        _nodeService.RunGraph();
+        var runTask = new Task(() =>
+        {
+            try
+            {
+                _nodeService.RunGraph();
+                
+            }
+            
+            catch (Exception e)
+            {
+                Dispatcher.UIThread.Post(async void() =>
+                {
+                    await MessageBox.ShowAsync($"An exception has occured while executing graph:\n{e.Message}\n{e.StackTrace}");
+                });
+            }
+        });
+        
+        runTask.Start();
     }
 }

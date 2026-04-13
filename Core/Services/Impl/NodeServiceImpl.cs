@@ -38,7 +38,8 @@ public class NodeServiceImpl : INodeService
     private readonly List<Node> _allNodes;
     private readonly PriorityQueue<int, int> _freeNodeIds;
     private readonly HashSet<int> _occupiedNodeIds;
-    
+
+    private Node? _selectedNode;
     private Port? _currentDragPort;
     private Point? _currentDragPoint;
 
@@ -130,6 +131,11 @@ public class NodeServiceImpl : INodeService
         
         foreach (var output in node.Outputs)
         {
+            foreach (var connectedInput in output.ConnectedInputs.ToList())
+            {
+                RemoveConnection(connectedInput, output);
+            }
+            
             _portsToNodeIds.Remove(output);
             _nodePorts.Remove(output);
         }
@@ -143,6 +149,8 @@ public class NodeServiceImpl : INodeService
         if (input is null || output is null) return;
         
         input.ConnectedOutputs.Remove(output);
+        output.ConnectedInputs.Remove(input);
+        InvalidateBackgroundOverlay();
     }
     
     public IEnumerable<(Point StartPoint, Point EndPoint)> GetGraphConnectionTuples(bool background)
@@ -243,11 +251,7 @@ public class NodeServiceImpl : INodeService
 
     public void EndConnection(PointerReleasedEventArgs e)
     {
-        var hit = _viewportCanvas.InputHitTest(e.GetPosition(_viewportCanvas), x =>
-        {
-            return x is not GraphOverlay;
-        }, false);
-        
+        var hit = _viewportCanvas.InputHitTest(e.GetPosition(_viewportCanvas), x => x is not GraphOverlay, false);
         var ancestor = (hit as Ellipse).FindAncestorOfType<NodePort>();
         
         if (ancestor is not null)
@@ -270,22 +274,17 @@ public class NodeServiceImpl : INodeService
     
     public void RunGraph()
     {
-        var graphTask = new Task(() =>
-        {
-            GetTimelineService().StartNewScriptRun();
+        GetTimelineService().StartNewScriptRun();
 
-            foreach (var outputNode in _outputNodes)
-            {
-                outputNode.ExecuteOutput();
-            }
+        foreach (var outputNode in _outputNodes)
+        {
+            outputNode.ExecuteOutput();
+        }
             
-            foreach (var outputNode in _outputNodes)
-            {
-                outputNode.Reset();
-            }
-        });
-        
-        graphTask.Start();
+        foreach (var outputNode in _outputNodes)
+        {
+            outputNode.Reset();
+        }
     }
 
     public NodeGraphData SaveGraph()
@@ -357,6 +356,19 @@ public class NodeServiceImpl : INodeService
         return _portsToNodeIds[port];
     }
 
+    public void SelectNode(Node node)
+    {
+        _selectedNode = node;
+    }
+
+    public void RemoveSelectedNode()
+    {
+        if (_selectedNode is null) return;
+        
+        RemoveNode(_selectedNode);
+        _selectedNode = null;
+    }
+
     private static Expander? FindFirstRetractedExpander(NodePort outputNode)
     {
         var currentExpander = outputNode.FindAncestorOfType<Expander>();
@@ -385,7 +397,7 @@ public class NodeServiceImpl : INodeService
 
     private static bool ArePortsTypeCompatible(Input input, Output output)
     {
-        if (!input.MultipleConnectionsAllowed) return input.Type.IsAssignableFrom(output.Type);
+        if (!input.MultipleConnectionsAllowed) return input.Type.IsAssignableFrom(output.Type) && input.ConnectedOutputs.Count == 0;
         
         var genericArgument = input.Type.GetGenericArguments().FirstOrDefault() ?? typeof(object);
         return genericArgument.IsAssignableFrom(output.Type);
@@ -407,6 +419,7 @@ public class NodeServiceImpl : INodeService
         if (!testResult.CanConnect) return;
         
         testResult.Input?.ConnectedOutputs.Add(testResult.Output!);
+        testResult.Output?.ConnectedInputs.Add(testResult.Input!);
         InvalidateBackgroundOverlay();
     }
 
@@ -416,11 +429,7 @@ public class NodeServiceImpl : INodeService
         
         _currentDragPoint = e.GetPosition(_viewportCanvas);
         
-        var hit = _viewportCanvas.InputHitTest(e.GetPosition(_viewportCanvas), x =>
-        {
-            return x is not GraphOverlay;
-        }, false);
-        
+        var hit = _viewportCanvas.InputHitTest(e.GetPosition(_viewportCanvas), x => x is not GraphOverlay, false);
         var ancestor = (hit as Ellipse).FindAncestorOfType<NodePort>();
 
         if (ancestor is not null)

@@ -78,12 +78,10 @@ public partial class ViewportDataContext
         using (drawingContext.PushTransform(TransformationMatrix))
         {
             using var bicubic = drawingContext.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});
-            foreach (var drawableSource in _drawingService.GetDrawableSources())
+            
+            foreach (var drawable in _drawingService.GetDrawables())
             {
-                foreach (var drawable in drawableSource.GetDrawables())
-                {
-                    drawable.Render(drawingContext);
-                }
+                drawable.Render(drawingContext);
             }
         }
     }

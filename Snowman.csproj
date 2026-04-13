@@ -18,21 +18,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.11" />
+    <PackageReference Include="Anthropic" Version="12.11.0" />
+    <PackageReference Include="Avalonia" Version="11.3.12" />
     <PackageReference Include="Avalonia.Controls.PanAndZoom" Version="11.3.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.11" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.12" />
     <PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
     <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
-    <PackageReference Include="Irihi.Ursa" Version="1.14.1" />
-    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.14.1" />
+    <PackageReference Include="Irihi.Ursa" Version="1.15.0" />
+    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.15.0" />
+    <PackageReference Include="LiveMarkdown.Avalonia" Version="1.9.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.74.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.74.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.74.0-alpha" />
     <PackageReference Include="python" Version="3.12.10" />
     <PackageReference Include="pythonnet" Version="3.1.0-preview2024-09-06" />
     <PackageReference Include="RangeSlider.Avalonia" Version="2.1.0" />
-    <PackageReference Include="Semi.Avalonia" Version="11.3.7.2" />
+    <PackageReference Include="Semi.Avalonia" Version="11.3.7.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,16 +86,24 @@
       <DependentUpon>NumberVariableControl.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="LoadVideoWindow.axaml.cs">
-      <DependentUpon>LoadVideoWindow.axaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="Controls\EventTimelineViewport.axaml.cs">
       <DependentUpon>EventTimelineViewport.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Controls\EventTimelineView.axaml.cs">
       <DependentUpon>EventTimelineView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Windows\MultiObjectTrackingWindow.axaml.cs">
+      <DependentUpon>MultiObjectTrackingWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Windows\MainWindow.axaml.cs">
+      <DependentUpon>MainWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Windows\LoadVideoWindow.axaml.cs">
+      <DependentUpon>LoadVideoWindow.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

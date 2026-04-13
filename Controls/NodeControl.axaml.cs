@@ -28,6 +28,7 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || _nodeService.IsNewConnectionActive() || (e.Source is Visual visual && IsInteractiveElement(visual))) return;
         
         ZIndex = ++_topZIndex; // move the clicked node to the front
+        _nodeService.SelectNode(DataContext.Node);
         _isDragging = true;
         _dragStartPoint = e.GetPosition(Parent as Control);
         e.Pointer.Capture(this);

@@ -22,6 +22,15 @@ public partial class NodeViewport : UserControlWrapper<NodeViewportDataContext>,
         serviceProvider.GetService<IEventManager>().RegisterEventSupplier<INodeViewportEventSupplier>(this);
         var nodeService = new NodeServiceImpl(ViewportCanvas, BackgroundOverlay, ForegroundOverlay, serviceProvider);
         serviceProvider.RegisterService<INodeService>(nodeService);
+        
+        KeyDown += (sender, args) =>
+        {
+            if (args.Key == Key.Delete)
+            {
+                nodeService.RemoveSelectedNode();
+            }
+        };
+        
         return new NodeViewportDataContext(serviceProvider);
     }
 }

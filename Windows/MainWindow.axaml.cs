@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -10,7 +9,7 @@ using Snowman.DataContexts;
 using Snowman.Utilities;
 using Ursa.Controls;
 
-namespace Snowman;
+namespace Snowman.Windows;
 
 public partial class MainWindow : Window
 {
@@ -61,7 +60,21 @@ public partial class MainWindow : Window
             await MessageBox.ShowAsync("Cannot run mot: " + e.Message);
         }
     }
-    
+
+    public void OpenChat()
+    {
+        var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
+        var chatService = serviceProvider.GetService<IChatService>();
+        chatService.OpenChatWindow();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
+        var chatService = serviceProvider.GetService<IChatService>();
+        chatService.CloseChatWindow();
+    }
+
     private static void InitializePythonExecutionEnvironment()
     {
         if (Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes

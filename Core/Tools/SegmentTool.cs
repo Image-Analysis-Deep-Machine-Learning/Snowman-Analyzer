@@ -9,13 +9,13 @@ using Snowman.Events.Viewport;
 
 namespace Snowman.Core.Tools;
 
-public class LineTool : EntityEditTool<LineEntity>
+public class SegmentTool : EntityEditTool<SegmentEntity>
 {
     private Entity? _selectedPoint;
     
-    public LineTool() : base("_Line Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
+    public SegmentTool() : base("_Segment Create", new Cursor(StandardCursorType.Arrow), new ImageBrush()) { }
 
-    private LineTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
+    private SegmentTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
     public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
@@ -29,9 +29,9 @@ public class LineTool : EntityEditTool<LineEntity>
             {
                 if (!EntityManager.GetSelectedEntities().Any())
                 {
-                    var newLineEntity = new LineEntity(pointerPosition, pointerPosition);
-                    EntityManager.AddEntity(newLineEntity);
-                    _selectedPoint = newLineEntity.Children[^1];
+                    var newSegmentEntity = new SegmentEntity(pointerPosition, pointerPosition);
+                    EntityManager.AddEntity(newSegmentEntity);
+                    _selectedPoint = newSegmentEntity.Children[^1];
                     EntityManager.SelectEntities([_selectedPoint]);
                 }
             }
@@ -52,7 +52,7 @@ public class LineTool : EntityEditTool<LineEntity>
     
     public override Tool Clone(IServiceProvider serviceProvider)
     {
-        return new LineTool(Name, Cursor, Icon)
+        return new SegmentTool(Name, Cursor, Icon)
         {
             EntityManager = serviceProvider.GetService<IEntityManager>()
         };

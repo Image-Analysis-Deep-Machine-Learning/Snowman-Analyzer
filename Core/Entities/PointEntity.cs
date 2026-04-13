@@ -18,7 +18,7 @@ public class PointEntity : Entity
 
     public override bool EvaluateHit(Rect selection)
     {
-        throw new System.NotImplementedException();
+        return selection.Contains(Position);
     }
 
     public override void Render(DrawingContext context)

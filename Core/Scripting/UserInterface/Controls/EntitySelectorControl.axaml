@@ -1,16 +1,16 @@
-﻿<ctrl:VariableControl x:TypeArguments="dataContext:EntitySelector"
-                      xmlns="https://github.com/avaloniaui"
-                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                      mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                      x:Class="Snowman.Core.Scripting.UserInterface.Controls.EntitySelectorControl"
-                      xmlns:dataContext="clr-namespace:Snowman.Core.Scripting.DataSource.Variables"
-                      xmlns:ctrl="clr-namespace:Snowman.Core.Scripting.UserInterface"
-                      x:DataType="dataContext:EntitySelector">
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:EntitySelector"
+                         xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="Snowman.Core.Scripting.UserInterface.Controls.EntitySelectorControl"
+                         xmlns:dataContext="clr-namespace:Snowman.Core.Scripting.DataSource.Variables"
+                         xmlns:ctrl="clr-namespace:Snowman.Controls"
+                         x:DataType="dataContext:EntitySelector">
     <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding FriendlyName}" Margin="10"/>
         <ComboBox ItemsSource="{Binding AvailableEntities}"
                   SelectedItem="{Binding TypedValue, Mode=TwoWay}"/>
     </StackPanel>
-</ctrl:VariableControl>
+</ctrl:UserControlWrapper>

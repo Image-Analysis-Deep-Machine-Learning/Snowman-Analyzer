@@ -47,13 +47,13 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
                 {
                     _polygonInCreation = new PolygonEntity(pointerPosition, pointerPosition);
                     EntityManager.AddEntity(_polygonInCreation);
-                    EntityManager.SelectEntities([_polygonInCreation.Children[^1]]);
+                    EntityManager.SelectEntities([_polygonInCreation.Children[^1].Children[^1]]);
                 }
             }
 
             else
             {
-                if (_polygonInCreation.CanBeClosed && EntityManager.GetEntitiesHitByPoint(pointerPosition).Contains(_polygonInCreation.Children[0]))
+                if (_polygonInCreation.CanBeClosed && EntityManager.GetEntitiesHitByPoint(pointerPosition).Contains(_polygonInCreation.Children[0].Children[0]))
                 {
                     _polygonInCreation.ClosePolygon();
                     _polygonInCreation = null;
@@ -62,7 +62,7 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
                 else
                 {
                     _polygonInCreation.AddPoint(pointerPosition);
-                    EntityManager.SelectEntities([_polygonInCreation.Children[^1]]);
+                    EntityManager.SelectEntities([_polygonInCreation.Children[^1].Children[^1]]);
                 }
             }
         }
@@ -79,7 +79,7 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
     {
         if (_polygonInCreation is not null)
         {
-            _polygonInCreation.Children[0].IsHit = EntityManager.GetEntitiesHitByPoint(e.GetTransformedPointerPosition()).Contains(_polygonInCreation.Children[0]);
+            _polygonInCreation.Children[0].Children[0].IsHit = EntityManager.GetEntitiesHitByPoint(e.GetTransformedPointerPosition()).Contains(_polygonInCreation.Children[0].Children[0]);
         }
         
         base.PointerMovedAction(sender, e);

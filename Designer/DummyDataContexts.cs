@@ -1,4 +1,5 @@
 using System.Linq;
+using Microsoft.Extensions.AI;
 using Snowman.Designer;
 // ReSharper disable once CheckNamespace
 // This file contains all dummy parameterless constructors for DataContexts
@@ -6,10 +7,11 @@ using Snowman.Designer;
 // Some non-null initializations are required for the actual application to work
 namespace Snowman.DataContexts;
 
-public partial class EventTimelineDataContext
+public partial class ChatWindowDataContext
 {
-    public EventTimelineDataContext()
+    public ChatWindowDataContext()
     {
+        _chatService = null!;
     }
 }
 

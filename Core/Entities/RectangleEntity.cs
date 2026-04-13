@@ -60,7 +60,7 @@ public class RectangleEntity : Entity
 
     public override bool EvaluateHit(Rect selection)
     {
-        throw new NotImplementedException();
+        return _rectangle.Intersects(selection);
     }
 
     public override void Render(DrawingContext context)

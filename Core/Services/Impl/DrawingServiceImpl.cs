@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Snowman.Core.Drawing;
 
 namespace Snowman.Core.Services.Impl;
@@ -12,9 +13,9 @@ public class DrawingServiceImpl : IDrawingService
         _drawableSources.Add(drawableSource);
     }
 
-    public IEnumerable<IDrawableSource> GetDrawableSources()
+    public IEnumerable<IDrawable> GetDrawables()
     {
-        return _drawableSources.AsReadOnly();
+        return _drawableSources.SelectMany(x => x.GetDrawables());
     }
     
 }

@@ -9,5 +9,5 @@ namespace Snowman.Core.Services;
 public interface IDrawingService : IService
 {
     public void RegisterDrawableSource(IDrawableSource drawableSource);
-    public IEnumerable<IDrawableSource> GetDrawableSources();
+    public IEnumerable<IDrawable> GetDrawables();
 }

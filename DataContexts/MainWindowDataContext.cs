@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
+using Snowman.Core.Settings;
 using Snowman.Events.Suppliers;
 using Snowman.Utilities;
 using Ursa.Controls;
@@ -119,6 +120,11 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
         {
             await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
         }
+    }
+    
+    public void OpenSettings()
+    {
+        SettingsRegistry.OpenSettingsWindow();
     }
 
     public void PrevFrame()

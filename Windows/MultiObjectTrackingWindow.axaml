@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" Width="480"
         xmlns:dataContext="using:Snowman.DataContexts"
-        x:Class="Snowman.MultiObjectTrackingWindow"
+        x:Class="Snowman.Windows.MultiObjectTrackingWindow"
         x:DataType="dataContext:MultiObjectTrackingWindowDataContext"
         Title="Run Multi Object Tracking And Create New Dataset"
         WindowStartupLocation="CenterOwner"

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Snowman.Events;
+using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
 
@@ -37,9 +38,9 @@ public class EventManagerImpl : IEventManager
         }
     }
 
-    public void UnregisterEventSupplier<T>(T eventSupplier)
+    public bool UnregisterEventSupplier<T>(T eventSupplier) where T : IEventSupplier
     {
-        throw new NotImplementedException();
+        return _eventSuppliers.TryGetValue(typeof(T), out var eventSupplierList) && eventSupplierList.Remove(eventSupplier);
     }
 
     public void RegisterActionOnSupplier<T>(Action<T> eventSupplierAction) where T : IEventSupplier
@@ -59,9 +60,7 @@ public class EventManagerImpl : IEventManager
         }
 
         // execute on existing suppliers
-        var suppliers = _eventSuppliers[typeof(T)];
-        
-        foreach (var supplier in suppliers)
+        foreach (var supplier in _eventSuppliers[typeof(T)])
         {
             wrapper(supplier);
         }

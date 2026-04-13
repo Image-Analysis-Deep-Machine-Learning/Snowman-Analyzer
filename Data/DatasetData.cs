@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
+using Avalonia;
 
 namespace Snowman.Data;
 
@@ -88,6 +89,10 @@ public class BoundingBox
 	[XmlElement(ElementName = "class_name")]
 	public ClassName ClassName { get; set; } = new();
 
+	public Rect ToRectangle()
+	{
+		return new Rect(XLeftTop, YLeftTop, Width, Height);
+	}
 }
 
 public class ClassName

@@ -25,4 +25,6 @@ public interface INodeService : IService
     public NodeGraphData SaveGraph();
     public void LoadGraph(NodeGraphData data);
     int GetNodeIdByPort(Port port);
+    void SelectNode(Node node);
+    void RemoveSelectedNode();
 }
