@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Snowman.Core.MachineLearning.Providers;
@@ -21,26 +19,27 @@ public static class SettingsRegistry
 {
     private const string SettingsPath = "settings.json";
     
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
     private static readonly Dictionary<string, ISetting> AllSettings = [];
     private static SettingsWindow? _settingsWindow;
     private static bool _loadingSettings;
     
     // Do NOT change the names of the settings fields after they have been in the production without a GOOD reason.
     // The settings file uses them as keys. Changing them will cause losing current saved values.
-    public static ISetting<string> SelectedLlmProvider = new Setting<string>("Ollama")
+    public static readonly ISetting<string> SelectedLlmProvider = new Setting<string>("Ollama")
     {
         AllowedValues = ["Anthropic", "Gemini", "Ollama", "OpenAI"]
     };
     
-    public static ISetting<string> SelectedLlmModel = new Setting<string>(string.Empty)
+    public static readonly ISetting<string> SelectedLlmModel = new Setting<string>(string.Empty)
     {
         AllowedValues = []
     };
     
-    public static ISetting<string> AnthropicApiKey = new Setting<string>(string.Empty);
-    public static ISetting<string> GeminiApiKey = new Setting<string>(string.Empty);
-    public static ISetting<string> OllamaUri = new Setting<string>("http://localhost:11434");
-    public static ISetting<string> OpenAiApiKey = new Setting<string>(string.Empty);
+    public static readonly ISetting<string> AnthropicApiKey = new Setting<string>(string.Empty);
+    public static readonly ISetting<string> GeminiApiKey = new Setting<string>(string.Empty);
+    public static readonly ISetting<string> OllamaUri = new Setting<string>("http://localhost:11434");
+    public static readonly ISetting<string> OpenAiApiKey = new Setting<string>(string.Empty);
 
     static SettingsRegistry()
     {
@@ -107,7 +106,7 @@ public static class SettingsRegistry
     private static void SaveSettings()
     {
         if (_loadingSettings) return; // avoid unnecessary writes
-        File.WriteAllText(SettingsPath, JsonSerializer.Serialize(AllSettings));
+        File.WriteAllText(SettingsPath, JsonSerializer.Serialize(AllSettings, JsonSerializerOptions));
     }
 
     private static void BindEvents()

@@ -16,6 +16,7 @@ public class GraphOverlay : UserControlWrapper<GraphOverlayDataContext>
 
     protected override GraphOverlayDataContext GetDataContext(IServiceProvider serviceProvider)
     {
+        ZIndex = BackgroundOverlay ? int.MinValue : int.MaxValue;
         return new GraphOverlayDataContext(serviceProvider);
     }
 }

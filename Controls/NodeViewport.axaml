@@ -31,14 +31,12 @@
         </StackPanel>
         <paz:ZoomBorder Grid.Row="1" ZoomSpeed="1.1" ClipToBounds="True">
             <Canvas UseLayoutRounding="False" Name="ViewportCanvas">
-                <ctrl:GraphOverlay ZIndex="-1"
-                                   Width="{Binding #ViewportCanvas.Bounds.Width}"
+                <ctrl:GraphOverlay Width="{Binding #ViewportCanvas.Bounds.Width}"
                                    Height="{Binding #ViewportCanvas.Bounds.Height}"
                                    ClipToBounds="False"
                                    Name="BackgroundOverlay"
                                    BackgroundOverlay="True"/>
-                <ctrl:GraphOverlay ZIndex="2147483647"
-                                   Width="{Binding #ViewportCanvas.Bounds.Width}"
+                <ctrl:GraphOverlay Width="{Binding #ViewportCanvas.Bounds.Width}"
                                    Height="{Binding #ViewportCanvas.Bounds.Height}"
                                    ClipToBounds="False"
                                    Name="ForegroundOverlay"

@@ -7,7 +7,6 @@ using Snowman.Controls;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.DataSource.Variables;
 using Snowman.Core.Scripting.UserInterface.Controls;
-using NumberVariableControl = Snowman.Core.Scripting.UserInterface.Controls.NumberVariableControl;
 
 namespace Snowman.Core.Scripting.UserInterface;
 
