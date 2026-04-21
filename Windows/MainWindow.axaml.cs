@@ -82,10 +82,8 @@ public partial class MainWindow : Window
 
         try
         {
-            var pythonDll = SettingsRegistry.PythonDllPath.Value;
-            var pythonDir = Path.GetDirectoryName(pythonDll) ?? "";
-            Runtime.PythonDLL = pythonDll;
-            PythonEngine.PythonHome = pythonDir;
+            Runtime.PythonDLL = SettingsRegistry.PythonDllPath.Value;
+            PythonEngine.PythonHome = SettingsRegistry.PythonHomeDirectory.Value;
             PythonEngine.Initialize();
             PythonEngine.BeginAllowThreads();
         }
