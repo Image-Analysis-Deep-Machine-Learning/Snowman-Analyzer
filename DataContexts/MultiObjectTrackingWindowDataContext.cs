@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Snowman.Core.Services;
+using Snowman.Core.Settings;
 using Snowman.Events;
 using Snowman.Utilities;
 using Ursa.Controls;
@@ -107,10 +108,9 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         // TODO: one possible solution is to create another github frankenstein project which will include all these projects in one single place to use here
         // TODO: then Snowman should provide a framework to select a python env. (with default being the Windows' NuGet package) and install all dependencies
         // TODO: DEBUGGER
-        var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
         var p = new Process();
-        var exe = Path.Combine(pythonDir, "python.exe");
-        p.StartInfo.FileName = exe;
+        var executable = SettingsRegistry.PythonExecutablePath.Value;
+        p.StartInfo.FileName = executable;
         //p.StartInfo.Arguments = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128";
         //p.StartInfo.Arguments = "-m pip install matplotlib PyQt5 pyside6";
         // TODO: GPU ACCELERATION

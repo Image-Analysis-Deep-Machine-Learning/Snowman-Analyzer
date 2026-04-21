@@ -40,6 +40,8 @@ public static class SettingsRegistry
     public static readonly ISetting<string> GeminiApiKey = new Setting<string>(string.Empty);
     public static readonly ISetting<string> OllamaUri = new Setting<string>("http://localhost:11434");
     public static readonly ISetting<string> OpenAiApiKey = new Setting<string>(string.Empty);
+    public static readonly ISetting<string> PythonDllPath = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64", "python312.dll"));
+    public static readonly ISetting<string> PythonExecutablePath = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64", "python.exe"));
 
     static SettingsRegistry()
     {

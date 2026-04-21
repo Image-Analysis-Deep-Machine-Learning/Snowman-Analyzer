@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Python.Runtime;
 using Snowman.Core.Services;
 using Snowman.Core.Services.Impl;
+using Snowman.Core.Settings;
 using Snowman.DataContexts;
 using Snowman.Utilities;
 using Ursa.Controls;
@@ -78,13 +79,20 @@ public partial class MainWindow : Window
     private static void InitializePythonExecutionEnvironment()
     {
         if (Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
-            
-        // TODO: bundle embedded python environment for Linux from https://github.com/lmbelo/python3-embeddable/ and who knows where for macOS
-        var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
-        Runtime.PythonDLL = Path.Combine(pythonDir, "python312.dll"); 
-        PythonEngine.PythonHome = pythonDir;
-        PythonEngine.Initialize();
-        PythonEngine.BeginAllowThreads();
-        
+
+        try
+        {
+            var pythonDll = SettingsRegistry.PythonDllPath.Value;
+            var pythonDir = Path.GetDirectoryName(pythonDll) ?? "";
+            Runtime.PythonDLL = pythonDll;
+            PythonEngine.PythonHome = pythonDir;
+            PythonEngine.Initialize();
+            PythonEngine.BeginAllowThreads();
+        }
+
+        catch (Exception e)
+        {
+            MessageBox.ShowAsync($"Cannot initialize Python engine. Check if the Python Dll Path in Settings is valid.\n{e.Message}\n{e.StackTrace}", "Error", MessageBoxIcon.Error);
+        }
     }
 }

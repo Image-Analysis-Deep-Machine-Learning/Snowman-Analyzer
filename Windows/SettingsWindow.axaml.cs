@@ -26,20 +26,20 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void CreateStringSettingControl(string settingKey, ISetting<string> setting)
+    private void CreateStringSettingControl(string settingKey, ISetting<string> stringSetting)
     {
         var newControl = new StackPanel();
         newControl.Children.Add(new TextBlock { Text = settingKey });
         Control control;
         
-        if (setting.AllowedValues is not null)
+        if (stringSetting.AllowedValues is not null)
         {
-            control = CreateComboBox(setting);
+            control = CreateComboBox(stringSetting);
         }
 
         else
         {
-            control = CreateTextBox(setting);
+            control = CreateTextBox(stringSetting);
         }
 
         control.Margin = new Thickness(5);
@@ -47,7 +47,7 @@ public partial class SettingsWindow : Window
         SettingsPanel.Children.Add(newControl);
     }
     
-    private static TextBox CreateTextBox(ISetting<string> setting)
+    private static TextBox CreateTextBox(ISetting<string> stringSetting)
     {
         var textBox = new TextBox();
     
@@ -55,15 +55,15 @@ public partial class SettingsWindow : Window
             TextBox.TextProperty,
             new Binding
             {
-                Source = setting,
-                Path = nameof(setting.Value),
+                Source = stringSetting,
+                Path = nameof(stringSetting.Value),
                 Mode = BindingMode.TwoWay
             });
     
         return textBox;
     }
     
-    private static ComboBox CreateComboBox(ISetting<string> setting)
+    private static ComboBox CreateComboBox(ISetting<string> stringSetting)
     {
         var comboBox = new ComboBox();
 
@@ -71,16 +71,16 @@ public partial class SettingsWindow : Window
             ItemsControl.ItemsSourceProperty,
             new Binding
             {
-                Source = setting,
-                Path = nameof(setting.AllowedValues)
+                Source = stringSetting,
+                Path = nameof(stringSetting.AllowedValues)
             });
 
         comboBox.Bind(
             SelectingItemsControl.SelectedItemProperty,
             new Binding
             {
-                Source = setting,
-                Path = nameof(setting.Value),
+                Source = stringSetting,
+                Path = nameof(stringSetting.Value),
                 Mode = BindingMode.TwoWay
             });
 
