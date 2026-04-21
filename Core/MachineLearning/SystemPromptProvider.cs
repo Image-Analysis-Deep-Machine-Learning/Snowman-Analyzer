@@ -1,4 +1,5 @@
-﻿using Snowman.Utilities;
+﻿using System.IO;
+using Snowman.Utilities;
 
 namespace Snowman.Core.MachineLearning;
 
@@ -58,7 +59,7 @@ public static class SystemPromptProvider
         "### EXAMPLE definition.xml FILE END ###\n" +
         "First elements - Name, Description, Version and UniqueIdentifier - are mandatory and form the metadata of this Script Node. " +
         "UniqueIdentifier must be unique across all loaded Script Nodes.\n" +
-        $"Currently used UniqueIdentifier values that cannot be used for a new script: {Helpers.GetAllUsedNodeUIDs()}\n" +
+        $"Currently used UniqueIdentifier values that cannot be used for a new script: {Helpers.GetAllUsedNodeUIds()}\n" +
         "Other elements - Outputs, Inputs and Variables are optional. " +
         "Each Output element in Outputs adds an Output port to the Script Node. " +
         "Each Input element in Inputs adds an Input port. " +
@@ -98,5 +99,7 @@ public static class SystemPromptProvider
         "EvaluateHit(Point) exists as well.\n" +
         "Stay professional. " +
         "Exclude any introductory fluff or questions at the end of your response prompting the user what to do next. " +
-        "Start with the definition.xml file, continue with the Python code and explain the reasoning behind included Input and Output ports and Variables. ";
+        "Start with the definition.xml file, continue with the Python code and explain the reasoning behind included Input and Output ports and Variables.\n" +
+        "Below is a digest from Repomix of the most important parts of Snowman's sourcecode to put some context to which methods are available on entities and can be used in Python code:\n"
+        + File.ReadAllText("repomix-digest-Snowman.txt");
 }

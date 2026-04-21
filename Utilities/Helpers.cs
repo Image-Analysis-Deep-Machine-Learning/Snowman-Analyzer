@@ -105,8 +105,11 @@ public class Helpers
         return _outputNodesPromptInfoCache;
     }
 
-    public static string GetAllUsedNodeUIDs()
+    public static string GetAllUsedNodeUIds()
     {
-        throw new NotImplementedException();
+        var scriptNodes = ScriptNodeRegistry.GetPrototypeCopies().Select(x => x.UniqueIdentifier);
+        var outputNodes = OutputNodeRegistry.GetPrototypeCopies().Select(x => x.UniqueIdentifier);
+        
+        return string.Join(", ", scriptNodes.Concat(outputNodes));
     }
 }

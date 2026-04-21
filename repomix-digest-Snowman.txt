@@ -1,0 +1,2530 @@
+================================================================
+Files
+================================================================
+
+================
+File: Core/Commands/RelayCommand.cs
+================
+using System;
+using System.Windows.Input;
+namespace Snowman.Core.Commands;
+public class RelayCommand<T>(Action<T> action) : ICommand
+{
+    public bool CanExecute(object? parameter) => true;
+    public void Execute(object? parameter) => action((T?)parameter ?? throw new InvalidCastException());
+    public event EventHandler? CanExecuteChanged;
+}
+
+================
+File: Core/Drawing/IDrawable.cs
+================
+using Avalonia.Media;
+namespace Snowman.Core.Drawing;
+public interface IDrawable
+{
+    public void Render(DrawingContext context);
+}
+
+================
+File: Core/Drawing/IDrawableSource.cs
+================
+using System.Collections.Generic;
+namespace Snowman.Core.Drawing;
+public interface IDrawableSource
+{
+    public IEnumerable<IDrawable> GetDrawables();
+}
+
+================
+File: Core/Entities/Entity.cs
+================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Avalonia;
+using Avalonia.Media;
+using Snowman.Core.Drawing;
+using Snowman.Events;
+namespace Snowman.Core.Entities;
+public abstract class Entity : IDrawable
+{
+    private static readonly Color Color                = Colors.Red;
+    private static readonly Color ColorWhenHit         = Colors.Lime;
+    private static readonly Color ColorWhenSelected    = Colors.DeepSkyBlue;
+    private static readonly Color ColorWhenHighlighted = Colors.Purple;
+    private static readonly List<(double Opacity, Brush[] Brushes)> Brushes =
+    [
+        (1.0, [
+        new SolidColorBrush(Color),
+        new SolidColorBrush(ColorWhenHit),
+        new SolidColorBrush(ColorWhenSelected),
+        new SolidColorBrush(ColorWhenHighlighted)
+    ])];
+    private static readonly Pen[] Pens =
+    [
+        new (Brushes[0].Brushes[0]),
+        new (Brushes[0].Brushes[1]),
+        new (Brushes[0].Brushes[2]),
+        new (Brushes[0].Brushes[3]),
+    ];
+    protected const int Radius = 5;
+    public event Events.EventHandler<Entity>? EntityChanged;
+    private Point _pos;
+    protected internal bool _selected;
+    protected internal List<Entity> _children = [];
+    public int Id { get; set; }
+    public event EventHandler<Entity, Point>? PositionChanges;
+    public Entity? Parent { get; }
+    public bool IsHit { get; set; }
+    public bool IsHighlighted { get; set; }
+    public bool IsVisible { get; set; }
+    public IReadOnlyList<Entity> Children => _children.AsReadOnly();
+    public virtual bool Selected
+    {
+        get => Parent?.Selected ?? _selected;
+        set
+        {
+            if (Parent is not null)
+            {
+                Parent.Selected = value;
+            }
+            else
+            {
+                _selected = value;
+            }
+        }
+    }
+    public Point Position
+    {
+        get => _pos;
+        set {
+            var oldPos = _pos;
+            _pos = value;
+            PositionChanges?.Invoke(this, oldPos);
+        }
+    }
+    protected Entity(Point position = default, Entity? parent = null)
+    {
+        Parent = parent;
+        Position = position;
+        Id = -1;
+        IsVisible = true;
+    }
+    public void SetPositionWithoutRaisingEvent(Point newPosition)
+    {
+        _pos = newPosition;
+    }
+    public override string ToString()
+    {
+        return $"ID: {Id}";
+    }
+    protected void RaiseEntityChanged()
+    {
+        EntityChanged?.Invoke(this);
+    }
+    protected Pen GetPen()
+    {
+        return Pens[GetColorIndex()];
+    }
+    protected Brush GetBrush(double opacity = 0.2)
+    {
+        if (!Brushes.Any(x => Math.Abs(x.Opacity - opacity) < 0.01))
+        {
+            Brushes.Add((opacity, [
+                new SolidColorBrush(Color, opacity),
+                new SolidColorBrush(ColorWhenHit, opacity),
+                new SolidColorBrush(ColorWhenSelected, opacity),
+                new SolidColorBrush(ColorWhenHighlighted, opacity)
+            ]));
+        }
+        return Brushes.First(x => Math.Abs(x.Opacity - opacity) < 0.01).Brushes[GetColorIndex()];
+    }
+    private int GetColorIndex()
+    {
+        if      (IsHit)         return 1;
+        if      (Selected)      return 2;
+        if      (IsHighlighted) return 3;
+        else                    return 0;
+    }
+    public abstract void Render(DrawingContext drawingContext);
+    public abstract bool EvaluateHit(Point point);
+    public abstract bool EvaluateHit(Rect rect);
+}
+
+================
+File: Core/Entities/PointEntity.cs
+================
+using System.Globalization;
+using Avalonia;
+using Avalonia.Media;
+using Snowman.Utilities;
+namespace Snowman.Core.Entities;
+public class PointEntity : Entity
+{
+    private static readonly Pen Pen = new(Brushes.Black);
+    public PointEntity(Point position, Entity? parent = null) : base(position, parent) { }
+    public override bool EvaluateHit(Point cursorPosition)
+    {
+        return IsVisible && cursorPosition.DistanceTo(Position) <= Radius;
+    }
+    public override bool EvaluateHit(Rect selection)
+    {
+        return selection.Contains(Position);
+    }
+    public override void Render(DrawingContext context)
+    {
+        if (!IsVisible) return;
+        context.DrawEllipse(GetBrush(1.0), Pen, Position, Radius, Radius);
+        if (Parent is null)
+        {
+            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, GetBrush(1)), Position + new Vector(-7, -17));
+        }
+    }
+}
+
+================
+File: Core/Entities/PolygonEntity.cs
+================
+using System;
+using System.Globalization;
+using System.Linq;
+using Avalonia;
+using Avalonia.Media;
+namespace Snowman.Core.Entities;
+public class PolygonEntity : Entity
+{
+    private bool _isClosed;
+    public bool CanBeClosed => Children.Count > 2;
+    public PolygonEntity(Point point1, Point point2) : base(point1)
+    {
+        var firstSegment = new SegmentEntity(point1, point2, this);
+        var controlPoint = firstSegment.Children[0];
+        firstSegment.Children[1].IsVisible = false;
+        controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
+        firstSegment.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(firstSegment.Children[0].Position);
+        _children.Add(firstSegment);
+        PositionChanges += OnPositionChanges;
+    }
+    public void AddPoint(Point point)
+    {
+        _children[^1].Children[1].IsVisible = true;
+        var nextSegment = new SegmentEntity(_children[^1].Children[1] as PointEntity ?? throw new InvalidOperationException(), point, this);
+        nextSegment.Children[1].IsVisible = false;
+        _children.Add(nextSegment);
+        RaiseEntityChanged();
+    }
+    public void ClosePolygon()
+    {
+        _children[^1]._children[1] = _children[0].Children[0];
+        _children[^1].PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(_children[^1].Children[1].Position);
+        _isClosed = true;
+        RaiseEntityChanged();
+    }
+    public override void Render(DrawingContext drawingContext)
+    {
+        if (!IsVisible) return;
+        var points = GetRawPoints();
+        var geometry = new StreamGeometry();
+        using (var geometryContext = geometry.Open())
+        {
+            geometryContext.BeginFigure(points[0], true);
+            for (var i = 1; i < points.Length; i++)
+            {
+                geometryContext.LineTo(points[i], false);
+                drawingContext.DrawLine(GetPen(), points[i - 1], points[i]);
+            }
+            geometryContext.EndFigure(true);
+            if (_isClosed)
+            {
+                drawingContext.DrawLine(GetPen(), points[^1], points[0]);
+            }
+        }
+        drawingContext.DrawGeometry(GetBrush(), null, geometry);
+        foreach (var child in Children)
+        {
+            child.Render(drawingContext);
+        }
+        if (Parent is null)
+        {
+            drawingContext.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, GetBrush(1)), Position + new Vector(-7, -17));
+        }
+    }
+    public override bool EvaluateHit(Point p)
+    {
+        if (!IsVisible) return false;
+        var points = GetRawPoints();
+        var isInside = false;
+        var n = points.Length;
+        for (int i = 0, j = n - 1; i < n; j = i++)
+        {
+            var isBetweenY = (points[i].Y > p.Y) != (points[j].Y > p.Y);
+            if (!isBetweenY) continue;
+            var intersectX = (points[j].X - points[i].X) * (p.Y - points[i].Y) /
+                (points[j].Y - points[i].Y) + points[i].X;
+            if (p.X < intersectX)
+            {
+                isInside = !isInside;
+            }
+        }
+        return isInside;
+    }
+    public override bool EvaluateHit(Rect rect)
+    {
+        var polygon = GetRawPoints();
+        var rectPoints = new[]
+        {
+            rect.TopLeft,
+            new Point(rect.Right, rect.Top),
+            rect.BottomRight,
+            new Point(rect.Left, rect.Bottom)
+        };
+        var axes = GetAxes(polygon).Concat(GetAxes(rectPoints));
+        foreach (var axis in axes)
+        {
+            var (minA, maxA) = Project(polygon, axis);
+            var (minB, maxB) = Project(rectPoints, axis);
+            if (maxA < minB || maxB < minA)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    public Point[] GetRawPoints()
+    {
+        return _children.SelectMany(child => child.Children).Select(x => x.Position).ToArray();
+    }
+    private void OnPositionChanges(Entity sender, Point oldPosition)
+    {
+        var vec = Position - oldPosition;
+        foreach (var childSegment in Children)
+        {
+            childSegment.Children[0].SetPositionWithoutRaisingEvent(childSegment.Children[0].Position + vec);
+        }
+    }
+    private static Point[] GetAxes(Point[] points)
+    {
+        var axes = new Point[points.Length];
+        for (var i = 0; i < points.Length; i++)
+        {
+            var p1 = points[i];
+            var p2 = points[i + 1 == points.Length ? 0 : i + 1];
+            var edge = p2 - p1;
+            axes[i] = new Point(-edge.Y, edge.X);
+            var length = Math.Sqrt(axes[i].X * axes[i].X + axes[i].Y * axes[i].Y);
+            if (length > 0) axes[i] /= length;
+        }
+        return axes;
+    }
+    private static (double min, double max) Project(Point[] points, Point axis)
+    {
+        var min = double.PositiveInfinity;
+        var max = double.NegativeInfinity;
+        foreach (var p in points)
+        {
+            var dot = p.Y * axis.Y + p.X * axis.X;
+            if (dot < min) min = dot;
+            if (dot > max) max = dot;
+        }
+        return (min, max);
+    }
+}
+
+================
+File: Core/Entities/RectangleEntity.cs
+================
+using System;
+using System.Globalization;
+using Avalonia;
+using Avalonia.Media;
+namespace Snowman.Core.Entities;
+public class RectangleEntity : Entity
+{
+    private Rect _rectangle;
+    public double Width => _rectangle.Width;
+    public double Height => _rectangle.Height;
+    public override bool Selected
+    {
+        get => base.Selected;
+        set
+        {
+            base.Selected = value;
+            foreach (var child in Children)
+            {
+                child._selected = value;
+            }
+        }
+    }
+    public RectangleEntity(Point position1, Point position2)
+    {
+        var minX = Math.Min(position1.X, position2.X);
+        var maxX = Math.Max(position1.X, position2.X);
+        var minY = Math.Min(position1.Y, position2.Y);
+        var maxY = Math.Max(position1.Y, position2.Y);
+        Position = new Point(minX, minY);
+        _rectangle = new Rect(Position, new Point(maxX, maxY));
+        _children.AddRange([
+            new PointEntity(Position, this),
+            new PointEntity(Position.WithX(Position.X + _rectangle.Width), this),
+            new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this),
+            new PointEntity(Position.WithY(Position.Y + _rectangle.Height), this)
+        ]);
+        for (var i = 0; i < 4; i++)
+        {
+            var index = i;
+            Children[i].PositionChanges += (sender, _) => UpdatePointsLocation(index);
+        }
+        PositionChanges += OnPositionChanges;
+    }
+    public override bool EvaluateHit(Point cursorPosition)
+    {
+        return IsVisible && _rectangle.Contains(cursorPosition);
+    }
+    public override bool EvaluateHit(Rect selection)
+    {
+        return _rectangle.Intersects(selection);
+    }
+    public override void Render(DrawingContext context)
+    {
+        if (!IsVisible) return;
+        context.FillRectangle(GetBrush(), _rectangle);
+        context.DrawRectangle(GetPen(), _rectangle);
+        foreach (var child in Children)
+        {
+            child.Render(context);
+        }
+        if (Parent is null)
+        {
+            context.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, GetBrush(1)), Position + new Vector(-7, -17));
+        }
+    }
+    private void OnPositionChanges(object? sender, Point oldPosition)
+    {
+        var vec = Position - oldPosition;
+        _rectangle = _rectangle.Translate(vec);
+        foreach (var child in Children)
+        {
+            child.SetPositionWithoutRaisingEvent(child.Position + vec);
+        }
+    }
+    private void UpdatePointsLocation(int childIndex)
+    {
+        var otherIndex = (childIndex + 1) % 2 + (childIndex < 2 ? 0 : 2);
+        Children[otherIndex].SetPositionWithoutRaisingEvent(Children[otherIndex].Position.WithY(Children[childIndex].Position.Y));
+        otherIndex = (childIndex + 1) % 2 + (childIndex < 2 ? 2 : 0);
+        Children[otherIndex].SetPositionWithoutRaisingEvent(Children[otherIndex].Position.WithX(Children[childIndex].Position.X));
+        var otherPointIndex = (childIndex + 2) % 4;
+        var minX = Math.Min(Children[otherPointIndex].Position.X, Children[childIndex].Position.X);
+        var maxX = Math.Max(Children[otherPointIndex].Position.X, Children[childIndex].Position.X);
+        var minY = Math.Min(Children[otherPointIndex].Position.Y, Children[childIndex].Position.Y);
+        var maxY = Math.Max(Children[otherPointIndex].Position.Y, Children[childIndex].Position.Y);
+        SetPositionWithoutRaisingEvent(new Point(minX, minY));
+        _rectangle = new Rect(Position, new Point(maxX, maxY));
+    }
+}
+
+================
+File: Core/Entities/SegmentEntity.cs
+================
+using System;
+using System.Globalization;
+using Avalonia;
+using Avalonia.Media;
+using Snowman.Utilities;
+namespace Snowman.Core.Entities;
+public class SegmentEntity : Entity
+{
+    public SegmentEntity(Point point1, Point point2, Entity? parent = null) : base(point1, parent)
+    {
+        var controlPoint = new PointEntity(point1, this);
+        controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
+        _children.Add(controlPoint);
+        _children.Add(new PointEntity(point2, this));
+        PositionChanges += OnPositionChanges;
+    }
+    public SegmentEntity(PointEntity pointEntity, Point point, Entity? parent = null) : base(pointEntity.Position,
+        parent)
+    {
+        pointEntity.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(pointEntity.Position);
+        _children.Add(pointEntity);
+        _children.Add(new PointEntity(point, this));
+        PositionChanges += OnPositionChanges;
+    }
+    public override void Render(DrawingContext drawingContext)
+    {
+        if (!IsVisible) return;
+        drawingContext.DrawLine(GetPen(), _children[0].Position, _children[1].Position);
+        foreach (var child in Children)
+        {
+            child.Render(drawingContext);
+        }
+        if (Parent is null)
+        {
+            drawingContext.DrawText(new FormattedText(ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, 10, GetBrush(1)), Position + new Vector(-7, -17));
+        }
+    }
+    public override bool EvaluateHit(Point cursorPosition)
+    {
+        var pointerDist = cursorPosition.DistanceTo(_children[0].Position) + cursorPosition.DistanceTo(_children[1].Position);
+        var pointDist = _children[0].Position.DistanceTo(_children[1].Position);
+        return IsVisible && 1 > pointerDist - pointDist;
+    }
+    public override bool EvaluateHit(Rect rect)
+    {
+        var p1 = _children[0].Position;
+        var p2 = _children[1].Position;
+        if (rect.Contains(p1) || rect.Contains(p2)) return true;
+        var topLeft = rect.TopLeft;
+        var topRight = new Point(rect.Right, rect.Top);
+        var bottomLeft = new Point(rect.Left, rect.Bottom);
+        var bottomRight = rect.BottomRight;
+        return LineSegmentsIntersect(p1, p2, topLeft, topRight) ||
+               LineSegmentsIntersect(p1, p2, topRight, bottomRight) ||
+               LineSegmentsIntersect(p1, p2, bottomRight, bottomLeft) ||
+               LineSegmentsIntersect(p1, p2, bottomLeft, topLeft);
+    }
+    private void OnPositionChanges(Entity sender, Point oldPosition)
+    {
+        var vec = Position - oldPosition;
+        foreach (var child in Children)
+        {
+            child.SetPositionWithoutRaisingEvent(child.Position + vec);
+        }
+    }
+    private static bool LineSegmentsIntersect(Point a, Point b, Point c, Point d)
+    {
+        var denominator = (b.X - a.X) * (d.Y - c.Y) - (b.Y - a.Y) * (d.X - c.X);
+        if (Math.Abs(denominator) < 1e-10) return false;
+        var numerator1 = (a.Y - c.Y) * (d.X - c.X) - (a.X - c.X) * (d.Y - c.Y);
+        var numerator2 = (a.Y - c.Y) * (b.X - a.X) - (a.X - c.X) * (b.Y - a.Y);
+        var t = numerator1 / denominator;
+        var u = numerator2 / denominator;
+        return t is >= 0 and <= 1 && u is >= 0 and <= 1;
+    }
+}
+
+================
+File: Core/Registries/DataSourceControlRegistry.cs
+================
+using System;
+using System.Collections.Generic;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Snowman.Controls;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.DataSource.Variables;
+using Snowman.Core.Scripting.UserInterface.Controls;
+namespace Snowman.Core.Registries;
+public static class DataSourceControlRegistry
+{
+    static DataSourceControlRegistry()
+    {
+        RegisterPortFactories();
+        RegisterVariableFactories();
+    }
+    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
+    public static void RegisterDataSourceControlFactory<T>(Func<T, Control> factory) where T : IDataSource
+    {
+        DataSourceFactoryRegistry[typeof(T)] = dataSource => factory((T)dataSource);
+    }
+    public static Control CreateControl(IDataSource dataSource)
+    {
+        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory) ? factory(dataSource) : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
+    }
+    private static void RegisterPortFactories()
+    {
+        RegisterDataSourceControlFactory<Input>(input =>
+        {
+            var grid = new Grid
+            {
+                RowDefinitions = new RowDefinitions("*"),
+                Margin = new Thickness(-10, 0)
+            };
+            var label = new TextBlock
+            {
+                Margin = new Thickness(20, 5),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Text = input.FriendlyName
+            };
+            var nodePort = new NodePort
+            {
+                Port = input,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(-4)
+            };
+            grid.Children.Add(label);
+            grid.Children.Add(nodePort);
+            return grid;
+        });
+        RegisterDataSourceControlFactory<Output>(output =>
+        {
+            var grid = new Grid
+            {
+                RowDefinitions = new RowDefinitions("*"),
+                Margin = new Thickness(-10, 0)
+            };
+            var label = new Label
+            {
+                Margin = new Thickness(20, 5),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Content = output.FriendlyName
+            };
+            var nodePort = new NodePort
+            {
+                Port = output,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(-4)
+            };
+            grid.Children.Add(label);
+            grid.Children.Add(nodePort);
+            return grid;
+        });
+    }
+    private static void RegisterVariableFactories()
+    {
+        RegisterDataSourceControlFactory<NumberVariable>(numberVariable => new NumberVariableControl(numberVariable));
+        RegisterDataSourceControlFactory<EntitySelector>(entitySelector => new EntitySelectorControl(entitySelector));
+        RegisterDataSourceControlFactory<DatasetSelector>(datasetSelector => new DatasetSelectorControl(datasetSelector));
+    }
+}
+
+================
+File: Core/Registries/OutputNodeRegistry.cs
+================
+using System.Collections.Generic;
+using System.Linq;
+using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Scripting.Nodes.OutputNodes;
+using Snowman.Core.Services;
+using Snowman.Designer;
+namespace Snowman.Core.Registries;
+public static class OutputNodeRegistry
+{
+    private static readonly Dictionary<string, OutputNode> OutputNodes = [];
+    static OutputNodeRegistry()
+    {
+        RegisterOutputNode<LoggerOutputNode>();
+        RegisterOutputNode<TimelineOutputNode>();
+    }
+    public static IEnumerable<OutputNode> GetPrototypeCopies()
+    {
+        return OutputNodes.Values.Select(x => x.Copy(DummyServiceProvider.Instance)).Cast<OutputNode>();
+    }
+    public static Node GetCopy(string uniqueIdentifier, IServiceProvider serviceProvider)
+    {
+        return OutputNodes[uniqueIdentifier].Copy(serviceProvider);
+    }
+    private static void RegisterOutputNode<T>() where T : OutputNode, new()
+    {
+        var prototype = new T();
+        OutputNodes.Add(prototype.UniqueIdentifier, prototype);
+    }
+}
+
+================
+File: Core/Registries/ScriptNodeRegistry.cs
+================
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Snowman.Core.Scripting;
+using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Services;
+using Snowman.Designer;
+namespace Snowman.Core.Registries;
+public static class ScriptNodeRegistry
+{
+    private const string ScriptFileExtension = ".script";
+    private const string ScriptsFolder = "Scripts";
+    private static readonly Dictionary<string, ScriptNode> ScriptNodePrototypes = [];
+    static ScriptNodeRegistry()
+    {
+        LoadScripts();
+    }
+    public static IEnumerable<ScriptNode> GetPrototypeCopies()
+    {
+        return ScriptNodePrototypes.Values.Select(x => x.Copy(DummyServiceProvider.Instance)).Cast<ScriptNode>();
+    }
+    public static Node GetCopy(string uniqueId, IServiceProvider serviceProvider)
+    {
+        return ScriptNodePrototypes[uniqueId].Copy(serviceProvider);
+    }
+    private static void LoadScripts()
+    {
+        var dirInfo = new DirectoryInfo(ScriptsFolder);
+        foreach (var fileInfo in dirInfo.GetFiles())
+        {
+            if (fileInfo.Extension != ScriptFileExtension) continue;
+            var script = Script.Load(fileInfo.FullName);
+            var scriptNode = ScriptParser.Parse(script, DummyServiceProvider.Instance);
+            ScriptNodePrototypes.Add(scriptNode.UniqueIdentifier, scriptNode);
+        }
+    }
+}
+
+================
+File: Core/Registries/ToolRegistry.cs
+================
+using System.Collections.Generic;
+using System.Linq;
+using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.Core.Tools;
+namespace Snowman.Core.Registries;
+public static class ToolRegistry
+{
+    private static readonly List<Tool> Tools = [];
+    static ToolRegistry()
+    {
+        RegisterTool(new ViewportMoveTool());
+        RegisterTool(new EntityEditTool<Entity>());
+        RegisterTool(new PointTool());
+        RegisterTool(new SegmentTool());
+        RegisterTool(new RectTool());
+        RegisterTool(new PolygonTool());
+    }
+    public static void RegisterTool(Tool tool)
+    {
+        Tools.Add(tool);
+    }
+    public static IEnumerable<Tool> GetTools(IServiceProvider serviceProvider)
+    {
+        return Tools.Select(x => x.Clone(serviceProvider));
+    }
+}
+
+================
+File: Core/Registries/VariableRegistry.cs
+================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.DataSource.Variables;
+using Snowman.Designer;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Registries;
+public static class VariableRegistry
+{
+    private static readonly Dictionary<Type, Variable> VariablePrototypes = [];
+    static VariableRegistry()
+    {
+        RegisterVariablePrototype<NumberVariable>();
+        RegisterVariablePrototype<EntitySelector>();
+        RegisterVariablePrototype<DatasetSelector>();
+    }
+    public static IEnumerable<Variable> GetPrototypeCopies()
+    {
+        return VariablePrototypes.Values.Select(x => x.Copy(DummyServiceProvider.Instance));
+    }
+    public static Variable GetCopy(Type type, IServiceProvider serviceProvider)
+    {
+        return VariablePrototypes[type].Copy(serviceProvider);
+    }
+    private static void RegisterVariablePrototype<T>() where T : Variable, new()
+    {
+        VariablePrototypes[typeof(T)] = new T();
+    }
+}
+
+================
+File: Core/Scripting/DataSource/Variables/DatasetSelector.cs
+================
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml;
+using Avalonia.Platform.Storage;
+using Snowman.Core.Services;
+using Snowman.Data;
+using Snowman.Utilities;
+using Ursa.Controls;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource.Variables;
+public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
+{
+    private readonly IStorageProviderService _storageProviderService;
+    private readonly IProjectService _projectService;
+    public bool IsCustomPathSelected
+    {
+        get;
+        set
+        {
+            field = value;
+            if (!value)
+            {
+                CustomDatasetPath = string.Empty;
+                TypedValue = _projectService.GetDatasetData();
+            }
+            OnPropertyChanged();
+        }
+    }
+    public string CustomDatasetPath
+    {
+        get;
+        set
+        {
+            field = value;
+            if (!string.IsNullOrWhiteSpace(field))
+            {
+                LoadSelectedDataset();
+            }
+            OnPropertyChanged();
+        }
+    }
+    private DatasetSelector(string name, Group group, string friendlyName, IServiceProvider serviceProvider) : base(name, group, friendlyName)
+    {
+        _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _projectService = serviceProvider.GetService<IProjectService>();
+        IsCustomPathSelected = false;
+        CustomDatasetPath = string.Empty;
+    }
+    public async Task PickCustomDataset()
+    {
+        var filePickerResult = await _storageProviderService.GetStorageProvider().OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            AllowMultiple = false,
+            FileTypeFilter = [AdditionalFilePickerFileTypes.Xml],
+            Title = "Open Dataset XML File"
+        });
+        if (!filePickerResult.Any()) return;
+        try
+        {
+            CustomDatasetPath = filePickerResult[0].Path.LocalPath;
+        }
+        catch (Exception e)
+        {
+            await MessageBox.ShowAsync($"Unable to load selected file.\nMessage:\n{e.Message}",  "Error", MessageBoxIcon.Error);
+        }
+    }
+    private void LoadSelectedDataset()
+    {
+        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
+        using var reader = new StreamReader(fileStream);
+        var fileContent = reader.ReadToEnd();
+        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
+    }
+    public override Variable Copy(IServiceProvider serviceProvider)
+    {
+        return new DatasetSelector(Name, Group, FriendlyName, serviceProvider)
+        {
+            IsCustomPathSelected = IsCustomPathSelected,
+            CustomDatasetPath = CustomDatasetPath
+        };
+    }
+    public override void SetPropertiesFromXml(XmlElement xml)
+    {
+    }
+    public override string GetSystemPromptInfo()
+    {
+        return "Allows the user to select a dataset. UI has two checkbox options: 'Current' and 'Custom Path'. " +
+               "'Current' will use currently loaded dataset. 'Custom Path' will allow the user to select a valid dataset file. " +
+               "This variable has no properties in the XML structure.";
+    }
+}
+
+================
+File: Core/Scripting/DataSource/Variables/EntitySelector.cs
+================
+using System;
+using System.Collections.ObjectModel;
+using System.Xml;
+using Snowman.Core.Entities;
+using Snowman.Core.Services;
+using Snowman.Events.Suppliers;
+using Snowman.Utilities;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource.Variables;
+public partial class EntitySelector : GenericVariableWrapper<Entity>
+{
+    public ObservableCollection<Entity> AvailableEntities { get; } = [];
+    private Type _entitySubtype;
+    private EntitySelector(string name, Group group, string friendlyName) : base(name, group, friendlyName)
+    {
+        _entitySubtype = typeof(Entity);
+    }
+    public override Variable Copy(IServiceProvider serviceProvider)
+    {
+        var copy = new EntitySelector(Name, Group, FriendlyName)
+        {
+            TypedValue = TypedValue,
+            _entitySubtype = _entitySubtype
+        };
+        foreach (var entity in serviceProvider.GetService<IEntityManager>().GetEntities())
+        {
+            if (entity.GetType().IsAssignableTo(_entitySubtype))
+            {
+                copy.AvailableEntities.Add(entity);
+            }
+        }
+        var eventManager = serviceProvider.GetService<IEventManager>();
+        eventManager.RegisterActionOnSupplier<IEntityEventSupplier>(x => x.EntityAdded += entity =>
+        {
+            if (entity.GetType().IsAssignableTo(_entitySubtype))
+            {
+                copy.AvailableEntities.Add(entity);
+            }
+        });
+        eventManager.RegisterActionOnSupplier<IEntityEventSupplier>(x => x.EntityRemoved += entity => copy.AvailableEntities.Remove(entity));
+        return copy;
+    }
+    public override void SetPropertiesFromXml(XmlElement xml)
+    {
+        var type = xml["EntityType"]?.InnerText ?? throw new ArgumentException($"No entity type specified for EntitySelector '{FriendlyName}'.");
+        _entitySubtype = Type.GetType(type) ?? throw new Exception($"Cannot construct type '{type}'");
+    }
+    public override string GetSystemPromptInfo()
+    {
+        return "Allows the user to select an entity from the viewport. " +
+               "This variable has one property in the XML structure called EntityType with its inner text containing the type of entity to limit the selection of this variable to. " +
+               "For instance, if the type is set to Snowman.Core.Entities.Entity all entities can be selected in the dropdown menu of this variable. " +
+               "However if the type is set to e.g. Snowman.Core.Entities.PolygonEntity only polygons can be selected. " +
+               $"Valid EntityType values are: {Helpers.GetValidEntityTypes()}\n" +
+               "Example Properties XML element of this variable: " +
+               "<Properties>\n" +
+               "    <EntityType>Snowman.Core.Entities.Entity</EntityType>\n" +
+               "</Properties>";
+    }
+}
+
+================
+File: Core/Scripting/DataSource/Variables/NumberVariable.cs
+================
+using System.Xml;
+using Snowman.Core.Services;
+namespace Snowman.Core.Scripting.DataSource.Variables;
+public partial class NumberVariable : GenericVariableWrapper<decimal>
+{
+    private NumberVariable(string name, Group group, string friendlyName): base(name, group, friendlyName)
+    {
+        TypedValue = 0;
+    }
+    public override Variable Copy(IServiceProvider serviceProvider)
+    {
+        return new NumberVariable(Name, Group, FriendlyName) { TypedValue = TypedValue };
+    }
+    public override void SetPropertiesFromXml(XmlElement xml)
+    {
+    }
+    public override string GetSystemPromptInfo()
+    {
+        return "Allows the user to type any real number. This variable has no properties in the XML structure.";
+    }
+}
+
+================
+File: Core/Scripting/DataSource/GenericVariableWrapper.cs
+================
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+namespace Snowman.Core.Scripting.DataSource;
+public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChanged
+{
+    public T? TypedValue
+    {
+        get => (T?)Value;
+        set
+        {
+            Value = value;
+            OnPropertyChanged();
+        }
+    }
+    protected GenericVariableWrapper(string name, Group group, string friendlyName) : base(name, typeof(T), group, friendlyName)
+    {
+    }
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+    protected bool SetField<TParam>(ref TParam field, TParam value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<TParam>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+}
+
+================
+File: Core/Scripting/DataSource/IDataSource.cs
+================
+using System;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource;
+public interface IDataSource
+{
+    public string Name { get; set; }
+    public Type Type { get; set; }
+    public Group Group { get; set; }
+    public string FriendlyName { get; set; }
+    public IDataSource Copy(IServiceProvider serviceProvider);
+}
+
+================
+File: Core/Scripting/DataSource/Input.cs
+================
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Snowman.Utilities;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource;
+public class Input(string name, Type type, Group group, string friendlyName) : Port(name, type, group, friendlyName)
+{
+    public List<Output> ConnectedOutputs { get; } = [];
+    public bool MultipleConnectionsAllowed { get; } = type.IsGenericType &&
+                                                      type.GetGenericTypeDefinition() == typeof(IEnumerable<>) &&
+                                                      type != typeof(string);
+    public override void AskForValue()
+    {
+        foreach (var connectedOutput in ConnectedOutputs)
+        {
+            connectedOutput.AskForValue();
+            if (MultipleConnectionsAllowed)
+            {
+                IList list;
+                if (Value is null)
+                {
+                    var itemType = Type;
+                    if (itemType.IsGenericType && itemType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    {
+                        itemType = itemType.GetGenericArguments()[0];
+                    }
+                    list = Helpers.CreateList(itemType);
+                    Value = list;
+                }
+                else
+                {
+                    list = Value as IList ?? throw new InvalidCastException($"Cannot cast {Value?.GetType()} to IList");
+                }
+                list!.Add(connectedOutput.Value);
+            }
+            else
+            {
+                Value = connectedOutput.Value;
+            }
+        }
+        HasValue = true;
+    }
+    public override void ResetPort(bool forced)
+    {
+        base.ResetPort(forced);
+        foreach (var connectedOutput in ConnectedOutputs)
+        {
+            connectedOutput.ResetPort(forced);
+        }
+    }
+    public override IDataSource Copy(IServiceProvider serviceProvider)
+    {
+        return new Input(Name, Type, Group, FriendlyName);
+    }
+}
+
+================
+File: Core/Scripting/DataSource/Output.cs
+================
+using System;
+using System.Collections.Generic;
+using Snowman.Events;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource;
+public class Output(string name, Type type, Group group, string friendlyName)
+    : Port(name, type, group, friendlyName)
+{
+    public event SignalEventHandler? ValueRequested;
+    public event Events.EventHandler<bool>? ResetRequested;
+    public List<Input> ConnectedInputs { get; } = [];
+    public override void AskForValue()
+    {
+        ValueRequested?.Invoke();
+        HasValue = true;
+    }
+    public override void ResetPort(bool forced)
+    {
+        base.ResetPort(forced);
+        ResetRequested?.Invoke(forced);
+    }
+    public override IDataSource Copy(IServiceProvider serviceProvider)
+    {
+        return new Output(Name, Type, Group, FriendlyName);
+    }
+}
+
+================
+File: Core/Scripting/DataSource/Port.cs
+================
+using System;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource;
+public abstract class Port : IDataSource
+{
+    public string Name { get; set; }
+    public Type Type { get; set; }
+    public Group Group { get; set; }
+    public string FriendlyName { get; set; }
+    public bool HasValue { get; protected set; }
+    public object? Value { get; set; }
+    protected Port(string name, Type type, Group group, string friendlyName)
+    {
+        Name = name;
+        Type = type;
+        Group = group;
+        FriendlyName = friendlyName;
+    }
+    public abstract void AskForValue();
+    public virtual void ResetPort(bool forced)
+    {
+        HasValue = false;
+        Value = null;
+    }
+    public abstract IDataSource Copy(IServiceProvider serviceProvider);
+}
+
+================
+File: Core/Scripting/DataSource/Variable.cs
+================
+using System;
+using System.Xml;
+using Snowman.Events;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.DataSource;
+public abstract class Variable : IDataSource
+{
+    public string Name { get; set; }
+    public Type Type
+    {
+        get;
+        set
+        {
+            field = value;
+            TypeChanged?.Invoke();
+        }
+    }
+    public Group Group { get; set; }
+    public string FriendlyName { get; set; }
+    public object? Value
+    {
+        get;
+        set {
+            field = value;
+            ValueChanged?.Invoke();
+        }
+    }
+    public event SignalEventHandler? TypeChanged;
+    public event SignalEventHandler? ValueChanged;
+    protected Variable(string name, Type type, Group group, string friendlyName)
+    {
+        Type = type;
+        Name = name;
+        Group = group;
+        FriendlyName = friendlyName;
+    }
+    IDataSource IDataSource.Copy(IServiceProvider serviceProvider)
+    {
+        return Copy(serviceProvider);
+    }
+    public abstract Variable Copy(IServiceProvider serviceProvider);
+    public abstract void SetPropertiesFromXml(XmlElement xml);
+    public abstract string GetSystemPromptInfo();
+}
+
+================
+File: Core/Scripting/Nodes/OutputNodes/LoggerOutputNode.cs
+================
+using System.Collections.Generic;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
+namespace Snowman.Core.Scripting.Nodes.OutputNodes;
+public class LoggerOutputNode : OutputNode
+{
+    private readonly ILoggerService _loggerService = null!;
+    private readonly Input _messageInput;
+    private LoggerOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _loggerService = serviceProvider.GetService<ILoggerService>();
+    }
+    public LoggerOutputNode()
+    {
+        _messageInput = CreateInput();
+        Name = "Logger Output";
+        UniqueIdentifier = nameof(LoggerOutputNode);
+    }
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        var copy = new LoggerOutputNode(serviceProvider);
+        return copy;
+    }
+    public override void ExecuteOutput()
+    {
+        base.ExecuteOutput();
+        var messages = _messageInput.Value as IEnumerable<object?>;
+        foreach (var message in messages ?? [])
+        {
+            _loggerService.LogMessage(message?.ToString());
+        }
+        IsReady = true;
+    }
+    public override string GetSystemPromptInfo()
+    {
+        return "Prints string representation of incoming data into a Console Output textbox in Main Window. " +
+               $"The Type of its single Input port is {typeof(IEnumerable<object?>)}. " +
+               "It accepts multiple connections from Output ports of any Type.";
+    }
+    private Input CreateInput()
+    {
+        var stringInput = new Input("logger_input", typeof(IEnumerable<object?>), Group.Default, "Message");
+        Inputs.Add(stringInput);
+        return stringInput;
+    }
+}
+
+================
+File: Core/Scripting/Nodes/OutputNodes/TimelineOutputNode.cs
+================
+using System.Collections.Generic;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
+using Snowman.Data;
+namespace Snowman.Core.Scripting.Nodes.OutputNodes;
+public class TimelineOutputNode : OutputNode
+{
+    private readonly ITimelineService _timelineService = null!;
+    private readonly Input _input;
+    private TimelineOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _timelineService = serviceProvider.GetService<ITimelineService>();
+    }
+    public TimelineOutputNode()
+    {
+        _input = CreateInput();
+        Name = "Timeline Layer Output Node";
+    }
+    public override void ExecuteOutput()
+    {
+        base.ExecuteOutput();
+        if (_input.Value is not IEnumerable<Layer> layer) return;
+        var output = new TimelineOutput();
+        foreach (var layerItem in layer)
+        {
+            output.Layers.Add(layerItem);
+        }
+        output.InitFilters();
+        _timelineService.AddOutput(output);
+    }
+    public override string GetSystemPromptInfo()
+    {
+        return "Sends Layers from Input to Event Timeline control to show them on a graph (chart). " +
+               $"The Type of its single Input port is {typeof(IEnumerable<Layer>)}. " +
+               "It accepts multiple connections from Output ports.";
+    }
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        var copy = new TimelineOutputNode(serviceProvider);
+        return copy;
+    }
+    private Input CreateInput()
+    {
+        var input = new Input("timeline_layer", typeof(IEnumerable<Layer>), Group.Default, "Timeline Layer");
+        Inputs.Add(input);
+        return input;
+    }
+}
+
+================
+File: Core/Scripting/Nodes/Node.cs
+================
+using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Services;
+using Snowman.Data;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.Nodes;
+public abstract class Node
+{
+    private bool _executed;
+    public double X { get; set; }
+    public double Y { get; set; }
+    public string UniqueIdentifier { get; set; }
+    public int Id { get; set; }
+    public Group Group { get; protected set; }
+    public ObservableCollection<Output> Outputs { get; }
+    public ObservableCollection<Input> Inputs { get; }
+    public ObservableCollection<Variable> Variables { get; }
+    public bool IsReady { get; set; }
+    public string Name { get; set; }
+    protected Node()
+    {
+        Group = Group.Default;
+        Outputs = [];
+        Outputs.CollectionChanged += OnOutputsChanged;
+        Inputs = [];
+        Variables = [];
+        Name = string.Empty;
+        UniqueIdentifier = string.Empty;
+        Id = -1;
+    }
+    public void Reset(bool forced)
+    {
+        if (!IsReady && !forced) return;
+        foreach (var input in Inputs)
+        {
+            input.ResetPort(forced);
+        }
+        IsReady = false;
+    }
+    public NodeData Serialize(IServiceProvider serviceProvider)
+    {
+        var nodeService = serviceProvider.GetService<INodeService>();
+        var data = new NodeData();
+        data.Id = Id;
+        data.UniqueIdentifier = UniqueIdentifier;
+        data.Position = new PointData { X = X, Y = Y };
+        foreach (var variable in Variables)
+        {
+            data.Variables.Add(NodeGraphDataConverter.Serialize(variable));
+        }
+        foreach (var input in Inputs)
+        {
+            var inputData = new InputData { Name = input.Name };
+            foreach (var connectedOutput in input.ConnectedOutputs)
+            {
+                inputData.ConnectedOutputs.Add(new ConnectedOutput { OutputName = connectedOutput.Name, NodeId = nodeService.GetNodeIdByPort(connectedOutput) });
+            }
+            data.Inputs.Add(inputData);
+        }
+        FillNodeType(data);
+        return data;
+    }
+    public void Deserialize(NodeData nodeData, IServiceProvider serviceProvider)
+    {
+        Id = nodeData.Id;
+        UniqueIdentifier = nodeData.UniqueIdentifier;
+        X = nodeData.Position.X;
+        Y = nodeData.Position.Y;
+        foreach (var variableData in nodeData.Variables)
+        {
+            var variable = Variables.First(v => v.Name == variableData.Name);
+            NodeGraphDataConverter.Deserialize(variable, variableData, serviceProvider);
+        }
+    }
+    public override string ToString()
+    {
+        return Name;
+    }
+    public abstract Node Copy(IServiceProvider serviceProvider);
+    protected abstract void FillNodeType(NodeData data);
+    protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
+    {
+        copy.Name = Name;
+        copy.Group = Group;
+        copy.UniqueIdentifier = UniqueIdentifier;
+        foreach (var input in Inputs)
+        {
+            copy.Inputs.Add((input.Copy(serviceProvider) as Input)!);
+        }
+        foreach (var output in Outputs)
+        {
+            copy.Outputs.Add((output.Copy(serviceProvider) as Output)!);
+        }
+        foreach (var variable in Variables)
+        {
+            copy.Variables.Add(variable.Copy(serviceProvider));
+        }
+    }
+    protected virtual void Execute()
+    {
+        if (_executed) throw new InvalidOperationException($"Attempted to execute node '{this}' more than once, this indicates a cycle.");
+        _executed = true;
+        PrepareInputs();
+        _executed = false;
+    }
+    private void PrepareInputs()
+    {
+        foreach (var input in Inputs.Where(input => !input.HasValue))
+        {
+            input.AskForValue();
+        }
+    }
+    private void OnOutputsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        switch (e)
+        {
+            case { Action: NotifyCollectionChangedAction.Add, NewItems: not null }:
+            {
+                foreach (var newItem in e.NewItems)
+                {
+                    var output = newItem as Output;
+                    output?.ValueRequested += Execute;
+                    output?.ResetRequested += Reset;
+                }
+                break;
+            }
+            case { Action: NotifyCollectionChangedAction.Remove, OldItems: not null }:
+            {
+                foreach (var oldItem in e.OldItems)
+                {
+                    var output = oldItem as Output;
+                    output?.ValueRequested -= Execute;
+                    output?.ResetRequested -= Reset;
+                }
+                break;
+            }
+        }
+    }
+}
+
+================
+File: Core/Scripting/Nodes/OutputNode.cs
+================
+using Snowman.Data;
+namespace Snowman.Core.Scripting.Nodes;
+public abstract class OutputNode : Node
+{
+    public virtual void ExecuteOutput()
+    {
+        Execute();
+    }
+    protected override void FillNodeType(NodeData data)
+    {
+        data.Type = nameof(OutputNode);
+    }
+    public abstract string GetSystemPromptInfo();
+}
+
+================
+File: Core/Scripting/Nodes/ScriptNode.cs
+================
+using Python.Runtime;
+using Snowman.Data;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting.Nodes;
+public class ScriptNode : Node
+{
+    public string PythonScriptContent { get; set; } = null!;
+    public override Node Copy(IServiceProvider serviceProvider)
+    {
+        var copy =  new ScriptNode();
+        CopyBasicInfo(copy, serviceProvider);
+        copy.PythonScriptContent = PythonScriptContent;
+        return copy;
+    }
+    protected override void FillNodeType(NodeData data)
+    {
+        data.Type = nameof(ScriptNode);
+    }
+    protected override void Execute()
+    {
+        base.Execute();
+        RunPythonScript();
+        IsReady = true;
+    }
+    private void RunPythonScript()
+    {
+        using (Py.GIL())
+        {
+            using (var scope = Py.CreateScope())
+            {
+                foreach (var input in Inputs)
+                {
+                    scope.Set(input.Name, input.Value);
+                }
+                foreach (var variable in Variables)
+                {
+                    scope.Set(variable.Name, variable.Value);
+                }
+                scope.Exec(PythonScriptContent);
+                foreach (var output in Outputs)
+                {
+                    output.Value = scope.Get(output.Name).AsManagedObject(output.Type);
+                }
+            }
+        }
+    }
+}
+
+================
+File: Core/Scripting/UserInterface/NodeControlBuilder.cs
+================
+using System.Collections.Generic;
+using Avalonia;
+using Avalonia.Controls;
+using Snowman.Controls;
+using Snowman.Core.Registries;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Services;
+namespace Snowman.Core.Scripting.UserInterface;
+public class NodeControlBuilder
+{
+    private readonly NodeControl _result;
+    private readonly Stack<Panel> _controlStack;
+    private readonly INodeService _nodeService;
+    public NodeControlBuilder(Node node, IServiceProvider serviceProvider)
+    {
+        _result = new NodeControl(node, serviceProvider);
+        _controlStack = new Stack<Panel>([_result.MainGroup]);
+        _nodeService = serviceProvider.GetService<INodeService>();
+    }
+    public void StartGroup(Group group)
+    {
+        var expander = new Expander
+        {
+            Classes = { "InnerExpander" },
+            Margin = new Thickness(-16, 0),
+            Header = group.Name,
+            IsExpanded = true
+        };
+        var stackPanel = new StackPanel();
+        expander.Content = stackPanel;
+        _controlStack.Peek().Children.Add(expander);
+        _controlStack.Push(stackPanel);
+    }
+    public void EndGroup()
+    {
+        _controlStack.Pop();
+    }
+    public void AddInput(Input input)
+    {
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(input));
+    }
+    public void AddOutput(Output output)
+    {
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(output));
+    }
+    public void AddVariable(Variable variable)
+    {
+        _controlStack.Peek().Children.Add(DataSourceControlRegistry.CreateControl(variable));
+    }
+    public NodeControl GetResult()
+    {
+        _result.DataContext.PropertyChanged += _nodeService.NodeChangedPosition;
+        return _result;
+    }
+}
+
+================
+File: Core/Scripting/UserInterface/NodeControlBuilderDirector.cs
+================
+using System.Collections.Generic;
+using System.Linq;
+using Snowman.Core.Scripting.Nodes;
+namespace Snowman.Core.Scripting.UserInterface;
+public class NodeControlBuilderDirector
+{
+    private readonly NodeControlBuilder _nodeBuilder;
+    private readonly Node _node;
+    public NodeControlBuilderDirector(Node node, NodeControlBuilder builder)
+    {
+        _nodeBuilder = builder;
+        _node = node;
+    }
+    public void Prepare()
+    {
+        var allGroups = CollectGroups();
+        var stack = new Stack<Group>([Group.Default]);
+        var endGroupCount = 0;
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (current != Group.Default)
+            {
+                _nodeBuilder.StartGroup(current);
+                endGroupCount++;
+            }
+            foreach (var output in _node.Outputs.Where(output => output.Group == current))
+            {
+                _nodeBuilder.AddOutput(output);
+            }
+            foreach (var variable in _node.Variables.Where(variable => variable.Group == current))
+            {
+                _nodeBuilder.AddVariable(variable);
+            }
+            foreach (var input in _node.Inputs.Where(input => input.Group == current))
+            {
+                _nodeBuilder.AddInput(input);
+            }
+            var count = stack.Count;
+            foreach (var group in allGroups.Where(g => g.Parent == current))
+            {
+                stack.Push(group);
+            }
+            if (current == Group.Default) continue;
+            if (stack.Count == count)
+            {
+                while (endGroupCount > 0)
+                {
+                    _nodeBuilder.EndGroup();
+                    endGroupCount--;
+                }
+            }
+            else
+            {
+                endGroupCount++;
+            }
+        }
+    }
+    private List<Group> CollectGroups()
+    {
+        var collectedGroups = new HashSet<Group>();
+        var groups = _node.Outputs.Select(output => output.Group);
+        groups = _node.Variables.Select(variable => variable.Group).Concat(groups);
+        groups = _node.Inputs.Select(input => input.Group).Concat(groups);
+        foreach (var group in groups)
+        {
+            var currentGroup = group;
+            Group? parent;
+            do
+            {
+                parent = currentGroup!.Parent;
+                collectedGroups.Add(currentGroup);
+                currentGroup = parent;
+            } while (parent is not null);
+        }
+        return  collectedGroups.ToList();
+    }
+}
+
+================
+File: Core/Scripting/Group.cs
+================
+using System;
+namespace Snowman.Core.Scripting;
+public class Group
+{
+    public const char GroupDelimiter = '/';
+    public static readonly Group Default = new() { Name = string.Empty, Parent = null };
+    public string Name { get; private set; }
+    public Group? Parent { get; private set; }
+    public string Path
+    {
+        get
+        {
+            return field ??= ToPath();
+        }
+    }
+    private Group()
+    {
+        Name = string.Empty;
+    }
+    public Group(string name, Group parent)
+    {
+        Parent = parent ?? throw new ArgumentNullException(nameof(parent), "Parent group cannot be null. Use Group(string name) constructor instead.");
+        Name = name;
+    }
+    private string ToPath()
+    {
+        var parent = Parent;
+        var str = Name;
+        while (parent is not null)
+        {
+            str = $"{parent.Name}{GroupDelimiter}{str}";
+            parent = parent.Parent;
+        }
+        return str;
+    }
+}
+
+================
+File: Core/Scripting/Script.cs
+================
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using Snowman.Data;
+namespace Snowman.Core.Scripting;
+public class Script
+{
+    private const string ScriptDefinitionFileName = "definition.xml";
+    private const string ScriptCodeFileName = "code.py";
+    public ScriptNodeDefinitionData NodeDefinitionData { get; }
+    public string Code { get; }
+    private Script(ScriptNodeDefinitionData scriptNodeDefinitionData, string code)
+    {
+        NodeDefinitionData = scriptNodeDefinitionData;
+        Code = code;
+    }
+    public static Script Load(string path)
+    {
+        using var zipFile = ZipFile.OpenRead(path);
+        var entries = zipFile.Entries;
+        var scriptDefinitionEntry = entries.Where(e => e.Name == ScriptDefinitionFileName).ToList();
+        if (scriptDefinitionEntry.Count == 0) throw new FileNotFoundException($"No script definition file found in '{path}'");
+        var scriptCodeEntry = entries.Where(e => e.Name == ScriptCodeFileName).ToList();
+        if (scriptCodeEntry.Count == 0) throw new FileNotFoundException($"No script code file found in '{path}'");
+        using var scriptDefinitionReader = new StreamReader(scriptDefinitionEntry.First().Open());
+        var scriptDefinitionString = scriptDefinitionReader.ReadToEnd();
+        var scriptDefinition = ScriptNodeDefinitionData.Deserialize(scriptDefinitionString);
+        using var scriptCodeReader = new StreamReader(scriptCodeEntry.First().Open());
+        var scriptCode = scriptCodeReader.ReadToEnd();
+        return new Script(scriptDefinition, scriptCode);
+    }
+}
+
+================
+File: Core/Scripting/ScriptParser.cs
+================
+using System;
+using System.Collections.Generic;
+using Snowman.Core.Registries;
+using Snowman.Core.Scripting.Nodes;
+using Snowman.Core.Scripting.DataSource;
+using Snowman.Core.Scripting.DataSource.Variables;
+using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+namespace Snowman.Core.Scripting;
+public class ScriptParser
+{
+    private readonly ScriptNode _result;
+    private readonly Script _script;
+    private readonly Dictionary<string, Group> _groups;
+    private ScriptParser(Script script)
+    {
+        _result = new ScriptNode();
+        _script = script;
+        _groups = [];
+    }
+    public static ScriptNode Parse(Script script, IServiceProvider serviceProvider)
+    {
+        var parser = new ScriptParser(script);
+        parser.ParseInternal(serviceProvider);
+        return parser.GetResult();
+    }
+    private void ParseInternal(IServiceProvider serviceProvider)
+    {
+        _groups[string.Empty] = Group.Default;
+        foreach (var group in _script.NodeDefinitionData.Groups)
+        {
+            var path = group.FullPath;
+            var nextDelimiterIndex = path.IndexOf(Group.GroupDelimiter);
+            var lastIndex = 0;
+            while (true)
+            {
+                var currentPath = path[..nextDelimiterIndex];
+                if (!_groups.ContainsKey(currentPath))
+                {
+                    var groupName = path[(lastIndex + 1)..(nextDelimiterIndex > -1 ? nextDelimiterIndex : path.Length)];
+                    var parentPath = path[..lastIndex];
+                    var newGroup = new Group(groupName, _groups[parentPath]);
+                    _groups[currentPath] = newGroup;
+                }
+                lastIndex = nextDelimiterIndex;
+                if (lastIndex == path.Length) break;
+                var stride = path[(nextDelimiterIndex + 1)..].IndexOf(Group.GroupDelimiter);
+                nextDelimiterIndex = stride == -1 ? path.Length : nextDelimiterIndex + stride + 1;
+            }
+        }
+        foreach (var input in _script.NodeDefinitionData.Inputs)
+        {
+            var newInput = new Input(
+                input.Name,
+                Type.GetType(input.Type) ?? throw new FormatException($"Cannot construct input {input.FriendlyName} with '{input.Type}' type in script {_script.NodeDefinitionData.Name}"),
+                _groups[input.Group],
+                input.FriendlyName ?? input.Name);
+            _result.Inputs.Add(newInput);
+        }
+        foreach (var output in _script.NodeDefinitionData.Outputs)
+        {
+            var newOutput = new Output(
+                output.Name,
+                Type.GetType(output.Type) ?? throw new FormatException($"Cannot construct output {output.FriendlyName} with '{output.Type}' type in script {_script.NodeDefinitionData.Name}"),
+                _groups[output.Group],
+                output.FriendlyName ?? output.Name);
+            _result.Outputs.Add(newOutput);
+        }
+        foreach (var variable in _script.NodeDefinitionData.Variables)
+        {
+            var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.NodeDefinitionData.Name}");
+            var variableInstance = VariableRegistry.GetCopy(variableType, serviceProvider);
+            variableInstance.Name = variable.Name;
+            variableInstance.Group = _groups[variable.Group];
+            variableInstance.Type = variableType;
+            variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
+            variableInstance.SetPropertiesFromXml(variable.Properties);
+            _result.Variables.Add(variableInstance);
+        }
+        _result.PythonScriptContent = _script.Code;
+        _result.Name = _script.NodeDefinitionData.Name;
+        _result.UniqueIdentifier = _script.NodeDefinitionData.UniqueIdentifier;
+    }
+    private ScriptNode GetResult()
+    {
+        return _result;
+    }
+}
+
+================
+File: Core/Settings/ISetting.cs
+================
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Snowman.Events;
+namespace Snowman.Core.Settings;
+public interface ISetting<T> : ISetting
+{
+    public event EventHandler<T>? ValueChanged;
+    public T Value { get; set; }
+    public ObservableCollection<T>? AllowedValues { get; init; }
+}
+public interface ISetting
+{
+    public object BoxedValue { get; set; }
+    public ObservableCollection<object>? BoxedAllowedValues { get; init; }
+}
+
+================
+File: Data/DatasetData.cs
+================
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using Avalonia;
+namespace Snowman.Data;
+[XmlRoot("data")]
+public class DatasetData
+{
+	[XmlElement("metadata")]
+	public Metadata Metadata { get; set; } = new();
+	[XmlArray("images")]
+	[XmlArrayItem("image")]
+	public List<Image> Images { get; set; } = [];
+	public static DatasetData? Deserialize(string data)
+	{
+		var serializer = new XmlSerializer(typeof(DatasetData));
+		using var reader = new StringReader(data);
+		var xmlData = (DatasetData?)serializer.Deserialize(reader);
+		if (xmlData is null || xmlData.Images.Count == 0) return null;
+		foreach (var image in xmlData.Images)
+		{
+			image.Src = image.Src.Replace("\\", "/"); // ALL paths must have '/' as a directory separator, while Windows supports '\', macOS and Linux do not
+		}
+		return xmlData;
+	}
+	public static string Serialize(DatasetData data)
+	{
+		var serializer = new XmlSerializer(typeof(DatasetData));
+		using var writer = new StringWriter();
+		serializer.Serialize(writer, data);
+		return writer.ToString();
+	}
+}
+/**
+ * Metadata of the XML file
+ */
+public class Metadata
+{
+	[XmlElement("data_id")]
+	public string DataId { get; set; } = string.Empty;
+	[XmlElement("parent")]
+	public string Parent { get; set; }  = string.Empty;
+	[XmlElement("version_major")]
+	public int VersionMajor { get; set; }
+	[XmlElement("xml_sid")]
+	public string XmlSid { get; set; } = string.Empty;
+	[XmlElement("description")]
+	public string Description { get; set; } = string.Empty;
+}
+public class Image
+{
+	[XmlElement("src")]
+	public string Src { get; set; } = string.Empty;
+	[XmlArray("boundingboxes")]
+	[XmlArrayItem("boundingbox")]
+	public List<BoundingBox> BoundingBoxes { get; set; } = [];
+}
+public class BoundingBox
+{
+	[XmlElement(ElementName="x_left_top")]
+	public int XLeftTop { get; set; }
+	[XmlElement(ElementName="y_left_top")]
+	public int YLeftTop { get; set; }
+	[XmlElement(ElementName="width")]
+	public int Width { get; set; }
+	[XmlElement(ElementName="height")]
+	public int Height { get; set; }
+	[XmlElement(ElementName = "class_name")]
+	public ClassName ClassName { get; set; } = new();
+	public Rect ToRectangle()
+	{
+		return new Rect(XLeftTop, YLeftTop, Width, Height);
+	}
+}
+public class ClassName
+{
+	[XmlElement(ElementName="project_id")] public string ProjectId { get; set; } = string.Empty;
+	[XmlElement(ElementName="track_id")] public int TrackId { get; set; }
+}
+
+================
+File: Data/NodeGraphData.cs
+================
+using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Serialization;
+namespace Snowman.Data;
+[XmlRoot("NodeGraph")]
+public class NodeGraphData
+{
+    [XmlArray("Nodes")]
+    [XmlArrayItem("Node")]
+    public List<NodeData> Nodes { get; set; } = [];
+}
+public class NodeData
+{
+    [XmlElement("UniqueIdentifier")]
+    public string UniqueIdentifier { get; set; } = string.Empty;
+    [XmlElement("Type")]
+    public string Type { get; set; } = string.Empty;
+    [XmlElement("Id")]
+    public int Id { get; set; }
+    [XmlElement("Position")]
+    public PointData Position { get; set; } = null!;
+    [XmlArray("Variables")]
+    [XmlArrayItem("Variable")]
+    public List<VariableData> Variables { get; set; } = [];
+    [XmlArray("Inputs")]
+    [XmlArrayItem("Input")]
+    public List<InputData> Inputs { get; set; } = [];
+}
+public class InputData
+{
+    [XmlElement("Name")]
+    public string Name { get; set; } = string.Empty;
+    [XmlArray("ConnectedOutputs")]
+    [XmlArrayItem("ConnectedOutput")]
+    public List<ConnectedOutput> ConnectedOutputs { get; set; } = [];
+}
+public class ConnectedOutput
+{
+    [XmlElement("NodeId")]
+    public int NodeId { get; set; }
+    [XmlElement("OutputName")]
+    public string OutputName { get; set; } = string.Empty;
+}
+public class VariableData
+{
+    [XmlElement("Name")]
+    public string Name { get; set; } = string.Empty;
+    [XmlAnyElement("Properties")]
+    public XmlElement Properties { get; set; } = null!;
+}
+
+================
+File: Data/ProjectData.cs
+================
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+namespace Snowman.Data;
+[XmlRoot(ElementName="ProjectData")]
+public class ProjectData
+{
+    [XmlElement("LoadedDatasetPath")]
+    public string LoadedDatasetPath { get; set; } = string.Empty;
+    [XmlArray("Entities")]
+    [XmlArrayItem("Entity")]
+    public List<EntityData> Entities { get; set; } = [];
+    [XmlElement("NodeGraph")]
+    public NodeGraphData NodeGraph { get; set; } = null!;
+    public static ProjectData? Deserialize(string data)
+    {
+        var serializer = new XmlSerializer(typeof(ProjectData));
+        using var reader = new StringReader(data);
+        var xmlData = (ProjectData?)serializer.Deserialize(reader);
+        return xmlData;
+    }
+    public static string Serialize(ProjectData data)
+    {
+        var serializer = new XmlSerializer(typeof(ProjectData));
+        using var writer = new StringWriter();
+        serializer.Serialize(writer, data);
+        return writer.ToString();
+    }
+}
+[XmlInclude(typeof(PointEntityData))]
+[XmlInclude(typeof(RectangleEntityData))]
+[XmlInclude(typeof(LineEntityData))]
+[XmlInclude(typeof(PolygonEntityData))]
+public abstract class EntityData
+{
+    [XmlElement("Position")]
+    public PointData Position { get; set; } = null!;
+    [XmlElement("Id")]
+    public int Id { get; set; }
+}
+public class PointEntityData : EntityData;
+public class RectangleEntityData : EntityData
+{
+    [XmlElement("Width")]
+    public double Width { get; set; }
+    [XmlElement("Height")]
+    public double Height { get; set; }
+}
+public class LineEntityData : EntityData
+{
+    [XmlElement("SecondPosition")]
+    public PointData SecondPosition { get; set; } = null!;
+}
+public class PolygonEntityData : EntityData
+{
+    [XmlArray("Points")]
+    [XmlArrayItem("Point")]
+    public List<PointData> Points { get; set; } = [];
+}
+public class PointData
+{
+    [XmlAttribute("X")]
+    public double X { get; set; }
+    [XmlAttribute("Y")]
+    public double Y { get; set; }
+}
+
+================
+File: Data/ScriptNodeDefinitionData.cs
+================
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
+namespace Snowman.Data;
+[XmlRoot("ScriptDefinition")]
+public class ScriptNodeDefinitionData
+{
+    public string Name { get; set; } = null!;
+    public string UniqueIdentifier { get; set; } = string.Empty;
+    public string Description { get; set; } = null!;
+    public int Version { get; set; }
+    [XmlArray("Groups")]
+    [XmlArrayItem("Group")]
+    public List<GroupDefinition> Groups { get; set; } = [];
+    [XmlArray("Inputs")]
+    [XmlArrayItem("Input")]
+    public List<PortDefinition> Inputs { get; set; } = [];
+    [XmlArray("Outputs")]
+    [XmlArrayItem("Output")]
+    public List<PortDefinition> Outputs { get; set; } = [];
+    [XmlArray("Variables")]
+    [XmlArrayItem("Variable")]
+    public List<VariableDefinition> Variables { get; set; } = [];
+    public static string Serialize(ScriptNodeDefinitionData def)
+    {
+        var serializer = new XmlSerializer(typeof(ScriptNodeDefinitionData));
+        var sb = new StringBuilder();
+        using var writer = new StringWriter(sb);
+        serializer.Serialize(writer, def);
+        return sb.ToString();
+    }
+    public static ScriptNodeDefinitionData Deserialize(string str)
+    {
+        var serializer = new XmlSerializer(typeof(ScriptNodeDefinitionData));
+        using var reader = new StringReader(str);
+        return (serializer.Deserialize(reader) as ScriptNodeDefinitionData)!;
+    }
+}
+public class GroupDefinition
+{
+    [XmlAttribute] public string FullPath { get; set; } = string.Empty;
+}
+public class PortDefinition
+{
+    public string Name { get; set; } = null!;
+    public string Type { get; set; } = null!;
+    public string? FriendlyName { get; set; }
+    public string Group { get; set; } = string.Empty;
+}
+public class VariableDefinition
+{
+    public string Name { get; set; } = null!;
+    public string? FriendlyName { get; set; }
+    public string Group { get; set; } = string.Empty;
+    public string VariableType { get; set; } = null!;
+    [XmlAnyElement("Properties")]
+    public XmlElement Properties { get; set; } = null!;
+}
+
+================
+File: Data/TimelineOutput.cs
+================
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Avalonia.Media;
+using Snowman.DataContexts;
+using Snowman.Utilities;
+namespace Snowman.Data;
+public class TimelineOutput : INotifyPropertyChanged
+{
+    private static int _outputCounter;
+    public string Name { get; set; } = "Output " + (_outputCounter++ + 1);
+    public List<Layer> Layers { get; set; } = [];
+    public double MaxY
+    {
+        get
+        {
+            var maxY = 0.0;
+            foreach (var layer in Layers)
+            {
+                var layerMax = layer.MaxY;
+                if (layerMax > maxY) maxY = layerMax;
+            }
+            return Math.Max(maxY, 1);
+        }
+    }
+    public double MinY
+    {
+        get
+        {
+            var minY = double.MaxValue;
+            foreach (var layer in Layers)
+            {
+                var layerMin = layer.MinY;
+                if (layerMin < minY) minY = layerMin;
+            }
+            return Math.Min(minY, 0);
+        }
+    }
+    public double MinYFilter
+    {
+        get;
+        set
+        {
+            field = value;
+            OnPropertyChanged();
+            UpdateEventVisibility();
+        }
+    }
+    public double MaxYFilter
+    {
+        get;
+        set
+        {
+            field = value;
+            OnPropertyChanged();
+            UpdateEventVisibility();
+        }
+    }
+    public void InitFilters()
+    {
+        MaxYFilter = MaxY;
+        MinYFilter = MinY;
+    }
+    private void UpdateEventVisibility()
+    {
+        foreach (var layer in Layers)
+        {
+            foreach (var ev in layer.Events)
+            {
+                ev.IsWithinMinMax = ev.Y >= MinYFilter && ev.Y <= MaxYFilter;
+            }
+        }
+    }
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+public class Layer : INotifyPropertyChanged
+{
+    private static readonly Random Random = new();
+    private static int _layerCounter;
+    public IBrush Brush { get; set; } = ColorGeneration.Palette[Random.Next(ColorGeneration.Palette.Length)];
+    public string Name { get; set; } = "Layer " + (_layerCounter++ + 1);
+    public List<EventData> Events { get; set; } = [];
+    public double MinY
+    {
+        get
+        {
+            var minY = Events[0].Y;
+            foreach (var ev in Events)
+            {
+                if (ev.Y < minY) minY = ev.Y;
+            }
+            return minY;
+        }
+    }
+    public double MaxY
+    {
+        get
+        {
+            var maxY = 0.0;
+            foreach (var ev in Events)
+            {
+                if (ev.Y > maxY) maxY = ev.Y;
+            }
+            return maxY;
+        }
+    }
+    public bool IsVisible
+    {
+        get;
+        set
+        {
+            if (field == value) return;
+            field = value;
+            OnPropertyChanged();
+        }
+    } = true;
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+public class ScriptRun : INotifyPropertyChanged
+{
+    private static int _scriptRunCounter;
+    public string Name { get; set; } = "Script run " + (_scriptRunCounter++ + 1);
+    public ObservableCollection<TimelineOutput> Outputs { get; } = [];
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public ScriptRun()
+    {
+        Outputs.CollectionChanged += (sender, args) => OnPropertyChanged();
+    }
+    public void SetActive(EventTimelineViewportDataContext dataContext)
+    {
+        dataContext.SelectedScriptRun(this);
+    }
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+public class EventData
+{
+    public int FrameIndex { get; set; }
+    public double Y { get; set; }
+    public List<int> TrackIds { get; set; } = [];
+    public List<int> EntityIds { get; set; } = [];
+    public bool IsBoolean { get; set; }
+    public bool IsWithinMinMax { get; set; }
+}
+
+================
+File: Events/Suppliers/IDatasetImagesEventSupplier.cs
+================
+namespace Snowman.Events.Suppliers;
+public interface IDatasetImagesEventSupplier : IEventSupplier
+{
+    public event SignalEventHandler SelectedFrameChanged;
+}
+
+================
+File: Events/Suppliers/IEntityEventSupplier.cs
+================
+using Snowman.Core.Entities;
+namespace Snowman.Events.Suppliers;
+public interface IEntityEventSupplier : IEventSupplier
+{
+    public event EventHandler<Entity> EntityAdded;
+    public event EventHandler<Entity> EntityRemoved;
+}
+
+================
+File: Events/Suppliers/INodeViewportEventSupplier.cs
+================
+using Avalonia.Input;
+using Snowman.Controls;
+namespace Snowman.Events.Suppliers;
+public interface INodeViewportEventSupplier : IEventSupplier
+{
+    public event EventHandler<NodeViewport, PointerEventArgs> OnPointerMovement;
+}
+
+================
+File: Events/Suppliers/IProjectEventSupplier.cs
+================
+namespace Snowman.Events.Suppliers;
+public interface IProjectEventSupplier : IEventSupplier
+{
+    public event SignalEventHandler ProjectLoaded;
+    public event SignalEventHandler DatasetLoaded;
+}
+
+================
+File: Events/Viewport/ViewportKeyDownEventArgs.cs
+================
+using Avalonia.Input;
+namespace Snowman.Events.Viewport;
+public readonly record struct ViewportKeyDownEventArgs(KeyEventArgs WrappedArgs);
+
+================
+File: Events/Viewport/ViewportPointerMovedEventArgs.cs
+================
+using Avalonia;
+using Avalonia.Input;
+namespace Snowman.Events.Viewport;
+public readonly record struct ViewportPointerMovedEventArgs(
+    PointerEventArgs WrappedArgs,
+    Visual SenderVisual,
+    Matrix TransformationMatrix
+)
+{
+    public Point GetTransformedPointerPosition() => GetPointerPosition().Transform(TransformationMatrix.Invert());
+    public Point GetPointerPosition() => WrappedArgs.GetPosition(SenderVisual);
+}
+
+================
+File: Events/Viewport/ViewportPointerPressedEventArgs.cs
+================
+using Avalonia;
+using Avalonia.Input;
+namespace Snowman.Events.Viewport;
+public readonly record struct ViewportPointerPressedEventArgs(
+    PointerPressedEventArgs WrappedArgs,
+    Visual SenderVisual,
+    Matrix TransformationMatrix
+)
+{
+    public Point GetTransformedPointerPosition() => GetPointerPosition().Transform(TransformationMatrix.Invert());
+    public Point GetPointerPosition() => WrappedArgs.GetPosition(SenderVisual);
+}
+
+================
+File: Events/Viewport/ViewportPointerReleasedEventArgs.cs
+================
+using Avalonia;
+using Avalonia.Input;
+namespace Snowman.Events.Viewport;
+public readonly record struct ViewportPointerReleasedEventArgs(
+    PointerReleasedEventArgs WrappedArgs,
+    Visual SenderVisual,
+    Matrix TransformationMatrix
+)
+{
+    public Point GetTransformedPointerPosition() => GetPointerPosition().Transform(TransformationMatrix.Invert());
+    public Point GetPointerPosition() => WrappedArgs.GetPosition(SenderVisual);
+}
+
+================
+File: Events/Viewport/ViewportPointerWheelChangedEventArgs.cs
+================
+using Avalonia;
+using Avalonia.Input;
+namespace Snowman.Events.Viewport;
+public readonly record struct ViewportPointerWheelChangedEventArgs(
+    PointerWheelEventArgs WrappedArgs,
+    Visual SenderVisual,
+    Matrix TransformationMatrix
+)
+{
+    public Point GetTransformedPointerPosition() => GetPointerPosition().Transform(TransformationMatrix.Invert());
+    public Point GetPointerPosition() => WrappedArgs.GetPosition(SenderVisual);
+}
+
+================
+File: Events/EventHandlers.cs
+================
+namespace Snowman.Events;
+public delegate void EventHandler<in TSender, in TEventArgs>(TSender sender, TEventArgs e);
+public delegate void EventHandler<in TEventArgs>(TEventArgs e);
+public delegate void SignalEventHandler();
+
+================
+File: Events/IEventSupplier.cs
+================
+namespace Snowman.Events;
+public interface IEventSupplier;
+
+================
+File: Utilities/AdditionalFilePickerFileTypes.cs
+================
+using Avalonia.Platform.Storage;
+namespace Snowman.Utilities;
+public static class AdditionalFilePickerFileTypes
+{
+    public static FilePickerFileType Xml { get; } = new("Xml")
+    {
+        Patterns = ["*.xml"],
+        AppleUniformTypeIdentifiers = ["public.xml"],
+        MimeTypes = ["text/xml"]
+    };
+    public static FilePickerFileType Video { get; } = new("Video")
+    {
+        Patterns = ["*.mp4", "*.avi", "*.mkv", "*.mov"],
+        MimeTypes = ["video/mp4", "video/avi", "video/mkv", "video/m4v"]
+    };
+}
+
+================
+File: Utilities/Converters.cs
+================
+using System;
+using System.Globalization;
+using Avalonia.Data.Converters;
+namespace Snowman.Utilities;
+public class InverseBoolConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is bool boolValue ? !boolValue : value;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is bool boolValue ? !boolValue : value;
+}
+
+================
+File: Utilities/ExtensionMethods.cs
+================
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
+using Avalonia;
+using Snowman.Core.Entities;
+namespace Snowman.Utilities;
+public static class ExtensionMethods
+{
+    public static double DistanceTo(this Point p1, Point p2) => Point.Distance(p1, p2);
+    public static IEnumerable<Entity> OfParentType<TEntity>(this IEnumerable<Entity> entities) => entities.Where(entity =>
+    {
+        while (entity.Parent is not null) entity = entity.Parent;
+        return entity is TEntity;
+    });
+    public static void SyncWithObservableCollection<T>(this IList<T> target,
+        NotifyCollectionChangedEventArgs collectionChangedEventArgs)
+    {
+        switch (collectionChangedEventArgs.Action)
+        {
+            case NotifyCollectionChangedAction.Add:
+                if (collectionChangedEventArgs.NewItems is not null)
+                {
+                    target.AddRange(collectionChangedEventArgs.NewItems.Cast<T>());
+                }
+                break;
+            case NotifyCollectionChangedAction.Remove:
+                if (collectionChangedEventArgs.OldItems is not null)
+                {
+                    target.RemoveRange(collectionChangedEventArgs.OldItems.Cast<T>());
+                }
+                break;
+            case NotifyCollectionChangedAction.Reset:
+                target.Clear();
+                break;
+            case NotifyCollectionChangedAction.Replace:
+            case NotifyCollectionChangedAction.Move:
+            default:
+                throw new NotSupportedException($"Operation {collectionChangedEventArgs.Action} is not supported");
+        }
+    }
+    public static void AddRange<T>(this IList<T> targetList, IEnumerable<T> sourceEnumerable)
+    {
+        foreach (var item in sourceEnumerable)
+        {
+            targetList.Add(item);
+        }
+    }
+    public static void RemoveRange<T>(this IList<T> targetList, IEnumerable<T> sourceEnumerable)
+    {
+        foreach (var item in sourceEnumerable)
+        {
+            targetList.Remove(item);
+        }
+    }
+}
+
+================
+File: Utilities/Helpers.cs
+================
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Python.Runtime;
+using Snowman.Core.Entities;
+using Snowman.Core.Registries;
+using Snowman.Core.Scripting.DataSource.Variables;
+using Snowman.Core.Scripting.Nodes.OutputNodes;
+using Snowman.Designer;
+namespace Snowman.Utilities;
+public class Helpers
+{
+    private static string? _validEntitiesCache;
+    private static string? _variablesPromptInfoCache;
+    private static string? _outputNodesPromptInfoCache;
+    private static readonly Dictionary<Type, Func<IList>> ListFactories = [];
+    public static List<TBase> PyListToPolymorphicList<TBase>(PyList? pyList, string listName)
+    {
+        var result = new List<TBase>();
+        if (pyList is null) return result;
+        foreach (var item in pyList)
+        {
+            try
+            {
+                var obj = (TBase?)item.AsManagedObject(typeof(TBase));
+                if (obj != null)
+                {
+                    result.Add(obj);
+                }
+            }
+            catch (InvalidCastException e)
+            {
+                throw new ArgumentException($"{listName} contains types incompatible with {typeof(TBase)}.", nameof(pyList), e);
+            }
+        }
+        return result;
+    }
+    public static IList CreateList(Type type)
+    {
+        if (ListFactories.TryGetValue(type, out var factory)) return factory();
+        var t = typeof(List<>).MakeGenericType(type);
+        factory = () => Activator.CreateInstance(t) as IList ?? throw new InvalidOperationException($"Type {t} cannot be cast to IList");
+        ListFactories.Add(type, factory);
+        return factory();
+    }
+    public static string GetValidEntityTypes()
+    {
+        if (_validEntitiesCache is not null) return _validEntitiesCache;
+        var baseType = typeof(Entity);
+        var list = Assembly.GetAssembly(baseType)!
+            .GetTypes()
+            .Where(t => t.IsSubclassOf(baseType));
+        _validEntitiesCache = string.Join(", ", list.Select(t => t.Name).ToArray());
+        return _validEntitiesCache;
+    }
+    public static string GetVariablesPromptInfo()
+    {
+        if (_variablesPromptInfoCache is not null) return _variablesPromptInfoCache;
+        var variables = VariableRegistry.GetPrototypeCopies();
+        _variablesPromptInfoCache = string.Empty;
+        foreach (var variable in variables)
+        {
+            _variablesPromptInfoCache += $"\nVariable: {variable.FriendlyName}\n";
+            _variablesPromptInfoCache += $"VariableType: {variable.GetType()}\n";
+            _variablesPromptInfoCache += $"{variable.GetSystemPromptInfo()}\n";
+        }
+        return _variablesPromptInfoCache;
+    }
+    public static string GetOutputNodesPromptInfo()
+    {
+        if (_outputNodesPromptInfoCache is not null) return _outputNodesPromptInfoCache;
+        var outputNodes = OutputNodeRegistry.GetPrototypeCopies();
+        _outputNodesPromptInfoCache = string.Empty;
+        foreach (var outputNode in outputNodes)
+        {
+            _outputNodesPromptInfoCache += $"\nName: {outputNode.Name}\n";
+            _outputNodesPromptInfoCache += $"{outputNode.GetSystemPromptInfo()}\n";
+        }
+        return _outputNodesPromptInfoCache;
+    }
+    public static string GetAllUsedNodeUIDs()
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+
+
+================================================================
+End of Codebase
+================================================================
