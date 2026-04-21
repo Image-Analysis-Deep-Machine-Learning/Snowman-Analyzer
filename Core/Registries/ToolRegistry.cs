@@ -2,8 +2,9 @@
 using System.Linq;
 using Snowman.Core.Entities;
 using Snowman.Core.Services;
+using Snowman.Core.Tools;
 
-namespace Snowman.Core.Tools;
+namespace Snowman.Core.Registries;
 
 public static class ToolRegistry
 {

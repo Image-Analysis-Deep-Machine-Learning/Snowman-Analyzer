@@ -2,6 +2,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Snowman.Controls;
+using Snowman.Core.Registries;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Services;

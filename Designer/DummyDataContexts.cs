@@ -108,26 +108,27 @@ public partial class NodeViewportDataContext
     }
 }
 
-public partial class ToolBarDataContext
+public partial class ViewportToolbarDataContext
 {
-    public ToolBarDataContext()
+    public ViewportToolbarDataContext()
     {
         Tools = [];
         ActiveTool = null!;
+        SetTool = null!;
     }
 }
 
-public partial class ViewportDataContext
+public partial class ViewportDisplayDataContext
 {
-    public ViewportDataContext()
+    public ViewportDisplayDataContext()
     {
         _drawingService = null!;
     }
 }
 
-public partial class ViewportWindowDataContext
+public partial class ViewportContainerDataContext
 {
-    public ViewportWindowDataContext()
+    public ViewportContainerDataContext()
     {
             
     }

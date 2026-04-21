@@ -22,7 +22,7 @@ public abstract class Port : IDataSource
     
     public abstract void AskForValue();
 
-    public virtual void ResetPort()
+    public virtual void ResetPort(bool forced)
     {
         HasValue = false;
         Value = null;

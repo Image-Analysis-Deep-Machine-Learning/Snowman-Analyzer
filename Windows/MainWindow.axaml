@@ -43,7 +43,7 @@
               HorizontalAlignment="Stretch">
             <!-- viewport -->
             <Grid Grid.Row="0" Grid.Column="0">
-                <ctrl:ViewportWindow HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <ctrl:ViewportContainer HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 <Button IsHitTestVisible="False" Foreground="White" Opacity="0.7" Background="#454548" Content="{Binding CurrentFrame}" Margin="7" HorizontalAlignment="Left" VerticalAlignment="Bottom" ZIndex="100">
                 </Button>
             </Grid>

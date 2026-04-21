@@ -24,7 +24,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
 
     protected EntityEditTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
-    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
+    public override void PointerPressedAction(ViewportDisplayDataContext sender, ViewportPointerPressedEventArgs e)
     {
         if (e.WrappedArgs.Properties.IsLeftButtonPressed)
         {
@@ -43,13 +43,13 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         base.PointerPressedAction(sender, e);
     }
 
-    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDisplayDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         Dragging = false;
         base.PointerReleasedAction(sender, e);
     }
 
-    public override void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e)
+    public override void PointerMovedAction(ViewportDisplayDataContext sender, ViewportPointerMovedEventArgs e)
     {
         var cursorPositionLocal = e.GetTransformedPointerPosition();
         
@@ -65,7 +65,7 @@ public class EntityEditTool<TEntity> : ViewportMoveTool where TEntity : Entity
         }
     }
 
-    public override void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e)
+    public override void KeyDownAction(ViewportDisplayDataContext sender, ViewportKeyDownEventArgs e)
     {
         base.KeyDownAction(sender, e);
 

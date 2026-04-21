@@ -26,14 +26,14 @@ public class ViewportMoveTool : Tool
     protected ViewportMoveTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
 
 
-    public override void PointerPressedAction(ViewportDataContext sender, ViewportPointerPressedEventArgs e)
+    public override void PointerPressedAction(ViewportDisplayDataContext sender, ViewportPointerPressedEventArgs e)
     {
         _clickOrigin = e.GetPointerPosition();
         _pressed = true;
         _originalMovement = sender.AdditionalTranslation;
     }
 
-    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDisplayDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         _pressed = false;
         // next three lines are important, viewport does not work properly without them, I don't know why
@@ -42,7 +42,7 @@ public class ViewportMoveTool : Tool
         CurrentMouseMovement = Vector.Zero;
     }
 
-    public override void PointerMovedAction(ViewportDataContext sender, ViewportPointerMovedEventArgs e)
+    public override void PointerMovedAction(ViewportDisplayDataContext sender, ViewportPointerMovedEventArgs e)
     {
         if (!_pressed) return;
         
@@ -50,13 +50,13 @@ public class ViewportMoveTool : Tool
         sender.AdditionalTranslation = _originalMovement + CurrentMouseMovement; // TODO: use service for this or is callback ok?
     }
 
-    public override void PointerWheelChangedAction(ViewportDataContext sender, ViewportPointerWheelChangedEventArgs e)
+    public override void PointerWheelChangedAction(ViewportDisplayDataContext sender, ViewportPointerWheelChangedEventArgs e)
     {
         var pos = e.GetPointerPosition();
         sender.Zoom(e.WrappedArgs.Delta.Y, pos);
     }
 
-    public override void KeyDownAction(ViewportDataContext sender, ViewportKeyDownEventArgs e)
+    public override void KeyDownAction(ViewportDisplayDataContext sender, ViewportKeyDownEventArgs e)
     {
         // no keybindings
     }

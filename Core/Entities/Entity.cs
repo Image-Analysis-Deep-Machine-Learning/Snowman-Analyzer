@@ -128,6 +128,6 @@ public abstract class Entity : IDrawable
     }
 
     public abstract void Render(DrawingContext drawingContext);
-    public abstract bool EvaluateHit(Point cursorPosition);
-    public abstract bool EvaluateHit(Rect selection);
+    public abstract bool EvaluateHit(Point point);
+    public abstract bool EvaluateHit(Rect rect);
 }

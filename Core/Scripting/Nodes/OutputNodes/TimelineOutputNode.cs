@@ -39,6 +39,13 @@ public class TimelineOutputNode : OutputNode
         _timelineService.AddOutput(output);
     }
 
+    public override string GetSystemPromptInfo()
+    {
+        return "Sends Layers from Input to Event Timeline control to show them on a graph (chart). " +
+               $"The Type of its single Input port is {typeof(IEnumerable<Layer>)}. " +
+               "It accepts multiple connections from Output ports.";
+    }
+
     public override Node Copy(IServiceProvider serviceProvider)
     {
         var copy = new TimelineOutputNode(serviceProvider);

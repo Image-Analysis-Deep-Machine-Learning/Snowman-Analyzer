@@ -19,7 +19,7 @@ public class PointTool : EntityEditTool<PointEntity>
 
     private PointTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
-    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDisplayDataContext sender, ViewportPointerReleasedEventArgs e)
     {
         if (
             CurrentMouseMovement.NearlyEquals(Vector.Zero) && // to prevent creating of entities when moving the viewport

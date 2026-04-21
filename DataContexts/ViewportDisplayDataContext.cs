@@ -8,7 +8,7 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
-public partial class ViewportDataContext
+public partial class ViewportDisplayDataContext
 {
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.5;
@@ -41,7 +41,7 @@ public partial class ViewportDataContext
 
     public Matrix TransformationMatrix { get; private set; }
 
-    public ViewportDataContext(IServiceProvider serviceProvider)
+    public ViewportDisplayDataContext(IServiceProvider serviceProvider)
     {
         _additionalScale = 1.0;
         

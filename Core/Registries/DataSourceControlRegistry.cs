@@ -8,7 +8,7 @@ using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.DataSource.Variables;
 using Snowman.Core.Scripting.UserInterface.Controls;
 
-namespace Snowman.Core.Scripting.UserInterface;
+namespace Snowman.Core.Registries;
 
 public static class DataSourceControlRegistry
 {
@@ -18,17 +18,17 @@ public static class DataSourceControlRegistry
         RegisterVariableFactories();
     }
 
-    private static readonly Dictionary<Type, Func<IDataSource, Control>> FactoryRegistry = [];
+    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
     
     public static void RegisterDataSourceControlFactory<T>(Func<T, Control> factory) where T : IDataSource
     {
         // wrapper to avoid dynamic invocation every time
-        FactoryRegistry[typeof(T)] = dataSource => factory((T)dataSource);
+        DataSourceFactoryRegistry[typeof(T)] = dataSource => factory((T)dataSource);
     }
     
     public static Control CreateControl(IDataSource dataSource)
     {
-        return FactoryRegistry.TryGetValue(dataSource.GetType(), out var factory) ? factory(dataSource) : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
+        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory) ? factory(dataSource) : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
     }
 
     private static void RegisterPortFactories()

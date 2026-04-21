@@ -19,4 +19,9 @@ public partial class NumberVariable : GenericVariableWrapper<decimal>
     {
         // no properties atm
     }
+
+    public override string GetSystemPromptInfo()
+    {
+        return "Allows the user to type any real number. This variable has no properties in the XML structure.";
+    }
 }

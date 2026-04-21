@@ -13,4 +13,6 @@ public abstract class OutputNode : Node
     {
         data.Type = nameof(OutputNode);
     }
+
+    public abstract string GetSystemPromptInfo();
 }

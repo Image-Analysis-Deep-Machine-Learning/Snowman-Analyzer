@@ -69,6 +69,6 @@ public class VariableDefinition
     public string Group { get; set; } = string.Empty;
     public string VariableType { get; set; } = null!;
 
-    [XmlAnyElement("Value")]
-    public XmlElement Value { get; set; } = null!;
+    [XmlAnyElement("Properties")]
+    public XmlElement Properties { get; set; } = null!;
 }

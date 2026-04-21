@@ -36,13 +36,13 @@ public abstract class Node
         Id = -1;
     }
 
-    public void Reset()
+    public void Reset(bool forced)
     {
-        if (!IsReady) return; // this node has been reset already
+        if (!IsReady && !forced) return; // this node has been reset already, only skip if the reset is not forced by an exception
         
         foreach (var input in Inputs)
         {
-            input.ResetPort();
+            input.ResetPort(forced);
         }
         
         IsReady = false;

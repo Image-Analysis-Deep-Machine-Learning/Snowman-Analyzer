@@ -40,6 +40,13 @@ public class LoggerOutputNode : OutputNode
         IsReady = true;
     }
 
+    public override string GetSystemPromptInfo()
+    {
+        return "Prints string representation of incoming data into a Console Output textbox in Main Window. " + 
+               $"The Type of its single Input port is {typeof(IEnumerable<object?>)}. " +
+               "It accepts multiple connections from Output ports of any Type.";
+    }
+
     private Input CreateInput()
     {
         var stringInput = new Input("logger_input", typeof(IEnumerable<object?>), Group.Default, "Message");

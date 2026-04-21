@@ -102,4 +102,11 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
     {
         // no properties atm
     }
+
+    public override string GetSystemPromptInfo()
+    {
+        return "Allows the user to select a dataset. UI has two checkbox options: 'Current' and 'Custom Path'. " +
+               "'Current' will use currently loaded dataset. 'Custom Path' will allow the user to select a valid dataset file. " +
+               "This variable has no properties in the XML structure.";
+    }
 }

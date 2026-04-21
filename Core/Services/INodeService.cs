@@ -21,7 +21,7 @@ public interface INodeService : IService
     void EndConnection(PointerReleasedEventArgs e);
     bool IsNewConnectionActive();
     IEnumerable<Node> GetNodes();
-    void RunGraph();
+    void ExecuteGraph();
     public NodeGraphData SaveGraph();
     public void LoadGraph(NodeGraphData data);
     int GetNodeIdByPort(Port port);

@@ -17,7 +17,7 @@ public class SegmentTool : EntityEditTool<SegmentEntity>
 
     private SegmentTool(string name, Cursor cursor, ImageBrush icon) : base(name, cursor, icon) { }
     
-    public override void PointerReleasedAction(ViewportDataContext sender, ViewportPointerReleasedEventArgs e)
+    public override void PointerReleasedAction(ViewportDisplayDataContext sender, ViewportPointerReleasedEventArgs e)
     { 
         var pointerPosition = e.GetTransformedPointerPosition();
         

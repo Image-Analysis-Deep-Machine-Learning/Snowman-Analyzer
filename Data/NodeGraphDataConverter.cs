@@ -91,6 +91,7 @@ public static class NodeGraphDataConverter
 
     // DO NOT CHANGE TO EXTENSION BLOCK (extension<T>(T property) {...})
     // CallerArgumentExpression attribute does not work when property is in extension block
+    // ReSharper disable once ConvertToExtensionBlock
     private static void ToParsedData<T>(this T property, (VariableData Data, XmlDocument Document) vData, Func<T?, string> converter, [CallerArgumentExpression(nameof(property))] string? propertyExpression = null)
     {
         var lastIndexOfDot = propertyExpression?.LastIndexOf('.') ?? throw new Exception($"Property expression from {property} cannot be null.");

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Snowman.Core.Registries;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.DataSource.Variables;
@@ -84,12 +85,12 @@ public class ScriptParser
         foreach (var variable in _script.NodeDefinitionData.Variables)
         {
             var variableType = Type.GetType(variable.VariableType) ?? throw new FormatException($"Cannot construct variable {variable.FriendlyName} of '{variable.VariableType}' type in script {_script.NodeDefinitionData.Name}");
-            var variableInstance = VariablePrototypeRegistry.GetVariableCopy(variableType, serviceProvider);
+            var variableInstance = VariableRegistry.GetCopy(variableType, serviceProvider);
             variableInstance.Name = variable.Name;
             variableInstance.Group = _groups[variable.Group];
             variableInstance.Type = variableType;
             variableInstance.FriendlyName = variable.FriendlyName ?? variable.Name;
-            variableInstance.SetPropertiesFromXml(variable.Value);
+            variableInstance.SetPropertiesFromXml(variable.Properties);
             _result.Variables.Add(variableInstance);
         }
 

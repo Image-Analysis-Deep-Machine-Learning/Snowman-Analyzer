@@ -9,19 +9,19 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
-public partial class Viewport : UserControlWrapper<ViewportDataContext>
+public partial class ViewportDisplay : UserControlWrapper<ViewportDisplayDataContext>
 {
     // TODO: I guess this can be moved to commands as there is nothing else expected to bind to these events except tools
     #region Events
-    public new event EventHandler<ViewportDataContext, ViewportPointerPressedEventArgs>? PointerPressed;
-    public new event EventHandler<ViewportDataContext, ViewportPointerReleasedEventArgs>? PointerReleased;
-    public new event EventHandler<ViewportDataContext, ViewportPointerMovedEventArgs>? PointerMoved;
-    public new event EventHandler<ViewportDataContext, ViewportPointerWheelChangedEventArgs>? PointerWheelChanged;
-    public new event EventHandler<ViewportDataContext, ViewportKeyDownEventArgs>? KeyDown;
+    public new event EventHandler<ViewportDisplayDataContext, ViewportPointerPressedEventArgs>? PointerPressed;
+    public new event EventHandler<ViewportDisplayDataContext, ViewportPointerReleasedEventArgs>? PointerReleased;
+    public new event EventHandler<ViewportDisplayDataContext, ViewportPointerMovedEventArgs>? PointerMoved;
+    public new event EventHandler<ViewportDisplayDataContext, ViewportPointerWheelChangedEventArgs>? PointerWheelChanged;
+    public new event EventHandler<ViewportDisplayDataContext, ViewportKeyDownEventArgs>? KeyDown;
 
     #endregion
     
-    public Viewport()
+    public ViewportDisplay()
     {
         InitializeComponent();
         Focusable = true;
@@ -68,10 +68,10 @@ public partial class Viewport : UserControlWrapper<ViewportDataContext>
         InvalidateVisual();
     }
 
-    protected override ViewportDataContext GetDataContext(IServiceProvider serviceProvider)
+    protected override ViewportDisplayDataContext GetDataContext(IServiceProvider serviceProvider)
     {
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += InvalidateVisual);
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += InvalidateVisual);
-        return new ViewportDataContext(serviceProvider);
+        return new ViewportDisplayDataContext(serviceProvider);
     }
 }

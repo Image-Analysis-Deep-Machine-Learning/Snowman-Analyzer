@@ -49,4 +49,5 @@ public abstract class Variable : IDataSource
     
     public abstract Variable Copy(IServiceProvider serviceProvider);
     public abstract void SetPropertiesFromXml(XmlElement xml);
+    public abstract string GetSystemPromptInfo();
 }

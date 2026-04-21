@@ -54,13 +54,13 @@ public class Input(string name, Type type, Group group, string friendlyName) : P
         HasValue = true;
     }
 
-    public override void ResetPort()
+    public override void ResetPort(bool forced)
     {
-        base.ResetPort();
+        base.ResetPort(forced);
         
         foreach (var connectedOutput in ConnectedOutputs)
         {
-            connectedOutput.ResetPort();
+            connectedOutput.ResetPort(forced);
         }
     }
 

@@ -15,7 +15,7 @@ public partial class NodeViewportDataContext
     private readonly INodeService _nodeService;
     private readonly IServiceProvider _serviceProvider;
     
-    public IEnumerable<Node> AvailableScripts => _nodeService.GetNodes();
+    public IEnumerable<Node> AvailableNodes => _nodeService.GetNodes();
     public Node? SelectedNode { get; set; }
 
     public NodeViewportDataContext(IServiceProvider serviceProvider)
@@ -30,13 +30,13 @@ public partial class NodeViewportDataContext
         _nodeService.AddNode(SelectedNode?.Copy(_serviceProvider));
     }
 
-    public void RunGraph()
+    public void ExecuteGraph()
     {
         var runTask = new Task(() =>
         {
             try
             {
-                _nodeService.RunGraph();
+                _nodeService.ExecuteGraph();
                 
             }
             

@@ -9,7 +9,7 @@ public class Output(string name, Type type, Group group, string friendlyName)
     : Port(name, type, group, friendlyName)
 {
     public event SignalEventHandler? ValueRequested;
-    public event SignalEventHandler? ResetRequested;
+    public event Events.EventHandler<bool>? ResetRequested;
     
     public List<Input> ConnectedInputs { get; } = []; // used to remove nodes
 
@@ -19,10 +19,10 @@ public class Output(string name, Type type, Group group, string friendlyName)
         HasValue = true;
     }
 
-    public override void ResetPort()
+    public override void ResetPort(bool forced)
     {
-        base.ResetPort();
-        ResetRequested?.Invoke();
+        base.ResetPort(forced);
+        ResetRequested?.Invoke(forced);
     }
 
     public override IDataSource Copy(IServiceProvider serviceProvider)

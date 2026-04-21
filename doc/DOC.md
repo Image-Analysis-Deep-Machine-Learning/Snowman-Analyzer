@@ -54,7 +54,7 @@ DataContexts that are set via DataContextInjector should be divided into two par
 2. Create new public partial DataContext class in Snowman.DataContexts namespace named \[control_name\]DataContext.
 3. Due to technical limitations of current design, a parameterless constructor must be available. The partial class with this constructor should be in the [DummyDataContexts](../Designer/DummyDataContexts.cs) file.
 4. Edit the .axaml.cs file for the control to extend from UserControlWrapper instead of UserControl. The generic type must be the \[control_name\]DataContext class.
-5. Edit the .axaml file to fit the template below. Replace \[control_name\] with the name of the control. See [Viewport XAML file](../Controls/Viewport.axaml) for an example:
+5. Edit the .axaml file to fit the template below. Replace \[control_name\] with the name of the control. See [Viewport XAML file](../Controls/ViewportDisplay.axaml) for an example:
 
 ```html
 <ctrl:UserControlWrapper x:TypeArguments="dataContext:[control_name]DataContext"

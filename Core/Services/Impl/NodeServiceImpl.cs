@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using Snowman.Controls;
+using Snowman.Core.Registries;
 using Snowman.Core.Scripting;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
@@ -22,11 +22,6 @@ namespace Snowman.Core.Services.Impl;
 
 public class NodeServiceImpl : INodeService
 {
-    private const string ScriptFileExtension = ".script";
-    private const string ScriptsFolder = "Scripts";
-
-    private readonly Dictionary<string, Node> _scriptPrototypes;
-    private readonly Dictionary<string, Node> _outputNodePrototypes;
     private readonly Canvas _viewportCanvas;
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<Port, NodePort> _nodePorts;
@@ -45,8 +40,6 @@ public class NodeServiceImpl : INodeService
 
     public NodeServiceImpl(Canvas viewportCanvas, GraphOverlay backgroundOverlay, GraphOverlay foregroundOverlay, IServiceProvider serviceProvider)
     {
-        _scriptPrototypes = [];
-        _outputNodePrototypes = [];
         _nodePorts = [];
         _outputNodes = [];
         _allNodes = [];
@@ -58,8 +51,6 @@ public class NodeServiceImpl : INodeService
         _freeNodeIds =  new PriorityQueue<int, int>([(0, 0)]);
         _occupiedNodeIds = [];
         _serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<INodeViewportEventSupplier>(x => x.OnPointerMovement += (_, e) => HandleNodeViewportMouseMovement(e));
-        LoadScripts();
-        LoadOutputNodes();
     }
 
     public void AddNode(Node? node)
@@ -269,21 +260,34 @@ public class NodeServiceImpl : INodeService
 
     public IEnumerable<Node> GetNodes()
     {
-        return _scriptPrototypes.Concat(_outputNodePrototypes).Select(x => x.Value);
+        return ScriptNodeRegistry.GetPrototypeCopies().Cast<Node>().Concat(OutputNodeRegistry.GetPrototypeCopies());
     }
     
-    public void RunGraph()
+    public void ExecuteGraph()
     {
         GetTimelineService().StartNewScriptRun();
+        var error = false;
 
-        foreach (var outputNode in _outputNodes)
+        try
         {
-            outputNode.ExecuteOutput();
+            foreach (var outputNode in _outputNodes)
+            {
+                outputNode.ExecuteOutput();
+            }
         }
-            
-        foreach (var outputNode in _outputNodes)
+
+        catch (Exception)
         {
-            outputNode.Reset();
+            error = true;
+            throw;
+        }
+
+        finally
+        {
+            foreach (var outputNode in _outputNodes)
+            {
+                outputNode.Reset(error);
+            }
         }
     }
 
@@ -310,19 +314,14 @@ public class NodeServiceImpl : INodeService
 
         foreach (var nodeData in data.Nodes)
         {
-            var dict = new Dictionary<string, Node>();
-
-            switch (nodeData.Type)
+            var copy = nodeData.Type switch
             {
-                case nameof(ScriptNode):
-                    dict = _scriptPrototypes;
-                    break;
-                case nameof(OutputNode):
-                    dict = _outputNodePrototypes;
-                    break;
-            }
-
-            var copy = dict[nodeData.UniqueIdentifier].Copy(_serviceProvider);
+                nameof(ScriptNode) => ScriptNodeRegistry.GetCopy(nodeData.UniqueIdentifier, _serviceProvider),
+                nameof(OutputNode) =>
+                    OutputNodeRegistry.GetCopy(nodeData.UniqueIdentifier, _serviceProvider),
+                _ => throw new Exception($"{nodeData.Type} with unique ID {nodeData.UniqueIdentifier} is not registered.")
+            };
+            
             copy.Deserialize(nodeData, _serviceProvider);
             AddNode(copy);
             
@@ -453,29 +452,6 @@ public class NodeServiceImpl : INodeService
     private void InvalidateForegroundOverlay()
     {
         _foregroundOverlay.InvalidateVisual();
-    }
-    
-
-    private void LoadOutputNodes()
-    {
-        var logger = new LoggerOutputNode();
-        _outputNodePrototypes.Add(logger.UniqueIdentifier, logger);
-        var timeline = new TimelineOutputNode();
-        _outputNodePrototypes.Add(timeline.UniqueIdentifier, timeline);
-    }
-
-    private void LoadScripts()
-    {
-        var dirInfo = new DirectoryInfo(ScriptsFolder);
-
-        foreach (var fileInfo in dirInfo.GetFiles())
-        {
-            if (fileInfo.Extension != ScriptFileExtension) continue;
-            
-            var script = Script.Load(fileInfo.FullName);
-            var scriptNode = ScriptParser.Parse(script, _serviceProvider);
-            _scriptPrototypes.Add(scriptNode.UniqueIdentifier, scriptNode);
-        }
     }
     
     private int GetNextNodeId()

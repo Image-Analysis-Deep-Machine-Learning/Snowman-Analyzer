@@ -1,21 +1,21 @@
-﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportWindowDataContext"
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:ViewportContainerDataContext"
                          xmlns="https://github.com/avaloniaui"
                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                          mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                         x:Class="Snowman.Controls.ViewportWindow"
+                         x:Class="Snowman.Controls.ViewportContainer"
                          xmlns:dataContext="using:Snowman.DataContexts"
                          xmlns:ctrl="using:Snowman.Controls"
-                         x:DataType="dataContext:ViewportWindowDataContext"
+                         x:DataType="dataContext:ViewportContainerDataContext"
                          x:Name="Root">
     <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
-        <ctrl:ToolBar Margin="0, 0, 0, 5" Grid.Row="0" Name="ToolBar"/>
+        <ctrl:ViewportToolbar Margin="0, 0, 0, 5" Grid.Row="0" Name="ViewportToolbar"/>
         <Border Grid.Row="1" BorderBrush="{DynamicResource ButtonBackground}"
                 BorderThickness="4"
                 CornerRadius="3">
             <Panel>
-                <ctrl:Viewport Name="Viewport" Background="Transparent"/>
+                <ctrl:ViewportDisplay Name="ViewportDisplay" Background="Transparent"/>
             </Panel>
         </Border>
     </Grid>

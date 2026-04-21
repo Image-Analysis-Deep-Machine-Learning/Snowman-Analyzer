@@ -70,8 +70,8 @@
       <DependentUpon>CanvasRenderer.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Controls\ToolBar.axaml.cs">
-      <DependentUpon>ToolBar.axaml</DependentUpon>
+    <Compile Update="Controls\ViewportToolbar.axaml.cs">
+      <DependentUpon>ViewportToolbar.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Controls\NodeViewport.axaml.cs">
