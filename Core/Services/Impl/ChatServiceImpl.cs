@@ -21,6 +21,7 @@ public class ChatServiceImplementation : IChatService
     private const string ChatHistoryStorageFile = "data/chatHistory.json";
     
     private readonly IServiceProvider _serviceProvider;
+    private readonly IMessageBoxService _messageBoxService;
     private ObservableCollection<Chat>? _chatHistory;
     private CancellationTokenSource? _cancellationTokenSource;
     private ChatWindow? _chatWindow;
@@ -28,6 +29,7 @@ public class ChatServiceImplementation : IChatService
 
     public ChatServiceImplementation(IServiceProvider serviceProvider)
     {
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _serviceProvider = serviceProvider;
     }
     
@@ -132,6 +134,21 @@ public class ChatServiceImplementation : IChatService
                 
                 assistantMessage.AppendContent(textContent);
             }
+            
+            if (firstMessage)
+            {
+                var summarizePrompt = $"Summarize this user prompt in at most 5 words:\n{prompt}";
+                var chatName = await chat.GetChatMessageContentAsync(summarizePrompt, executionSettings: options, cancellationToken: token);
+                
+                if (chatName.Content is not null)
+                {
+                    _currentChat.ShortChatDescription = chatName.Content;
+                }
+                
+                _chatHistory?.Add(_currentChat);
+            }
+            
+            SaveChatHistory();
         }
         
         catch (OperationCanceledException)
@@ -141,16 +158,14 @@ public class ChatServiceImplementation : IChatService
         
         catch (Exception ex)
         {
-            await MessageBox.ShowAsync(ex.Message, "Error", MessageBoxIcon.Error);
+            if (_chatWindow is not null)
+            {
+                _messageBoxService.ShowMessageBox("Error", ex.Message, MessageBoxIcon.Error, MessageBoxButton.OK, _chatWindow);
+            }
+            
             return false;
         }
-
-        if (firstMessage)
-        {
-            _chatHistory?.Add(_currentChat);
-        }
-
-        SaveChatHistory();
+        
         return true;
     }
 
@@ -169,7 +184,12 @@ public class ChatServiceImplementation : IChatService
 
         catch (Exception e)
         {
-            MessageBox.ShowAsync($"Cannot load chat message history.\n{e.StackTrace}", "Error", MessageBoxIcon.Error);
+            if (_chatWindow is not null)
+            {
+                _messageBoxService.ShowMessageBox("Error", $"Cannot load chat message history.\n{e.StackTrace}", MessageBoxIcon.Error, MessageBoxButton.OK, _chatWindow);
+            }
+            
+            
             return;
         }
         

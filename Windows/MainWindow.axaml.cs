@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Python.Runtime;
@@ -9,17 +8,23 @@ using Snowman.Core.Settings;
 using Snowman.DataContexts;
 using Snowman.Utilities;
 using Ursa.Controls;
+using Dispatcher = Avalonia.Threading.Dispatcher;
 
 namespace Snowman.Windows;
 
 public partial class MainWindow : Window
 {
+    private readonly IMessageBoxService _messageBoxService;
+    
     public MainWindow()
     {
         InitializePythonExecutionEnvironment();
         // the most important lines of this application that handle the dependency injection magic
         var serviceProvider = new ServiceProviderImpl();
         serviceProvider.RegisterService<IStorageProviderService>(new StorageProviderServiceImpl(StorageProvider));
+        _messageBoxService = new MessageBoxServiceImpl(this);
+        serviceProvider.RegisterService(_messageBoxService);
+        serviceProvider.RegisterService<IChatService>(new ChatServiceImplementation(serviceProvider));
         DataContext = new MainWindowDataContext(serviceProvider);
         ServiceProviderAttachedProperty.SetProvider(this, serviceProvider);
 
@@ -31,6 +36,12 @@ public partial class MainWindow : Window
     
     public async Task LoadVideoFile()
     {
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+        {
+            _messageBoxService.ShowMessageBox("Error", "Loading video file is not supported on this operating system.", MessageBoxIcon.Error);
+            return;
+        }
+        
         try
         {
             var serviceProvider = ServiceProviderAttachedProperty.GetProvider(this);
@@ -44,7 +55,7 @@ public partial class MainWindow : Window
 
         catch (Exception e)
         {
-            await MessageBox.ShowAsync("Cannot load the video " + e.Message);
+            _messageBoxService.ShowMessageBox("Error", $"Cannot load video file: {e.Message}", MessageBoxIcon.Error);
         }
     }
 
@@ -58,7 +69,7 @@ public partial class MainWindow : Window
         
         catch (Exception e)
         {
-            await MessageBox.ShowAsync("Cannot run mot: " + e.Message);
+            _messageBoxService.ShowMessageBox("Error", $"Cannot run mot: {e.Message}", MessageBoxIcon.Error);
         }
     }
 
@@ -76,13 +87,22 @@ public partial class MainWindow : Window
         chatService.CloseChatWindow();
     }
 
-    private static void InitializePythonExecutionEnvironment()
+    private void InitializePythonExecutionEnvironment()
     {
         if (Design.IsDesignMode) return; // do not initialize PythonEngine in the design mode to prevent crashes
 
         try
         {
-            Runtime.PythonDLL = SettingsRegistry.PythonDllPath.Value;
+            // there is literally no way of catching Python initialization errors without subprocess black magic, Snowman just crashes even inside try-catch
+            if (SettingsRegistry.PythonLibraryPath.Value.EndsWith(".dll") && Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                throw new Exception(
+                    "Cannot use DLL library on UNIX-like operating systems. " +
+                    "Open settings, change ALL THREE Python paths to the library, executable and Python home and restart. " +
+                    "Setting incorrect values may crash Snowman on startup without warning. Change the settings.json file in that case.");
+            }
+            
+            Runtime.PythonDLL = SettingsRegistry.PythonLibraryPath.Value;
             PythonEngine.PythonHome = SettingsRegistry.PythonHomeDirectory.Value;
             PythonEngine.Initialize();
             PythonEngine.BeginAllowThreads();
@@ -90,7 +110,7 @@ public partial class MainWindow : Window
 
         catch (Exception e)
         {
-            MessageBox.ShowAsync($"Cannot initialize Python engine. Check if the Python Dll Path in Settings is valid.\n{e.Message}\n{e.StackTrace}", "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", $"Cannot initialize Python engine. Check if the Python paths in Settings are valid.\n{e.Message}\n{e.StackTrace}", MessageBoxIcon.Error);
         }
     }
 }

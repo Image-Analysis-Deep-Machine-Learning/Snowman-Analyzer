@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Services;
@@ -13,6 +14,7 @@ namespace Snowman.DataContexts;
 public partial class NodeViewportDataContext
 {
     private readonly INodeService _nodeService;
+    private readonly IMessageBoxService _messageBoxService;
     private readonly IServiceProvider _serviceProvider;
     
     public IEnumerable<Node> AvailableNodes => _nodeService.GetNodes();
@@ -21,6 +23,7 @@ public partial class NodeViewportDataContext
     public NodeViewportDataContext(IServiceProvider serviceProvider)
     {
         _nodeService = serviceProvider.GetService<INodeService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _serviceProvider = serviceProvider;
         SelectedNode = _nodeService.GetNodes().FirstOrDefault();
     }
@@ -42,10 +45,7 @@ public partial class NodeViewportDataContext
             
             catch (Exception e)
             {
-                Dispatcher.UIThread.Post(async void() =>
-                {
-                    await MessageBox.ShowAsync($"An exception has occured while executing graph:\n{e.Message}\n{e.StackTrace}");
-                });
+                _messageBoxService.ShowMessageBox("Error", $"An exception has occured while executing graph:\n{e.Message}\n{e.StackTrace}", MessageBoxIcon.Error);
             }
         });
         

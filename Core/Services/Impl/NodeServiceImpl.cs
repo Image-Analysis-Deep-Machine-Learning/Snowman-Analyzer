@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,10 +9,8 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using Snowman.Controls;
 using Snowman.Core.Registries;
-using Snowman.Core.Scripting;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.Nodes;
-using Snowman.Core.Scripting.Nodes.OutputNodes;
 using Snowman.Core.Scripting.UserInterface;
 using Snowman.Data;
 using Snowman.Events.Suppliers;
@@ -26,11 +23,11 @@ public class NodeServiceImpl : INodeService
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<Port, NodePort> _nodePorts;
     private readonly Dictionary<Port, int> _portsToNodeIds;
+    private readonly Dictionary<int, Node> _nodeIdsToNodes;
     private readonly GraphOverlay _backgroundOverlay; // TODO: maybe don't send the entire overlay here, but make an event supplier for NodeService that will fire every time the node graph changes
     private readonly GraphOverlay _foregroundOverlay;
     private readonly List<OutputNode> _outputNodes;
     private ITimelineService? _timelineService;
-    private readonly List<Node> _allNodes;
     private readonly PriorityQueue<int, int> _freeNodeIds;
     private readonly HashSet<int> _occupiedNodeIds;
 
@@ -42,8 +39,8 @@ public class NodeServiceImpl : INodeService
     {
         _nodePorts = [];
         _outputNodes = [];
-        _allNodes = [];
         _portsToNodeIds = [];
+        _nodeIdsToNodes = [];
         _viewportCanvas = viewportCanvas;
         _serviceProvider = serviceProvider;
         _backgroundOverlay = backgroundOverlay;
@@ -63,7 +60,7 @@ public class NodeServiceImpl : INodeService
         }
         
         _occupiedNodeIds.Add(node.Id);
-        _allNodes.Add(node);
+        _nodeIdsToNodes.Add(node.Id, node);
         var builder = new NodeControlBuilder(node, _serviceProvider);
         var director = new NodeControlBuilderDirector(node, builder);
         director.Prepare();
@@ -97,7 +94,7 @@ public class NodeServiceImpl : INodeService
         }
         
         _occupiedNodeIds.Remove(node.Id);
-        _allNodes.Remove(node);
+        _nodeIdsToNodes.Remove(node.Id);
         var control = _viewportCanvas.Children.Where(x => x is NodeControl).Cast<NodeControl>().FirstOrDefault(x => x.DataContext.Node == node);
         
         if (control is null) return;
@@ -295,7 +292,7 @@ public class NodeServiceImpl : INodeService
     {
         var graphData = new NodeGraphData();
 
-        foreach (var node in _allNodes)
+        foreach (var node in _nodeIdsToNodes.Values)
         {
             graphData.Nodes.Add(node.Serialize(_serviceProvider));
         }
@@ -305,7 +302,7 @@ public class NodeServiceImpl : INodeService
 
     public void LoadGraph(NodeGraphData data)
     {
-        foreach (var node in _allNodes.ToList())
+        foreach (var node in _nodeIdsToNodes.Values.ToList())
         {
             RemoveNode(node);
         }
@@ -342,7 +339,7 @@ public class NodeServiceImpl : INodeService
                 
                 foreach (var connectedOutputData in inputData.ConnectedOutputs)
                 {
-                    var connectedOutputNode = _allNodes.First(x => x.Id == connectedOutputData.NodeId);
+                    var connectedOutputNode = _nodeIdsToNodes[connectedOutputData.NodeId];
                     var output = connectedOutputNode.Outputs.First(output => output.Name == connectedOutputData.OutputName);
                     ConnectPorts(input, output);
                 }
@@ -390,7 +387,7 @@ public class NodeServiceImpl : INodeService
         return (CanConnect:
             input is not null &&
             output is not null &&
-            IsDifferentNode(input, output) &&
+            IsNotCycle(input, output) &&
             ArePortsTypeCompatible(input, output), input, output);
     }
 
@@ -403,12 +400,31 @@ public class NodeServiceImpl : INodeService
 
     }
 
-    private bool IsDifferentNode(Port port1, Port port2)
+    private bool IsNotCycle(Input input, Output output)
     {
-        var id1 = _portsToNodeIds[port1];
-        var id2 = _portsToNodeIds[port2];
-        
-        return id1 != id2;
+        var nodeSet = new HashSet<Node>();
+        var node1 = _nodeIdsToNodes[_portsToNodeIds[input]];
+        nodeSet.Add(node1);
+        var connectedNode = _nodeIdsToNodes[_portsToNodeIds[output]];
+        var nodeStack = new Stack<Node>();
+        nodeStack.Push(connectedNode);
+
+        while (nodeStack.Count > 0)
+        {
+            connectedNode = nodeStack.Pop();
+
+            if (!nodeSet.Add(connectedNode)) return false;
+
+            foreach (var nodeInput in connectedNode.Inputs)
+            {
+                foreach (var connectedOutput in nodeInput.ConnectedOutputs)
+                {
+                    nodeStack.Push(_nodeIdsToNodes[_portsToNodeIds[connectedOutput]]);
+                }
+            }
+        }
+
+        return true;
     }
 
     private void ConnectPorts(Port? port1, Port? port2)

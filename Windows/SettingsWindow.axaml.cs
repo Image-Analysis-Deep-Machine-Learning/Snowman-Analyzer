@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Layout;
 using Snowman.Core.Settings;
 
 namespace Snowman.Windows;
@@ -28,7 +29,12 @@ public partial class SettingsWindow : Window
 
     private void CreateStringSettingControl(string settingKey, ISetting<string> stringSetting)
     {
-        var newControl = new StackPanel();
+        var newControl = new StackPanel
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(10, 5, 5, 5)
+        };
+        
         newControl.Children.Add(new TextBlock { Text = settingKey });
         Control control;
         
@@ -42,14 +48,18 @@ public partial class SettingsWindow : Window
             control = CreateTextBox(stringSetting);
         }
 
-        control.Margin = new Thickness(5);
+        control.Margin = new Thickness(0, 5, 5, 5);
         newControl.Children.Add(control);
         SettingsPanel.Children.Add(newControl);
     }
     
     private static TextBox CreateTextBox(ISetting<string> stringSetting)
     {
-        var textBox = new TextBox();
+        var textBox = new TextBox
+        {
+            MaxWidth = 640,
+            MinWidth = 200,
+        };
     
         textBox.Bind(
             TextBox.TextProperty,
@@ -65,7 +75,10 @@ public partial class SettingsWindow : Window
     
     private static ComboBox CreateComboBox(ISetting<string> stringSetting)
     {
-        var comboBox = new ComboBox();
+        var comboBox = new ComboBox
+        {
+            MinWidth = 200
+        };
 
         comboBox.Bind(
             ItemsControl.ItemsSourceProperty,

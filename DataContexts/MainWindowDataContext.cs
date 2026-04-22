@@ -18,6 +18,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 {
     private readonly IDatasetImagesService _datasetImagesService;
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IMessageBoxService _messageBoxService;
     private readonly IProjectService _projectService;
     
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -42,6 +43,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
     public MainWindowDataContext(IServiceProvider serviceProvider)
     {
         _datasetImagesService = serviceProvider.GetService<IDatasetImagesService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(supplier =>
         {
             supplier.SelectedFrameChanged += () => { OnPropertyChanged(nameof(CurrentFrame)); };
@@ -75,7 +77,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         catch (Exception)
         {
-            await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", "Unable to load selected file.", MessageBoxIcon.Error);
         }
     }
     
@@ -96,7 +98,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         catch (Exception e)
         {
-            await MessageBox.ShowAsync($"Unable to load selected file.\nError:\n{e}",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", $"Unable to load selected file.\nError:\n{e}", MessageBoxIcon.Error);
         }
     }
     
@@ -118,7 +120,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
 
         catch (Exception)
         {
-            await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", "Unable to load selected file.", MessageBoxIcon.Error);
         }
     }
     

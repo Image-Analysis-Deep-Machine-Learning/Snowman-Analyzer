@@ -15,6 +15,7 @@ namespace Snowman.Core.Scripting.DataSource.Variables;
 public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
 {
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IMessageBoxService _messageBoxService;
     private readonly IProjectService _projectService;
 
     public bool IsCustomPathSelected
@@ -53,6 +54,7 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
     private DatasetSelector(string name, Group group, string friendlyName, IServiceProvider serviceProvider) : base(name, group, friendlyName)
     {
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _projectService = serviceProvider.GetService<IProjectService>();
         IsCustomPathSelected = false;
         CustomDatasetPath = string.Empty;
@@ -76,7 +78,7 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
 
         catch (Exception e)
         {
-            await MessageBox.ShowAsync($"Unable to load selected file.\nMessage:\n{e.Message}",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", $"Unable to load selected file.\nMessage:\n{e.Message}", MessageBoxIcon.Error);
         }
     }
 

@@ -16,6 +16,7 @@ namespace Snowman.DataContexts;
 public partial class LoadVideoWindowDataContext : INotifyPropertyChanged
 {
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IMessageBoxService _messageBoxService;
     private VideoSequenceMetadata? _videoMetadata;
     
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -71,9 +72,10 @@ public partial class LoadVideoWindowDataContext : INotifyPropertyChanged
     public string SelectedFrameRateStr => $"{SelectedFrameRate:0.###} FPS";
     public bool MetadataSet => _videoMetadata is not null;
 
-    public LoadVideoWindowDataContext(IServiceProvider serviceProvider) : this()
+    public LoadVideoWindowDataContext(IServiceProvider serviceProvider)
     {
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
     }
 
     public async Task SelectVideoFile()
@@ -112,7 +114,7 @@ public partial class LoadVideoWindowDataContext : INotifyPropertyChanged
 
         catch (Exception)
         {
-            await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", "Unable to load selected file.", MessageBoxIcon.Error);
         }
     }
     

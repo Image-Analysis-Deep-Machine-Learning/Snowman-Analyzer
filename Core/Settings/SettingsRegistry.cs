@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -40,7 +39,7 @@ public static class SettingsRegistry
     public static readonly ISetting<string> GeminiApiKey = new Setting<string>(string.Empty);
     public static readonly ISetting<string> OllamaUri = new Setting<string>("http://localhost:11434");
     public static readonly ISetting<string> OpenAiApiKey = new Setting<string>(string.Empty);
-    public static readonly ISetting<string> PythonDllPath = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64", "python312.dll"));
+    public static readonly ISetting<string> PythonLibraryPath = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64", "python312.dll"));
     public static readonly ISetting<string> PythonExecutablePath = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64", "python.exe"));
     public static readonly ISetting<string> PythonHomeDirectory = new Setting<string>(Path.Combine(Environment.CurrentDirectory, "python_win64"));
 
@@ -60,6 +59,12 @@ public static class SettingsRegistry
         if (_settingsWindow == null)
         {
             _settingsWindow = new SettingsWindow();
+            
+            if (string.IsNullOrWhiteSpace(SelectedLlmModel.Value))
+            {
+                OnSelectedLlmProviderValueChanged(SelectedLlmProvider.Value, true);
+            }
+            
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         }
         
@@ -114,39 +119,55 @@ public static class SettingsRegistry
 
     private static void BindEvents()
     {
-        SelectedLlmProvider.ValueChanged += newProvider =>
-        {
-            var kernelProvider = KernelProvider.GetProviderFromName(newProvider);
-            
-            Dispatcher.UIThread.Post(async void () =>
-                {
-                    if (SelectedLlmModel.BoxedAllowedValues is null || SelectedLlmModel.AllowedValues is null) return; // it is not null, but the compiler is clueless
-                    
-                    SelectedLlmModel.BoxedAllowedValues.Clear();
-                    IEnumerable<string> models;
-
-                    try
-                    {
-                        models = await kernelProvider.GetAvailableModels();
-                    }
-
-                    catch (Exception e)
-                    {
-                        await MessageBox.ShowAsync($"Cannot get available models for selected provider.\nError:\n{e.Message}\nStacktrace:\n{e.StackTrace}", "Error", MessageBoxIcon.Error);
-                        return;
-                    }
-                    
-                    foreach (var model in models)
-                    {
-                        SelectedLlmModel.BoxedAllowedValues.Add(model);
-                    }
-                    
-                    SelectedLlmModel.Value = SelectedLlmModel.AllowedValues[0];
-                }
-            );
-        };
+        SelectedLlmProvider.ValueChanged += newProvider => OnSelectedLlmProviderValueChanged(newProvider);
     }
-    
+
+    private static void OnSelectedLlmProviderValueChanged(string newProvider, bool ignoreException = false)
+    {
+        var kernelProvider = KernelProvider.GetProviderFromName(newProvider);
+
+        Dispatcher.UIThread.Post(async void () =>
+        {
+            if (SelectedLlmModel.BoxedAllowedValues is null || SelectedLlmModel.AllowedValues is null) return; // it is not null, but the compiler is clueless
+
+            SelectedLlmModel.BoxedAllowedValues.Clear();
+            SelectedLlmModel.BoxedAllowedValues.Add("Loading...");
+            SelectedLlmModel.Value = SelectedLlmModel.AllowedValues[0];
+            IEnumerable<string> models;
+
+            try
+            {
+                models = await kernelProvider.GetAvailableModels();
+            }
+
+            catch (Exception e)
+            {
+                SelectedLlmModel.Value = string.Empty;
+                
+                if (!ignoreException && _settingsWindow is not null)
+                {
+                    await MessageBox.ShowAsync(_settingsWindow,
+                        $"Cannot get available models for selected provider.\nError:\n{e.Message}\nStacktrace:\n{e.StackTrace}",
+                        "Error", MessageBoxIcon.Error);
+                }
+
+                return;
+            }
+
+            finally
+            {
+                SelectedLlmModel.BoxedAllowedValues.Clear();
+            }
+
+            foreach (var model in models)
+            {
+                SelectedLlmModel.BoxedAllowedValues.Add(model);
+            }
+
+            SelectedLlmModel.Value = SelectedLlmModel.AllowedValues[0];
+        });
+    }
+
     private class Setting<T> : ISetting<T>, INotifyPropertyChanged where T : notnull
     {
         private T _value;
@@ -183,6 +204,15 @@ public static class SettingsRegistry
                 field?.CollectionChanged += (_, _) => SaveSettings();
                 
                 BoxedAllowedValues = [];
+
+                if (field is not null)
+                {
+                    foreach (var item in field)
+                    {
+                        BoxedAllowedValues.Add(item);
+                    }
+                }
+                
                 BoxedAllowedValues.CollectionChanged += (_, e) => AllowedValues?.SyncWithObservableCollection(e);
             }
         }

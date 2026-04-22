@@ -126,11 +126,7 @@ public abstract class Node
     
     protected virtual void Execute()
     {
-        if (_executed) throw new InvalidOperationException($"Attempted to execute node '{this}' more than once, this indicates a cycle.");
-        
-        _executed = true;
         PrepareInputs();
-        _executed = false;
     }
 
     private void PrepareInputs()

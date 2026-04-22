@@ -28,8 +28,9 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
 
     private readonly IStorageProviderService _storageProviderService;
     private readonly IProgressBarService _progressBarService;
+    private readonly IMessageBoxService  _messageBoxService;
     private readonly IProjectService _projectService;
-    private readonly ILoggerService _loggerService = null!;
+    private readonly ILoggerService _loggerService;
 
     public static IEnumerable<string> AvailableDetectors => Detectors.Select(x => x.Name);
     public static IEnumerable<string> AvailableTrackers => ["botsort", "bytetrack"];
@@ -95,6 +96,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
     {
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
         _progressBarService = serviceProvider.GetService<IProgressBarService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _projectService = serviceProvider.GetService<IProjectService>();
         _loggerService = serviceProvider.GetService<ILoggerService>();
         SelectedDetector = Detectors.First().Name;
@@ -139,7 +141,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
 
         catch (Exception)
         {
-            await MessageBox.ShowAsync("Unable to load selected file.",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", "Unable to load selected file.", MessageBoxIcon.Error);
         }
     }
     
@@ -158,13 +160,12 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
     public void StartProcess()
     {
         var outputPath = OutputFolderPath ?? throw new Exception("Output folder path cannot be empty");
-        var pythonDir = Path.Combine(Environment.CurrentDirectory, "python_win64");
-        var exe = Path.Combine(pythonDir, "python.exe");
+        var executable = SettingsRegistry.PythonExecutablePath.Value;
         var script = Path.Combine(Environment.CurrentDirectory, "MultiObjectTracking", "MultiObjectTracking.py");
         
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = exe,
+            FileName = executable,
             Arguments = $"\"{script}\" --input_video=\"{VideoFilePath}\" --output_dir=\"{OutputFolderPath}\" --detector=\"{SelectedDetector}\" --weights=\"{SelectedModel}\" --tracker=\"{SelectedTracker}\"",
             RedirectStandardError = true,
             RedirectStandardOutput = true,
