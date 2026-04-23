@@ -167,7 +167,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         var processStartInfo = new ProcessStartInfo
         {
             FileName = executable,
-            Arguments = $"\"{script}\" --input_video=\"{VideoFilePath}\" --output_dir=\"{OutputFolderPath}\" --detector=\"{SelectedDetector}\" --weights=\"{SelectedModel}\" --tracker=\"{SelectedTracker}\"",
+            Arguments = $"\"{script}\" --input_video=\"{VideoFilePath}\" --output_dir=\"{OutputFolderPath}\" --detector=\"{SelectedDetector}\" --weights=\"{SelectedModel}\" --tracker=\"{SelectedTracker}\" --gpu_accelerated",
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,
@@ -182,7 +182,7 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
             
             _loggerService.LogMessage(args.Data);
             
-            var initializingMatch = new Regex(@" Initializing .* engine...").Match(args.Data);
+            var initializingMatch = new Regex("Initializing .* engine...").Match(args.Data);
             
             if (initializingMatch.Success)
             {

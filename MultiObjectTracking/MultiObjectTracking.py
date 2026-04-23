@@ -56,12 +56,12 @@ def process_video(args):
 
     # 2. Model Selection
     if "RTDETR" in args.detector.upper():
-        print(f"📡 Initializing RT-DETR engine...")
+        print(f"Initializing RT-DETR engine...")
         model = RTDETR(args.weights)
     else:
-        print(f"📡 Initializing {args.detector} engine...")
+        print(f"Initializing {args.detector} engine...")
         model = YOLO(args.weights)
-    print(f"🚀 Detector: {args.detector} | Tracker: {args.tracker} | Speed Est: ON")
+    print(f"Detector: {args.detector} | Tracker: {args.tracker} | Speed Est: ON")
 
     cap = cv2.VideoCapture(args.input_video)
 
@@ -83,8 +83,8 @@ def process_video(args):
     # e.g., 60fps input / 15fps target = 4. Process every 4th frame.
     frame_stride = max(1, int(round(original_fps / target_fps)))
 
-    print(f"ℹ️  Input: {original_w}x{original_h} @ {original_fps:.2f} FPS")
-    print(f"🎯 Target: {target_w}x{target_h} @ {target_fps:.2f} FPS (Stride: {frame_stride})")
+    print(f"Input: {original_w}x{original_h} @ {original_fps:.2f} FPS")
+    print(f"Target: {target_w}x{target_h} @ {target_fps:.2f} FPS (Stride: {frame_stride})")
 
     # Output Setup
     # Create 'frames' subdirectory
@@ -99,7 +99,7 @@ def process_video(args):
         video_writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), target_fps, (target_w, target_h))
 
     # Progress Bar
-    pbar = tqdm(total=total_input_frames, desc="🎥 Processing Video", unit="frame", file=sys.stdout, ascii=True, dynamic_ncols=False, mininterval=0.1)
+    pbar = tqdm(total=total_input_frames, desc="Processing Video", unit="frame", file=sys.stdout, ascii=True, dynamic_ncols=False, mininterval=0.1)
 
     frame_idx = 0
 
@@ -235,11 +235,11 @@ def process_video(args):
     xml_filename = f"_{video_name_only}_metadata.xml"
     output_xml_path = os.path.join(frames_dir, xml_filename)
 
-    print(f"💾 Exporting tracking metadata to: {output_xml_path}")
+    print(f"Exporting tracking metadata to: {output_xml_path}")
     ET.indent(root, space="    ")
     ET.ElementTree(root).write(output_xml_path, encoding="utf-8", xml_declaration=True)
 
-    print(f"✅ Finished.")
+    print(f"Finished.")
 
 
 if __name__ == "__main__":

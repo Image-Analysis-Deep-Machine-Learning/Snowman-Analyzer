@@ -17,7 +17,7 @@ public class LoggerServiceImpl : ILoggerService
     {
         Debug.Print(message);
         
-        Dispatcher.UIThread.Invoke(() =>
+        Dispatcher.UIThread.Post(() =>
         {
             _outputLogTextBox.Text += $"{message}\n";
             _outputLogTextBox.CaretIndex = _outputLogTextBox.Text.Length;
