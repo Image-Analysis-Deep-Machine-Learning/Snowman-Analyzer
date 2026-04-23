@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Snowman.Core.MachineLearning.Providers;
@@ -18,7 +19,7 @@ public static class SettingsRegistry
 {
     private const string SettingsPath = "settings.json";
     
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
     private static readonly Dictionary<string, ISetting> AllSettings = [];
     private static SettingsWindow? _settingsWindow;
     private static bool _loadingSettings;
@@ -88,10 +89,10 @@ public static class SettingsRegistry
 
         foreach (var setting in AllSettings)
         {
-            if (!dict.TryGetValue(setting.Key, out var jsonElement)) continue;
+            if (!dict.TryGetValue(setting.Key, out var jsonElement) || !jsonElement.TryGetProperty("BoxedValue", out var boxedValue)) continue;
 
             var boxedValueType = AllSettings[setting.Key].BoxedValue.GetType();
-            AllSettings[setting.Key].BoxedValue = jsonElement.GetProperty("BoxedValue").Deserialize(boxedValueType) ?? new object();
+            AllSettings[setting.Key].BoxedValue = boxedValue.Deserialize(boxedValueType) ?? new object();
 
             if (!jsonElement.TryGetProperty("BoxedAllowedValues", out var boxedAllowedValues) || boxedAllowedValues.ValueKind is not JsonValueKind.Array) continue;
 
