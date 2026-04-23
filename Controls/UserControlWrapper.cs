@@ -14,7 +14,7 @@ namespace Snowman.Controls;
 public abstract class UserControlWrapper<T> : UserControl where T : class, new()
 {
     /// <summary>
-    /// A replacement for default DataContext that needs to be cast AND null-checked EVERY FUCKING TIME before use.
+    /// A replacement for default DataContext that needs to be cast AND null-checked EVERY         TIME before use.
     /// Shouldn't be the purpose of a XAML UI framework reducing unnecessary UI boilerplate?
     /// </summary>
     /// <exception cref="NullReferenceException">thrown when the getter is accessed but the underlying DataContext is not set yet</exception>

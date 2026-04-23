@@ -73,7 +73,7 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
     {
         while (visual != null && visual != this)
         {
-            if (visual is ComboBox or Button or TextBox or NumericUpDown or Popup) // TODO: add all controls that are clickable and interactable because this retarded framework DOES NOT FUCKING CAPTURE THE POINTER WHEN CLICKING ON SUCH CONTORL
+            if (visual is ComboBox or Button or TextBox or NumericUpDown or Popup) // TODO: add all controls that are clickable and interactable because this          framework DOES NOT         CAPTURE THE POINTER WHEN CLICKING ON SUCH CONTORL
                 return true;
         
             visual = visual.Parent as Visual;

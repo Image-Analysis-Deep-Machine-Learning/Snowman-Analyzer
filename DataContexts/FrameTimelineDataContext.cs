@@ -66,8 +66,8 @@ public partial class FrameTimelineDataContext
     }
     
     // In order to tell the ItemsSource in ItemsControl to refresh, the IEnumerable source needs to implement
-    // INotifyCollectionChanged AND also IList. Why? FUCK YOU, that's why. To avoid adding unnecessary boilerplate from
-    // IList methods and properties NO ONE WILL EVER FUCKING USE ArrayList is extended instead. Do not remove ArrayList
+    // INotifyCollectionChanged AND also IList. Why?      YOU, that's why. To avoid adding unnecessary boilerplate from
+    // IList methods and properties NO ONE WILL EVER         USE ArrayList is extended instead. Do not remove ArrayList
     // as the base class, otherwise the collection silently with no exception whatsoever stops reacting to notifications
     // about updating. I am losing my mind here. Help
     public class FrameCollection : ArrayList, IEnumerable<FrameCollection.TimelineFrame>, INotifyCollectionChanged
