@@ -3,8 +3,8 @@ using System.Linq;
 using System.Windows.Input;
 using Snowman.Core.Commands;
 using Snowman.Core.Registries;
+using Snowman.Core.Services;
 using Snowman.Core.Tools;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 

@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Services;
 using Snowman.Data;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 
 public abstract class Node
 {
-    private bool _executed;
-    
     public double X { get; set; }
     public double Y { get; set; }
     public string UniqueIdentifier { get; set; }
@@ -97,10 +93,6 @@ public abstract class Node
     {
         return Name;
     }
-
-    public abstract Node Copy(IServiceProvider serviceProvider);
-
-    protected abstract void FillNodeType(NodeData data);
     
     protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
     {
@@ -122,11 +114,6 @@ public abstract class Node
         {
             copy.Variables.Add(variable.Copy(serviceProvider));
         }
-    }
-    
-    protected virtual void Execute()
-    {
-        PrepareInputs();
     }
 
     private void PrepareInputs()
@@ -166,4 +153,13 @@ public abstract class Node
             }
         }
     }
+    
+    protected virtual void Execute()
+    {
+        PrepareInputs();
+    }
+
+    public abstract Node Copy(IServiceProvider serviceProvider);
+
+    protected abstract void FillNodeType(NodeData data);
 }

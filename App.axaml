@@ -10,8 +10,8 @@
             <Application.Styles>
                 <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>
                 <FluentTheme/>
-                <fluent:RangeSliderTheme />
-                <semi:SemiTheme Locale="en-US" />
+                <fluent:RangeSliderTheme/>
+                <semi:SemiTheme Locale="en-US"/>
                 <u-Semi:SemiTheme Locale="en-US"/>
                 
                 <!-- Borrowed from SemiTheme code for Expander. A bit hacky but does the work -->

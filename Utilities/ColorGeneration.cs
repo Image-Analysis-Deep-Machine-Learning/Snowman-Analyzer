@@ -7,6 +7,15 @@ namespace Snowman.Utilities;
 public static class ColorGeneration
 {
     private static readonly Random Random = new();
+    private static readonly List<Color> BaseColors =
+    [
+        Colors.DarkOrange,
+        Colors.Gold,
+        Colors.LimeGreen,
+        Colors.DeepSkyBlue,
+        Colors.MediumPurple,
+        Colors.HotPink
+    ];
     
     public static readonly IBrush[] Palette =
     [
@@ -38,16 +47,6 @@ public static class ColorGeneration
         Brushes.HotPink,
         Brushes.LightPink
     ];
-    
-    private static readonly List<Color> BaseColors =
-    [
-        Colors.DarkOrange,
-        Colors.Gold,
-        Colors.LimeGreen,
-        Colors.DeepSkyBlue,
-        Colors.MediumPurple,
-        Colors.HotPink
-    ];
 
     public static Color GetRandomColor()
     {
@@ -62,14 +61,14 @@ public static class ColorGeneration
 
         var baseColor = BaseColors[baseIndex];
 
-        ColorToHSL(baseColor, out var h, out var s, out var l);
+        ColorToHsl(baseColor, out var h, out var s, out var l);
 
         double hueShift = round * 10 % 360; // 10° hue shift per loop
         var newHue = (h + hueShift) % 360;
-        var newColor = HSLToColor(newHue, s, l);
+        var newColor = HslToColor(newHue, s, l);
         
         const double lightL = 0.8;
-        var lightColor = HSLToColor(newHue, s * 0.5, lightL);
+        var lightColor = HslToColor(newHue, s * 0.5, lightL);
 
         return (newColor, lightColor);
     }
@@ -80,7 +79,7 @@ public static class ColorGeneration
 
         frequency = Math.Max(0, Math.Min(frequency, maxFrequency));
 
-        ColorToHSL(baseColor, out var h, out var s, out var lLightest);
+        ColorToHsl(baseColor, out var h, out var s, out var lLightest);
 
         const double lDarkest = 0.3; // target darkest value
         var t = (double)frequency / maxFrequency;
@@ -89,10 +88,10 @@ public static class ColorGeneration
         var l = lLightest - t * (lLightest - lDarkest);
         l = Math.Clamp(l, lDarkest, lLightest);
 
-        return HSLToColor(h, s, l);
+        return HslToColor(h, s, l);
     }
 
-    private static void ColorToHSL(Color color, out double h, out double s, out double l)
+    private static void ColorToHsl(Color color, out double h, out double s, out double l)
     {
         var r = color.R / 255.0;
         var g = color.G / 255.0;
@@ -120,33 +119,33 @@ public static class ColorGeneration
         }
     }
 
-    private static Color HSLToColor(double h, double s, double l)
+    private static Color HslToColor(double h, double s, double l)
     {
-        var C = (1 - Math.Abs(2 * l - 1)) * s;
-        var X = C * (1 - Math.Abs((h / 60) % 2 - 1));
-        var m = l - C / 2;
+        var c = (1 - Math.Abs(2 * l - 1)) * s;
+        var x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+        var m = l - c / 2;
 
-        double r = 0, g = 0, b = 0;
+        double r, g, b;
 
         switch (h)
         {
             case < 60:
-                r = C; g = X; b = 0;
+                r = c; g = x; b = 0;
                 break;
             case < 120:
-                r = X; g = C; b = 0;
+                r = x; g = c; b = 0;
                 break;
             case < 180:
-                r = 0; g = C; b = X;
+                r = 0; g = c; b = x;
                 break;
             case < 240:
-                r = 0; g = X; b = C;
+                r = 0; g = x; b = c;
                 break;
             case < 300:
-                r = X; g = 0; b = C;
+                r = x; g = 0; b = c;
                 break;
             default:
-                r = C; g = 0; b = X;
+                r = c; g = 0; b = x;
                 break;
         }
 

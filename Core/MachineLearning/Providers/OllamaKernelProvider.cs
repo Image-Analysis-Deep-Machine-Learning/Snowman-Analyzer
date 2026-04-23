@@ -27,11 +27,10 @@ public class OllamaKernelProvider : KernelProvider
     {
         var client = new OllamaApiClient(new Uri(SettingsRegistry.OllamaUri.Value));
         var models = await client.ListLocalModelsAsync();
-    
+
         return models
             .Select(x => x.Name)
             .Where(x => !string.IsNullOrEmpty(x))
-            .Order()
-            .ToList();
+            .Order();
     }
 }

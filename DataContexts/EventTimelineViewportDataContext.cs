@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Snowman.Controls;
 using Snowman.Data;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
@@ -18,7 +16,7 @@ public partial class EventTimelineViewportDataContext
 
     public ObservableCollection<ScriptRun> ScriptRuns { get; } = [];
 
-    public EventTimelineViewportDataContext(IServiceProvider serviceProvider, StackPanel timelineViewer)
+    public EventTimelineViewportDataContext(StackPanel timelineViewer)
     {
         _timelineViewer = timelineViewer;
     }
@@ -26,10 +24,7 @@ public partial class EventTimelineViewportDataContext
     public void SelectedScriptRun(ScriptRun scriptRun)
     {
         _timelines.Clear();
-
-        foreach (var output in scriptRun.Outputs)
-            _timelines.Add(output);
-
+        _timelines.AddRange(scriptRun.Outputs);
         UpdateTimelines();
     }
 

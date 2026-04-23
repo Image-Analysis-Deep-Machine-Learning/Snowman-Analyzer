@@ -59,14 +59,20 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         foreach (var bb in _datasetData.Images[_datasetImagesService.CurrentFrameIndex()].BoundingBoxes)
         {
             if (bb.ClassName.TrackId == trackId)
+            {
                 _highlightedBoxes.Add(bb);
+            }
         }
     }
 
     public void ClearHighlights()
     {
         _highlightedBoxes.Clear();
-        foreach (var entity in _entityManager.GetEntities()) entity.IsHighlighted = false;
+        
+        foreach (var entity in _entityManager.GetEntities())
+        {
+            entity.IsHighlighted = false;
+        }
     }
 
     public async Task OpenDataset(string datasetPath)
@@ -83,9 +89,7 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
     {
         var fileStream = await file.OpenReadAsync();
         using var reader = new StreamReader(fileStream);
-        
         var fileContent = await reader.ReadToEndAsync();
-        
         var projectData = ProjectData.Deserialize(fileContent);
         
         if (projectData == null) throw new Exception("Project data could not be deserialized");
@@ -103,7 +107,6 @@ public class ProjectServiceImpl : IProjectService, IDrawableSource, IProjectEven
         }
         
         GetNodeService().LoadGraph(projectData.NodeGraph);
-        
         ProjectLoaded?.Invoke();
     }
 

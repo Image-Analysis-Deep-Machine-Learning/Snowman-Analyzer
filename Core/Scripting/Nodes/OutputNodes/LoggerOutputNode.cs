@@ -6,21 +6,22 @@ namespace Snowman.Core.Scripting.Nodes.OutputNodes;
 
 public class LoggerOutputNode : OutputNode
 {
-    private readonly ILoggerService _loggerService = null!;
+    private readonly ILoggerService _loggerService;
     private readonly Input _messageInput;
+
+    public LoggerOutputNode()
+    {
+        _messageInput = CreateInput();
+        _loggerService = null!;
+        Name = "Logger Output";
+        UniqueIdentifier = nameof(LoggerOutputNode);
+    }
 
     private LoggerOutputNode(IServiceProvider serviceProvider) : this()
     {
         _loggerService = serviceProvider.GetService<ILoggerService>();
     }
     
-    public LoggerOutputNode()
-    {
-        _messageInput = CreateInput();
-        Name = "Logger Output";
-        UniqueIdentifier = nameof(LoggerOutputNode);
-    }
-
     public override Node Copy(IServiceProvider serviceProvider)
     {
         var copy = new LoggerOutputNode(serviceProvider);

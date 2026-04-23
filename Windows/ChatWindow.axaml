@@ -2,13 +2,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" Width="1150" Height="780"
+        x:Class="Snowman.Windows.ChatWindow"
         xmlns:dataContext="using:Snowman.DataContexts"
         xmlns:utilities="using:Snowman.Utilities"
         xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-        mc:Ignorable="d"
-        Width="1150" Height="780"
         x:DataType="dataContext:ChatWindowDataContext"
-        x:Class="Snowman.Windows.ChatWindow"
         Title="Chat"
         x:Name="Root">
     <Window.Resources>
@@ -20,28 +19,20 @@
             <StreamGeometry>M14.5747 10.2538C14.9869 10.295 15.2876 10.6625 15.2464 11.0747L14.7464 16.0747C14.7052 16.4868 14.3376 16.7875 13.9255 16.7463C13.5133 16.7051 13.2126 16.3376 13.2538 15.9254L13.7538 10.9254C13.795 10.5133 14.1626 10.2125 14.5747 10.2538Z</StreamGeometry>
         </GeometryGroup>
     </Window.Resources>
+    
     <Grid ColumnDefinitions="285,*">
-        <Border Grid.Column="0"
-                Background="#161B22"
-                BorderBrush="#30363D"
-                BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="#161B22" BorderBrush="#30363D" BorderThickness="0,0,1,0">
             <DockPanel>
                 <Border DockPanel.Dock="Top"
                         Background="#0D1117"
                         Padding="14,12"
                         BorderBrush="#30363D"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="Chat History"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Foreground="#C9D1D9" />
+                    <TextBlock Text="Chat History" FontSize="13" FontWeight="SemiBold" Foreground="#C9D1D9"/>
                 </Border>
                 
-                <StackPanel DockPanel.Dock="Bottom"
-                            Spacing="6"
-                            Margin="14,10,14,14">
-                    <Separator Margin="0,4" />
-
+                <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="14,10,14,14">
+                    <Separator Margin="0,4"/>
                     <Button Content="New Conversation"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
@@ -63,19 +54,21 @@
                                         CornerRadius="15"
                                         HorizontalContentAlignment="Stretch"
                                         HorizontalAlignment="Stretch"
-                                        Command="{Binding SelectChat}"
-                                        CommandParameter="{Binding #Root.DataContext}"
+                                        Command="{Binding #Root.((dataContext:ChatWindowDataContext)DataContext).SelectChat}"
+                                        CommandParameter="{Binding}"
                                         IsEnabled="{Binding #Root.((dataContext:ChatWindowDataContext)DataContext).IsGeneratingResponse, Converter={StaticResource InverseBool}}">
                                     <DockPanel>
-                                        <TextBlock DockPanel.Dock="Left" Text="{Binding ShortChatDescription}" VerticalAlignment="Center"/>
+                                        <TextBlock DockPanel.Dock="Left"
+                                                   Text="{Binding ShortChatDescription}"
+                                                   VerticalAlignment="Center"/>
                                         <Button DockPanel.Dock="Right"
                                                 Background="Transparent"
                                                 CornerRadius="10"
                                                 Padding="2"
                                                 HorizontalAlignment="Right"
                                                 Foreground="Red"
-                                                Command="{Binding DeleteChat}"
-                                                CommandParameter="{Binding #Root.DataContext}">
+                                                Command="{Binding #Root.((dataContext:ChatWindowDataContext)DataContext).DeleteChat}"
+                                                CommandParameter="{Binding}">
                                             <PathIcon Height="15" Data="{StaticResource DeleteIcon}"/>
                                         </Button>
                                     </DockPanel>
@@ -88,7 +81,6 @@
         </Border>
 
         <DockPanel Grid.Column="1">
-            <!-- ── Input area ────────────────────────────────────────────── -->
             <Border DockPanel.Dock="Bottom"
                     Background="#161B22"
                     BorderBrush="#30363D"
@@ -107,10 +99,7 @@
                              BorderBrush="#30363D"
                              VerticalContentAlignment="Top">
                     </TextBox>
-                    <StackPanel Grid.Column="1"
-                                Margin="10,0,0,0"
-                                Spacing="6"
-                                VerticalAlignment="Bottom">
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="6" VerticalAlignment="Bottom">
                         <Button Content="Send"
                                 Width="72"
                                 IsEnabled="{Binding IsGeneratingResponse, Converter={StaticResource InverseBool}}"
@@ -118,8 +107,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
-
-            <!-- ── Chat header ───────────────────────────────────────────── -->
+            
             <Border DockPanel.Dock="Top"
                     Background="#0D1117"
                     Padding="14,10"
@@ -132,69 +120,19 @@
                                FontWeight="SemiBold"
                                Foreground="#C9D1D9"
                                VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding CurrentProviderAndModel}"
-                               FontSize="12"
-                               Foreground="#6E7681"
-                               VerticalAlignment="Center"/>
                 </Grid>
             </Border>
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="Indigo"
-                                    CornerRadius="5"
-                                    Margin="5"
-                                    Padding="10">
+                            <Border Background="Indigo" CornerRadius="5" Margin="5" Padding="10">
                                 <md:MarkdownRenderer MarkdownBuilder="{Binding MarkdownBuilder}"/>                   
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
-
-            <!-- ── Messages list ─────────────────────────────────────────── -->
-            <!-- <ScrollViewer x:Name="MessagesScroll" -->
-            <!--               VerticalScrollBarVisibility="Auto" -->
-            <!--               HorizontalScrollBarVisibility="Disabled" -->
-            <!--               Background="#0D1117" -->
-            <!--               Padding="10,6,10,6"> -->
-            <!--     <ItemsControl x:Name="MessagesList" ItemsSource="{Binding Messages}"> -->
-            <!--         <ItemsControl.ItemTemplate> -->
-            <!--             <DataTemplate> -->
-            <!--                 <Border Margin="4,4,4,4" -->
-            <!--                         Padding="14,10" -->
-            <!--                         CornerRadius="8" -->
-            <!--                         Background="Indigo"> -->
-            <!--                     <md:MarkdownRenderer MarkdownBuilder="{Binding MarkdownBuilder}"/> -->
-            <!--                 </Border> -->
-            <!--             </DataTemplate> -->
-            <!--         </ItemsControl.ItemTemplate> -->
-            <!-- -->
-            <!--         ~1~ Empty state placeholder @1@ -->
-            <!--         <ItemsControl.Styles> -->
-            <!--             <Style Selector="ItemsControl:empty"> -->
-            <!--                 <Setter Property="Template"> -->
-            <!--                     <ControlTemplate> -->
-            <!--                         <StackPanel HorizontalAlignment="Center" -->
-            <!--                                     VerticalAlignment="Center" -->
-            <!--                                     Spacing="10" -->
-            <!--                                     Margin="0,80"> -->
-            <!--                             <TextBlock Text="💬" -->
-            <!--                                        FontSize="48" -->
-            <!--                                        HorizontalAlignment="Center" /> -->
-            <!--                             <TextBlock Text="Start a conversation" -->
-            <!--                                        FontSize="16" -->
-            <!--                                        Foreground="#6E7681" -->
-            <!--                                        HorizontalAlignment="Center" /> -->
-            <!--                         </StackPanel> -->
-            <!--                     </ControlTemplate> -->
-            <!--                 </Setter> -->
-            <!--             </Style> -->
-            <!--         </ItemsControl.Styles> -->
-            <!--     </ItemsControl> -->
-            <!-- </ScrollViewer> -->
         </DockPanel>
     </Grid>
 </Window>

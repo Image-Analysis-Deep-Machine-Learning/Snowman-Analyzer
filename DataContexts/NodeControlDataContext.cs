@@ -7,10 +7,9 @@ namespace Snowman.DataContexts;
 
 public partial class NodeControlDataContext : INotifyPropertyChanged
 {
-    public readonly Node Node;
-    
     public event PropertyChangedEventHandler? PropertyChanged;
     
+    public Node Node { get; }
     public string NodeName => Node.Name;
     
     public double X

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Snowman.Events;
-using Snowman.Events.Suppliers;
 
 namespace Snowman.Core.Services.Impl;
 

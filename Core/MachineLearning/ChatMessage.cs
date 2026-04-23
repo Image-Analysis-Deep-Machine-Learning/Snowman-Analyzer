@@ -20,8 +20,6 @@ public class ChatMessage
         Dispatcher.UIThread.Post(() => MarkdownBuilder.Append(content));
     }
 
-    public ChatMessage() : this(ChatRole.User) {}
-
     public void AppendContent(string newContent)
     {
         Content += newContent;

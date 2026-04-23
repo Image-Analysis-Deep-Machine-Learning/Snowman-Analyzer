@@ -1,6 +1,6 @@
 ﻿using Python.Runtime;
+using Snowman.Core.Services;
 using Snowman.Data;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.Nodes;
 

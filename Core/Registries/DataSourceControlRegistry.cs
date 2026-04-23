@@ -12,13 +12,13 @@ namespace Snowman.Core.Registries;
 
 public static class DataSourceControlRegistry
 {
+    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
+
     static DataSourceControlRegistry()
     {
         RegisterPortFactories();
         RegisterVariableFactories();
     }
-
-    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
     
     public static void RegisterDataSourceControlFactory<T>(Func<T, Control> factory) where T : IDataSource
     {
@@ -28,7 +28,9 @@ public static class DataSourceControlRegistry
     
     public static Control CreateControl(IDataSource dataSource)
     {
-        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory) ? factory(dataSource) : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
+        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory)
+            ? factory(dataSource)
+            : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
     }
 
     private static void RegisterPortFactories()

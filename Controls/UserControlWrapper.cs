@@ -2,6 +2,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Snowman.Core.Services;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;

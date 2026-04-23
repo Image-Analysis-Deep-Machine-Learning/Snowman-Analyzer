@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Snowman.Utilities;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource;
@@ -42,7 +43,7 @@ public class Input(string name, Type type, Group group, string friendlyName) : P
                     list = Value as IList ?? throw new InvalidCastException($"Cannot cast {Value?.GetType()} to IList");
                 }
                 
-                list!.Add(connectedOutput.Value);
+                list.Add(connectedOutput.Value);
             }
 
             else

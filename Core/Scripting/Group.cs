@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Snowman.Core.Scripting;
+﻿namespace Snowman.Core.Scripting;
 
 public class Group
 {
@@ -25,7 +23,7 @@ public class Group
 
     public Group(string name, Group parent)
     {
-        Parent = parent ?? throw new ArgumentNullException(nameof(parent), "Parent group cannot be null. Use Group(string name) constructor instead.");
+        Parent = parent;
         Name = name;
     }
 

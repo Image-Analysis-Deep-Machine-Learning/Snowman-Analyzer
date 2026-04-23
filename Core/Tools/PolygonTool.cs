@@ -53,7 +53,7 @@ public class PolygonTool : EntityEditTool<PolygonEntity>
 
             else
             {
-                if (_polygonInCreation.CanBeClosed && EntityManager.GetEntitiesHitByPoint(pointerPosition).Contains(_polygonInCreation.Children[0].Children[0]))
+                if (_polygonInCreation.CanBeClosed() && EntityManager.GetEntitiesHitByPoint(pointerPosition).Contains(_polygonInCreation.Children[0].Children[0]))
                 {
                     _polygonInCreation.ClosePolygon();
                     _polygonInCreation = null;

@@ -3,11 +3,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" Width="1920" Height="1080"
+        x:Class="Snowman.Windows.MainWindow"
         xmlns:dataContext="using:Snowman.DataContexts"
         xmlns:ctrl="using:Snowman.Controls"
-        xmlns:snowman="using:Snowman"
-        xmlns:windows="clr-namespace:Snowman.Windows"
-        x:Class="Snowman.Windows.MainWindow"
+        xmlns:windows="using:Snowman.Windows"
         x:DataType="dataContext:MainWindowDataContext"
         Title="Snowman"
         WindowState="Maximized"
@@ -16,6 +15,7 @@
         <StreamGeometry x:Key="ArrowLeftRegular">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
         <StreamGeometry x:Key="ArrowRightRegular">M15.2685,4.20949 C14.97,3.92233 14.4952,3.93153 14.208,4.23005 C13.9209,4.52857 13.9301,5.00335 14.2286,5.29051 L22.5028,13.25 L3.75,13.25 C3.33579,13.25 3,13.5858 3,13.9999982 C3,14.4142 3.33579,14.75 3.75,14.75 L22.5018,14.75 L14.2286,22.7085 C13.9301,22.9957 13.9209,23.4705 14.208,23.769 C14.4952,24.0675 14.97,24.0767 15.2685,23.7896 L24.6965,14.7202 C25.1054,14.3268 25.1054,13.6723 24.6965,13.2788 L15.2685,4.20949 Z</StreamGeometry>
     </Window.Resources>
+    
     <Grid RowDefinitions="Auto, *, Auto, Auto">
         <!-- menu -->
         <Menu Grid.Row="0">
@@ -30,7 +30,7 @@
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="_Load Video File" Command="{Binding $parent[windows:MainWindow].LoadVideoFile}"/>
-                <MenuItem Header="_Run Multi-Object Tracking" Command="{Binding $parent[windows:MainWindow].RunMot}"/>
+                <MenuItem Header="_Run MOT" Command="{Binding $parent[windows:MainWindow].RunMot}"/>
                 <MenuItem Header="_Chat" Command="{Binding $parent[windows:MainWindow].OpenChat}"/>
             </MenuItem>
         </Menu>
@@ -44,8 +44,15 @@
             <!-- viewport -->
             <Grid Grid.Row="0" Grid.Column="0">
                 <ctrl:ViewportContainer HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                <Button IsHitTestVisible="False" Foreground="White" Opacity="0.7" Background="#454548" Content="{Binding CurrentFrame}" Margin="7" HorizontalAlignment="Left" VerticalAlignment="Bottom" ZIndex="100">
-                </Button>
+                <Button IsHitTestVisible="False"
+                        Foreground="White"
+                        Opacity="0.7"
+                        Background="#454548"
+                        Content="{Binding CurrentFrame}"
+                        Margin="7"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        ZIndex="100"/>
             </Grid>
             
             <!-- timeline container -->
@@ -67,27 +74,24 @@
                         <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
                     </Style>
                 </Grid.Styles>
-                <Grid RowDefinitions="*" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding FrameTimelineActive}">
+                
+                <Grid RowDefinitions="*"
+                      ColumnDefinitions="Auto,*,Auto"
+                      IsVisible="{Binding FrameTimelineActive}">
                     <!-- prev -->
                     <Button Grid.Column="0"
                             Command="{Binding PrevFrame}"
                             HorizontalContentAlignment="Center"
                             Width="60"
                             Padding="2">
-                        <StackPanel Orientation="Vertical"
-                                    HorizontalAlignment="Center"
-                                    Spacing="5">
-                            <Path Data="{StaticResource ArrowLeftRegular}"
-                                  HorizontalAlignment="Center"/>
-                            <TextBlock Text="Prev"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"/>
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Spacing="5">
+                            <Path Data="{StaticResource ArrowLeftRegular}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Prev" HorizontalAlignment="Center" TextAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     
                     <!-- frame timeline -->
-                    <Border Grid.Column="1"
-                            Margin="5, 0, 5, 0">
+                    <Border Grid.Column="1" Margin="5, 0, 5, 0">
                         <ctrl:FrameTimeline Name="FrameTimeline"/>
                     </Border>
                     
@@ -97,14 +101,9 @@
                             HorizontalContentAlignment="Center"
                             Width="60"
                             Padding="2">
-                        <StackPanel Orientation="Vertical"
-                                    Spacing="5"
-                                    HorizontalAlignment="Center">
-                            <Path Data="{StaticResource ArrowRightRegular}"
-                                  HorizontalAlignment="Center"/>
-                            <TextBlock Text="Next"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"/>
+                        <StackPanel Orientation="Vertical" Spacing="5" HorizontalAlignment="Center">
+                            <Path Data="{StaticResource ArrowRightRegular}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Next" HorizontalAlignment="Center" TextAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -116,35 +115,49 @@
                 
                 <!-- timeline toggle buttons -->
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Left" VerticalAlignment="Top" ZIndex="100"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            ZIndex="100"
                             Spacing="5">
                     
                     <!-- frame timeline button -->
-                    <Button Width="24" Height="24" MinWidth="24" MinHeight="24"
+                    <Button Width="24"
+                            Height="24"
+                            MinWidth="24"
+                            MinHeight="24"
                             Padding="0"
-                            Command="{Binding SetTimelineMode}" CommandParameter="Frame"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            Command="{Binding SetTimelineMode}"
+                            CommandParameter="Frame"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
                             ToolTip.Tip="Frame Timeline">
                         <Path Classes="FrameTimelinePath"
                               Data="{StaticResource FrameTimelineIcon}"
                               Stretch="Uniform"
                               Width="16" Height="16"
-                              VerticalAlignment="Center" HorizontalAlignment="Center">
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center">
                         </Path>
                     </Button>
                     
                     <!-- event timeline button -->
-                    <Button Width="24" Height="24" MinWidth="24" MinHeight="24"
+                    <Button Width="24"
+                            Height="24"
+                            MinWidth="24"
+                            MinHeight="24"
                             Padding="0"
-                            Command="{Binding SetTimelineMode}" CommandParameter="Event"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            Command="{Binding SetTimelineMode}"
+                            CommandParameter="Event"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
                             ToolTip.Tip="Event Timeline">
                         <Path Classes="EventTimelinePath"
                               Data="{StaticResource EventTimelineIcon}"
                               Fill="{StaticResource TextControlForeground}"
                               Stretch="Uniform"
                               Width="16" Height="16"
-                              VerticalAlignment="Center" HorizontalAlignment="Center">
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center">
                         </Path>
                     </Button>
                 </StackPanel>
@@ -172,15 +185,25 @@
         </Grid>
         
         <!-- bottom bar -->
-        <Border Grid.Row="2" Background="{StaticResource CalendarViewBackground}" Padding="5" Height="25">
+        <Border Grid.Row="2"
+                Background="{StaticResource CalendarViewBackground}"
+                Padding="5"
+                Height="25">
             <!-- progress bar -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                <ProgressBar Height="15" MaxWidth="200"
+                <ProgressBar Height="15"
+                             MaxWidth="200"
                              x:Name="ProgressBar"
-                             Minimum="0" Maximum="100" Value="0"
+                             Minimum="0"
+                             Maximum="100"
+                             Value="0"
                              ShowProgressText="True"
                              IsVisible="False"/>
-                <TextBlock Height="15" FontSize="12" Margin="5, 0 , 0, 0" x:Name="ProgressBarText" IsVisible="False"></TextBlock>
+                <TextBlock Height="15"
+                           FontSize="12"
+                           Margin="5, 0 , 0, 0"
+                           x:Name="ProgressBarText"
+                           IsVisible="False"/>
             </StackPanel>
         </Border>
     </Grid>

@@ -17,9 +17,11 @@ namespace Snowman.Core.Services.Impl;
 public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, IDatasetImagesEventSupplier
 {
     private const int CachePurgeInterval = 2;
+    
     private static readonly IEnumerable<Image> PlaceHolderFrame = [new() { Src = "placeholder.png" }];
     
     private readonly List<Image> _imageList;
+    
     private string _baseFolder;
     private int _currentFrameIndex;
     private Bitmap?[] _cachedFrames;
@@ -176,7 +178,7 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
     {
         for (var i = 0; i < _cachedFrames.Length; i++)
         {
-            // TODO: do not clear cache of frames that are currently visible
+            // TODO: do not clear cache of frames that are currently visible and rework cache clearing to not cause stutters
             _cachedFrames[i] = null;
             _cachedThumbnails[i] = null;
         }

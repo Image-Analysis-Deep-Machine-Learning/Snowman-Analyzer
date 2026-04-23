@@ -1,4 +1,5 @@
 ﻿using System;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource;
@@ -19,14 +20,14 @@ public abstract class Port : IDataSource
         Group = group;
         FriendlyName = friendlyName;
     }
-    
-    public abstract void AskForValue();
 
     public virtual void ResetPort(bool forced)
     {
         HasValue = false;
         Value = null;
     }
+    
+    public abstract void AskForValue();
 
     public abstract IDataSource Copy(IServiceProvider serviceProvider);
 }

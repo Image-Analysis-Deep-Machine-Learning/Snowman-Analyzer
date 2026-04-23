@@ -10,8 +10,10 @@ using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Snowman.Core.MachineLearning;
 using Snowman.Core.MachineLearning.Providers;
+using Snowman.Utilities;
 using Snowman.Windows;
 using Ursa.Controls;
+
 using ChatMessage = Snowman.Core.MachineLearning.ChatMessage;
 
 namespace Snowman.Core.Services.Impl;
@@ -22,6 +24,7 @@ public class ChatServiceImplementation : IChatService
     
     private readonly IServiceProvider _serviceProvider;
     private readonly IMessageBoxService _messageBoxService;
+    
     private ObservableCollection<Chat>? _chatHistory;
     private CancellationTokenSource? _cancellationTokenSource;
     private ChatWindow? _chatWindow;
@@ -189,16 +192,11 @@ public class ChatServiceImplementation : IChatService
                 _messageBoxService.ShowMessageBox("Error", $"Cannot load chat message history.\n{e.StackTrace}", MessageBoxIcon.Error, MessageBoxButton.OK, _chatWindow);
             }
             
-            
             return;
         }
         
         _chatHistory?.Clear();
-        
-        foreach (var chat in history)
-        {
-            _chatHistory?.Add(chat);
-        }
+        _chatHistory?.AddRange(history);
     }
 
     private void SaveChatHistory()

@@ -7,18 +7,19 @@ namespace Snowman.Core.Scripting.Nodes.OutputNodes;
 
 public class TimelineOutputNode : OutputNode
 {
-    private readonly ITimelineService _timelineService = null!;
+    private readonly ITimelineService _timelineService;
     private readonly Input _input;
-
-    private TimelineOutputNode(IServiceProvider serviceProvider) : this()
-    {
-        _timelineService = serviceProvider.GetService<ITimelineService>();
-    }
 
     public TimelineOutputNode()
     {
         _input = CreateInput();
+        _timelineService = null!;
         Name = "Timeline Layer Output Node";
+    }
+
+    private TimelineOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _timelineService = serviceProvider.GetService<ITimelineService>();
     }
 
     public override void ExecuteOutput()
@@ -28,12 +29,7 @@ public class TimelineOutputNode : OutputNode
         if (_input.Value is not IEnumerable<Layer> layer) return;
 
         var output = new TimelineOutput();
-
-        foreach (var layerItem in layer)
-        {
-            output.Layers.Add(layerItem);
-        }
-
+        output.Layers.AddRange(layer);
         output.InitFilters();
         
         _timelineService.AddOutput(output);

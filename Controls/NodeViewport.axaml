@@ -11,24 +11,26 @@
                          x:DataType="dataContext:NodeViewportDataContext">
     <ctrl:UserControlWrapper.Styles>
         <Style Selector="ctrl|NodeControl" x:DataType="dataContext:NodeControlDataContext">
-            <Setter Property="(Canvas.Left)" Value="{Binding X, Mode=TwoWay}" />
-            <Setter Property="(Canvas.Top)" Value="{Binding Y, Mode=TwoWay}" />
-    
-            <Setter Property="UseLayoutRounding" Value="False" />
+            <Setter Property="(Canvas.Left)" Value="{Binding X, Mode=TwoWay}"/>
+            <Setter Property="(Canvas.Top)" Value="{Binding Y, Mode=TwoWay}"/>
+            <Setter Property="UseLayoutRounding" Value="False"/>
         </Style>
     </ctrl:UserControlWrapper.Styles>
+    
     <Grid RowDefinitions="Auto,*">
         <Grid.Styles>
             <Style Selector="Grid Button">
                 <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
             </Style>
         </Grid.Styles>
+        
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5" Margin="0, 0, 0, 5">
             <ComboBox ItemsSource="{Binding AvailableNodes}"
                       SelectedItem="{Binding SelectedNode}"/>
             <Button Content="Add Node" Command="{Binding AddNode}"/>
             <Button Content="Execute Graph" Command="{Binding ExecuteGraph}"/>
         </StackPanel>
+        
         <paz:ZoomBorder Grid.Row="1" ZoomSpeed="1.1" ClipToBounds="True">
             <Canvas UseLayoutRounding="False" Name="ViewportCanvas">
                 <ctrl:GraphOverlay Width="{Binding #ViewportCanvas.Bounds.Width}"

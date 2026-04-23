@@ -114,6 +114,7 @@ public static class SettingsRegistry
     private static void SaveSettings()
     {
         if (_loadingSettings) return; // avoid unnecessary writes
+        
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(AllSettings, JsonSerializerOptions));
     }
 
@@ -159,11 +160,7 @@ public static class SettingsRegistry
                 SelectedLlmModel.BoxedAllowedValues.Clear();
             }
 
-            foreach (var model in models)
-            {
-                SelectedLlmModel.BoxedAllowedValues.Add(model);
-            }
-
+            SelectedLlmModel.BoxedAllowedValues.AddRange(models);
             SelectedLlmModel.Value = SelectedLlmModel.AllowedValues[0];
         });
     }

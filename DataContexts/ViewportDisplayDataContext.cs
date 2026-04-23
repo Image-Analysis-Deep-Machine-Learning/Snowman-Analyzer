@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Snowman.Core.Services;
 using Snowman.Events.Suppliers;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -56,6 +57,8 @@ public partial class ViewportDisplayDataContext
                 _cachedImageSize = datasetImagesService.GetImageSize();
                 ResetTransform();
             };
+
+            x.ProjectLoaded += ResetTransform;
         });
         
         ResetTransform();
@@ -72,9 +75,6 @@ public partial class ViewportDisplayDataContext
 
     public void Render(DrawingContext drawingContext)
     {
-        // background color - TODO: configurable?
-        //drawingContext.FillRectangle(new SolidColorBrush(Color.FromRgb(30, 31, 34)), new Rect(0, 0, ControlBounds.Width, ControlBounds.Height));
-
         using (drawingContext.PushTransform(TransformationMatrix))
         {
             using var bicubic = drawingContext.PushRenderOptions(new RenderOptions{BitmapInterpolationMode = BitmapInterpolationMode.None});

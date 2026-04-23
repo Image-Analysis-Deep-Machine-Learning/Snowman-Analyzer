@@ -1,20 +1,21 @@
 ﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:FrameTimelineDataContext"
-                             xmlns="https://github.com/avaloniaui"
-                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                             x:Class="Snowman.Controls.FrameTimeline"
-                             xmlns:dataContext="using:Snowman.DataContexts"
-                             xmlns:ctrl="using:Snowman.Controls"
-                             x:DataType="dataContext:FrameTimelineDataContext"
-                             Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
+                         xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="Snowman.Controls.FrameTimeline"
+                         xmlns:dataContext="using:Snowman.DataContexts"
+                         xmlns:ctrl="using:Snowman.Controls"
+                         x:DataType="dataContext:FrameTimelineDataContext"
+                         Bounds="{Binding ControlBounds, Mode=OneWayToSource}">
     <ItemsControl Name="FrameItems" ItemsSource="{Binding Frames}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
                 <UniformGrid Rows="1"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
+        
         <ItemsControl.ItemTemplate>
             <DataTemplate>
                 <Grid RowDefinitions="15,*"
@@ -37,18 +38,18 @@
                             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
                         </Style>
                     </Grid.Styles>
+                    
                     <TextBlock Grid.Row="0"
                                TextAlignment="Center"
                                Text="{Binding Label}"
                                Margin="5"
                                FontFamily="Arial"/>
-                    <Border Grid.Row="1"
-                            BorderThickness="3"
-                            CornerRadius="3">
+                    
+                    <Border Grid.Row="1" BorderThickness="3" CornerRadius="3">
                         <Image Source="{Binding Image}">
                             <Interaction.Behaviors>
                                 <EventTriggerBehavior EventName="PointerPressed">
-                                    <InvokeCommandAction Command="{Binding ProcessPointerPressed}" />
+                                    <InvokeCommandAction Command="{Binding ProcessPointerPressed}"/>
                                 </EventTriggerBehavior>
                             </Interaction.Behaviors>
                         </Image>

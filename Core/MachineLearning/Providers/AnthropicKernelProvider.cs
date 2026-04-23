@@ -12,7 +12,7 @@ public class AnthropicKernelProvider : KernelProvider
     public override Kernel BuildKernel()
     {
         return Kernel.CreateBuilder()
-            .AddAnthropicChatCompletion("", SettingsRegistry.AnthropicApiKey.Value, httpClient: KernelProvider.HttpClient)
+            .AddAnthropicChatCompletion("", SettingsRegistry.AnthropicApiKey.Value, httpClient: HttpClient)
             .Build();
     }
 
@@ -23,7 +23,7 @@ public class AnthropicKernelProvider : KernelProvider
 
     public override async Task<IEnumerable<string>> GetAvailableModels()
     {
-        var client = new AnthropicClient { ApiKey = SettingsRegistry.AnthropicApiKey.Value, HttpClient = KernelProvider.HttpClient };
+        var client = new AnthropicClient { ApiKey = SettingsRegistry.AnthropicApiKey.Value, HttpClient = HttpClient };
         var response = await client.Models.List();
 
         return response.Items.Select(m => m.ID);

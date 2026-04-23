@@ -22,7 +22,7 @@ public class RectangleEntity : Entity
 
             foreach (var child in Children)
             {
-                child._selected = value;
+                child.SelectedInternal = value;
             }
         }
     }
@@ -37,7 +37,7 @@ public class RectangleEntity : Entity
         
         _rectangle = new Rect(Position, new Point(maxX, maxY));
         
-        _children.AddRange([
+        ChildrenInternal.AddRange([
             new PointEntity(Position, this), // top left
             new PointEntity(Position.WithX(Position.X + _rectangle.Width), this), // top right
             new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this), // bottom right
@@ -47,7 +47,7 @@ public class RectangleEntity : Entity
         for (var i = 0; i < 4; i++)
         {
             var index = i;
-            Children[i].PositionChanges += (sender, _) => UpdatePointsLocation(index);
+            Children[i].PositionChanges += (_, _) => UpdatePointsLocation(index);
         }
 
         PositionChanges += OnPositionChanges;

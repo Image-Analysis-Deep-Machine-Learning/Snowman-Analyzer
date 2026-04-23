@@ -1,6 +1,6 @@
 ﻿using Snowman.Controls;
 using Snowman.Core.Scripting.DataSource.Variables;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+using Snowman.Core.Services;
 
 namespace Snowman.Core.Scripting.UserInterface.Controls;
 

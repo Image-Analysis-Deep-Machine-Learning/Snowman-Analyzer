@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Snowman.Core.Registries;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
-using Snowman.Core.Scripting.DataSource.Variables;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting;

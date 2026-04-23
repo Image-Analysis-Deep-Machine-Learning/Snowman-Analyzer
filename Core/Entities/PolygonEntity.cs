@@ -9,8 +9,6 @@ namespace Snowman.Core.Entities;
 public class PolygonEntity : Entity
 {
     private bool _isClosed;
-    
-    public bool CanBeClosed => Children.Count > 2;
 
     public PolygonEntity(Point point1, Point point2) : base(point1)
     {
@@ -19,35 +17,32 @@ public class PolygonEntity : Entity
         firstSegment.Children[1].IsVisible = false;
         controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
         firstSegment.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(firstSegment.Children[0].Position);
-        _children.Add(firstSegment);
+        ChildrenInternal.Add(firstSegment);
         PositionChanges += OnPositionChanges;
-        // var controlPoint = new PointEntity(point1, this);
-        // controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
-        // _children.Add(controlPoint);
-        // _children.Add(new PointEntity(point2, this) { IsVisible = false });
-        // PositionChanges += OnPositionChanges;
     }
 
     public void AddPoint(Point point)
     {
-        _children[^1].Children[1].IsVisible = true;
-        var nextSegment = new SegmentEntity(_children[^1].Children[1] as PointEntity ?? throw new InvalidOperationException(), point, this);
+        ChildrenInternal[^1].Children[1].IsVisible = true;
+        var nextSegment = new SegmentEntity(ChildrenInternal[^1].Children[1] as PointEntity ?? throw new InvalidOperationException(), point, this);
         nextSegment.Children[1].IsVisible = false;
-        _children.Add(nextSegment);
+        ChildrenInternal.Add(nextSegment);
         RaiseEntityChanged();
-        // _children[^1].IsVisible = true;
-        // _children.Add(new PointEntity(point, this) { IsVisible = false });
-        // RaiseEntityChanged();
     }
 
     public void ClosePolygon()
     {
-        _children[^1]._children[1] = _children[0].Children[0];
-        _children[^1].PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(_children[^1].Children[1].Position);
+        ChildrenInternal[^1].ChildrenInternal[1] = ChildrenInternal[0].Children[0];
+        ChildrenInternal[^1].PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(ChildrenInternal[^1].Children[1].Position);
         _isClosed = true;
         RaiseEntityChanged();
     }
     
+    public bool CanBeClosed()
+    {
+        return Children.Count > 2;
+    }
+
     public override void Render(DrawingContext drawingContext)
     {
         if (!IsVisible) return;
@@ -151,7 +146,7 @@ public class PolygonEntity : Entity
 
     public Point[] GetRawPoints()
     {
-        return _children.SelectMany(child => child.Children).Select(x => x.Position).ToArray();
+        return ChildrenInternal.SelectMany(child => child.Children).Select(x => x.Position).ToArray();
     }
 
     private void OnPositionChanges(Entity sender, Point oldPosition)

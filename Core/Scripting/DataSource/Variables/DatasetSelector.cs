@@ -8,6 +8,7 @@ using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.Utilities;
 using Ursa.Controls;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource.Variables;
@@ -82,15 +83,6 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         }
     }
 
-    private void LoadSelectedDataset()
-    {
-        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
-        using var reader = new StreamReader(fileStream);
-        var fileContent = reader.ReadToEnd();
-        
-        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
-    }
-
     public override Variable Copy(IServiceProvider serviceProvider)
     {
         return new DatasetSelector(Name, Group, FriendlyName, serviceProvider)
@@ -110,5 +102,14 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         return "Allows the user to select a dataset. UI has two checkbox options: 'Current' and 'Custom Path'. " +
                "'Current' will use currently loaded dataset. 'Custom Path' will allow the user to select a valid dataset file. " +
                "This variable has no properties in the XML structure.";
+    }
+
+    private void LoadSelectedDataset()
+    {
+        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
+        using var reader = new StreamReader(fileStream);
+        var fileContent = reader.ReadToEnd();
+        
+        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
     }
 }

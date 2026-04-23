@@ -9,6 +9,7 @@ using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
 using Snowman.Utilities;
 using Ursa.Controls;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -17,10 +18,20 @@ public partial class LoadVideoWindowDataContext : INotifyPropertyChanged
 {
     private readonly IStorageProviderService _storageProviderService;
     private readonly IMessageBoxService _messageBoxService;
+    
     private VideoSequenceMetadata? _videoMetadata;
     
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Events.EventHandler<VideoSequenceMetadata?>? DialogCloseRequested;
+
+    public ReadOnlyCollection<string> FrameFormats { get; } = new(["jpeg", "png", "gif", "tiff", "bmp"]);
+    public double DurationSeconds => _videoMetadata?.DurationSeconds ?? 1;
+    public double FrameRate => _videoMetadata?.FrameRate ?? 1;
+    public string LowerSelectedTimeStr => $@"{TimeSpan.FromSeconds(StartSelectedTime):mm\:ss\.fff}";
+    public string UpperSelectedTimeStr => $@"{TimeSpan.FromSeconds(EndSelectedTime):mm\:ss\.fff}";
+    public string SelectedFrameRateStr => $"{SelectedFrameRate:0.###} FPS";
+    public bool MetadataSet => _videoMetadata is not null;
+    
     public double SelectedFrameRate
     {
         get => _videoMetadata?.FrameRate ?? 1;
@@ -63,14 +74,6 @@ public partial class LoadVideoWindowDataContext : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
-
-    public ReadOnlyCollection<string> FrameFormats { get; } = new(["jpeg", "png", "gif", "tiff", "bmp"]);
-    public double DurationSeconds => _videoMetadata?.DurationSeconds ?? 1;
-    public double FrameRate => _videoMetadata?.FrameRate ?? 1;
-    public string LowerSelectedTimeStr => $@"{TimeSpan.FromSeconds(StartSelectedTime):mm\:ss\.fff}";
-    public string UpperSelectedTimeStr => $@"{TimeSpan.FromSeconds(EndSelectedTime):mm\:ss\.fff}";
-    public string SelectedFrameRateStr => $"{SelectedFrameRate:0.###} FPS";
-    public bool MetadataSet => _videoMetadata is not null;
 
     public LoadVideoWindowDataContext(IServiceProvider serviceProvider)
     {

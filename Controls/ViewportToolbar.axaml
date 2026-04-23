@@ -15,11 +15,12 @@
                 <StackPanel Orientation="Horizontal" Spacing="5"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
+        
         <ItemsControl.ItemTemplate>
             <DataTemplate>
                 <Button Content="{Binding Name}"
                         Command="{Binding #Root.DataContext.SetTool}"
-                        CommandParameter="{Binding }"
+                        CommandParameter="{Binding}"
                         Foreground="{StaticResource SystemAccentColor}"/>
             </DataTemplate>
         </ItemsControl.ItemTemplate>

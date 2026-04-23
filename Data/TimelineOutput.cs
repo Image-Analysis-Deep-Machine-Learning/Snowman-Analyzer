@@ -12,6 +12,9 @@ namespace Snowman.Data;
 public class TimelineOutput : INotifyPropertyChanged
 {
     private static int _outputCounter;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    
     public string Name { get; set; } = "Output " + (_outputCounter++ + 1);
     public List<Layer> Layers { get; set; } = [];
     
@@ -86,8 +89,6 @@ public class TimelineOutput : INotifyPropertyChanged
         }
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -99,6 +100,8 @@ public class Layer : INotifyPropertyChanged
     private static readonly Random Random = new();
     
     private static int _layerCounter;
+    
+    public event PropertyChangedEventHandler? PropertyChanged;
     
     public IBrush Brush { get; set; } = ColorGeneration.Palette[Random.Next(ColorGeneration.Palette.Length)];
     public string Name { get; set; } = "Layer " + (_layerCounter++ + 1);
@@ -140,8 +143,6 @@ public class Layer : INotifyPropertyChanged
             OnPropertyChanged();
         }
     } = true;
-    
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
@@ -153,13 +154,14 @@ public class ScriptRun : INotifyPropertyChanged
 {
     private static int _scriptRunCounter;
     
+    public event PropertyChangedEventHandler? PropertyChanged;
+    
     public string Name { get; set; } = "Script run " + (_scriptRunCounter++ + 1);
     public ObservableCollection<TimelineOutput> Outputs { get; } = [];
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public ScriptRun()
     {
-        Outputs.CollectionChanged += (sender, args) => OnPropertyChanged();
+        Outputs.CollectionChanged += (_, _) => OnPropertyChanged();
     }
 
     public void SetActive(EventTimelineViewportDataContext dataContext)
@@ -181,22 +183,4 @@ public class EventData
     public List<int> EntityIds { get; set; } = [];
     public bool IsBoolean { get; set; }
     public bool IsWithinMinMax { get; set; }
-
-    // public BoundingBox ObjectBbox { get;} = objectBbox;
-    // public bool IsFirstEventOfObject { get; set; } = isFirstEventOfObject;
-    // public Entity Entity { get; } = entity;
-    //
-    // public override string ToString()
-    // {
-    //     StringBuilder sb = new();
-    //     sb.Append($"Object track ID: {ObjectBbox.ClassName.TrackId}\n");
-    //     sb.Append($"The first event of this object: {IsFirstEventOfObject}\n");
-    //     
-    //     // TODO: info about entity (maybe add entity IDs to identify them easily?)
-    //     var entityType = Entity.GetType().Name;
-    //     if (entityType.EndsWith("Entity")) entityType = entityType.Substring(0, entityType.Length - 6);
-    //     sb.Append($"Entity: {entityType}\n");
-    //    
-    //     return sb.ToString();
-    // }
 }

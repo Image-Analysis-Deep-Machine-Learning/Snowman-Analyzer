@@ -14,6 +14,7 @@ using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Services;
 using Snowman.Data;
 using Snowman.Events;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Designer;
@@ -45,7 +46,6 @@ public class DummyProjectService : IProjectService
     public Task SaveProject(IStorageFile file) => Task.CompletedTask;
     public DatasetData GetDatasetData() => new();
     public void HighlightByTrackId(int trackId) { }
-    public void ClearHighlights() { }
 }
 
 public class DummyServiceProvider : IServiceProvider

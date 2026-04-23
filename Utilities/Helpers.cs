@@ -6,9 +6,6 @@ using System.Reflection;
 using Python.Runtime;
 using Snowman.Core.Entities;
 using Snowman.Core.Registries;
-using Snowman.Core.Scripting.DataSource.Variables;
-using Snowman.Core.Scripting.Nodes.OutputNodes;
-using Snowman.Designer;
 
 namespace Snowman.Utilities;
 
@@ -61,14 +58,12 @@ public class Helpers
     public static string GetValidEntityTypes()
     {
         if (_validEntitiesCache is not null) return _validEntitiesCache;
-        
-        var baseType = typeof(Entity);
 
-        var list = Assembly.GetAssembly(baseType)!
-            .GetTypes()
-            .Where(t => t.IsSubclassOf(baseType));
+        var subclasses = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(x => x.GetTypes())
+            .Where(x => x.IsSubclassOf(typeof(Entity)));
         
-        _validEntitiesCache = string.Join(", ", list.Select(t => t.Name).ToArray());
+        _validEntitiesCache = string.Join(", ", subclasses.Select(t => t.Name).ToArray());
         return _validEntitiesCache;
     }
 

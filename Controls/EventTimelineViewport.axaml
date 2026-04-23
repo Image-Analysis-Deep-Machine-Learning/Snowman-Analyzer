@@ -1,14 +1,15 @@
-﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:EventTimelineViewportDataContext" xmlns="https://github.com/avaloniaui"
-                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                             x:Class="Snowman.Controls.EventTimelineViewport"
-                             xmlns:dataContext="using:Snowman.DataContexts"
-                             xmlns:ctrl="using:Snowman.Controls"
-                             xmlns:controls="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
-                             x:DataType="dataContext:EventTimelineViewportDataContext"
-                             x:Name="Root">
+﻿<ctrl:UserControlWrapper x:TypeArguments="dataContext:EventTimelineViewportDataContext"
+                         xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="Snowman.Controls.EventTimelineViewport"
+                         xmlns:dataContext="using:Snowman.DataContexts"
+                         xmlns:ctrl="using:Snowman.Controls"
+                         xmlns:slider="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
+                         x:DataType="dataContext:EventTimelineViewportDataContext"
+                         x:Name="Root">
     <ctrl:UserControlWrapper.Styles>
         <!-- visible -->
         <Style Selector="ToggleButton.layer-visibility PathIcon.eye-show">
@@ -31,23 +32,15 @@
             </Style.Resources>
         </Style>
     </ctrl:UserControlWrapper.Styles>
+    
     <Grid ColumnDefinitions="8*,Auto,2*">
-            <ScrollViewer Grid.Row="0" AllowAutoHide="True" 
-                          Margin="0, 0, 2, 0">
+            <ScrollViewer Grid.Row="0" AllowAutoHide="True" Margin="0, 0, 2, 0">
                 <StackPanel x:Name="TimelineViewer" Spacing="5" Orientation="Vertical"/>
-                <!-- <ItemsControl ItemsSource="{Binding Timelines}"> -->
-                <!--     <ItemsControl.ItemTemplate> -->
-                <!--         <DataTemplate> -->
-                <!--             <ctrl:EventTimeline Timeline="{Binding}" Height="100" Width="1500"/> -->
-                <!--         </DataTemplate> -->
-                <!--     </ItemsControl.ItemTemplate> -->
-                <!-- </ItemsControl> -->
             </ScrollViewer>
         
         <GridSplitter Grid.Column="1" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
         
-        <ScrollViewer Grid.Column="2"
-                      AllowAutoHide="True">
+        <ScrollViewer Grid.Column="2" AllowAutoHide="True">
             <StackPanel Name="PanelLvl1" Orientation="Vertical" Spacing="2" >
                 <ItemsControl ItemsSource="{Binding ScriptRuns}">
                     <ItemsControl.ItemTemplate>
@@ -55,49 +48,78 @@
                             <Expander Header="{Binding Name}" VerticalAlignment="Top">
                                 <Interaction.Behaviors>
                                     <EventTriggerBehavior EventName="Expanded">
-                                        <InvokeCommandAction Command="{Binding SetActive}" CommandParameter="{Binding #Root.DataContext}"/>
+                                        <InvokeCommandAction Command="{Binding SetActive}"
+                                                             CommandParameter="{Binding #Root.DataContext}"/>
                                     </EventTriggerBehavior>
                                 </Interaction.Behaviors>
-                                <StackPanel Name="PanelLvl2" Orientation="Vertical" Width="{Binding #PanelLvl1.Bounds.Width}" Spacing="2" Margin="0, 2, 0, 0">
+                                
+                                <StackPanel Name="PanelLvl2"
+                                            Orientation="Vertical"
+                                            Width="{Binding #PanelLvl1.Bounds.Width}"
+                                            Spacing="2"
+                                            Margin="0, 2, 0, 0">
                                     <ItemsControl ItemsSource="{Binding Outputs}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Expander Header="{Binding Name}" VerticalAlignment="Top">
-                                                    <StackPanel Orientation="Vertical" Spacing="2" Margin="0, 2, 0, 0">
+                                                <Expander Header="{Binding Name}"
+                                                          VerticalAlignment="Top">
+                                                    <StackPanel Orientation="Vertical"
+                                                                Spacing="2"
+                                                                Margin="0, 2, 0, 0">
                                                         <StackPanel Orientation="Vertical" Spacing="1">
                                                             <Label Content="Layers" FontWeight="DemiBold"/>
                                                             <ItemsControl ItemsSource="{Binding Layers}">
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
-                                                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                                                            <ToggleButton Classes="layer-visibility" IsChecked="{Binding IsVisible}"
-                                                                                    Width="16" Height="16" MinWidth="16" MinHeight="16" Padding="0"
-                                                                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                                                        <StackPanel Orientation="Horizontal"
+                                                                                    Spacing="5">
+                                                                            <ToggleButton Classes="layer-visibility"
+                                                                                          IsChecked="{Binding IsVisible}"
+                                                                                          Width="16"
+                                                                                          Height="16"
+                                                                                          MinWidth="16"
+                                                                                          MinHeight="16"
+                                                                                          Padding="0"
+                                                                                          HorizontalContentAlignment="Center"
+                                                                                          VerticalContentAlignment="Center">
                                                                                 <Grid>
-                                                                                    <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}" />
-                                                                                    <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}" />
+                                                                                    <PathIcon Width="12" Height="12" Classes="eye-show" Data="{StaticResource EyeShowRegular}"/>
+                                                                                    <PathIcon Width="12" Height="12" Classes="eye-hide" Data="{StaticResource EyeHideRegular}"/>
                                                                                 </Grid>
                                                                             </ToggleButton>
-                                                                            <Canvas Width="16" Height="16" Background="{Binding Brush}"/>
+                                                                            
+                                                                            <Canvas Width="16"
+                                                                                    Height="16"
+                                                                                    Background="{Binding Brush}"/>
                                                                             <Label Content="{Binding Name}"/>
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
                                                         </StackPanel>
+                                                        
                                                         <StackPanel Orientation="Vertical" Spacing="1">
                                                              <Label Content="Values" FontWeight="DemiBold"/>
-                                                             <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch" Margin="0">
-                                                                 <TextBlock Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                             
+                                                             <Grid ColumnDefinitions="*,*"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   Margin="0">
+                                                                 <TextBlock Grid.Column="0"
+                                                                            HorizontalAlignment="Left"
+                                                                            VerticalAlignment="Center">
                                                                      <Run Text="Min"/>
                                                                      <Run Text="{Binding MinYFilter}"/>
                                                                  </TextBlock>
-                                                                 <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                 
+                                                                 <TextBlock Grid.Column="1"
+                                                                            HorizontalAlignment="Right"
+                                                                            VerticalAlignment="Center">
                                                                      <Run Text="Max"/>
                                                                      <Run Text="{Binding MaxYFilter}"/>
                                                                  </TextBlock>
                                                              </Grid>
-                                                             <controls:RangeSlider
+                                                             
+                                                             <slider:RangeSlider
                                                                  Minimum="{Binding MinY}"
                                                                  Maximum="{Binding MaxY}"
                                                                  LowerSelectedValue="{Binding MinYFilter}"

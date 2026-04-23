@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using Snowman.DataContexts;
 using Snowman.Events;
 
 namespace Snowman.Core.MachineLearning;
@@ -22,14 +21,4 @@ public class Chat
             ChatDescriptionChanged?.Invoke();
         }
     } = "New Conversation";
-
-    public void SelectChat(ChatWindowDataContext dataContext)
-    {
-        dataContext.SelectChat(this);
-    }
-
-    public void DeleteChat(ChatWindowDataContext dataContext)
-    {
-        dataContext.DeleteChat(this);
-    }
 }

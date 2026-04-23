@@ -23,7 +23,7 @@ public partial class NodeViewport : UserControlWrapper<NodeViewportDataContext>,
         var nodeService = new NodeServiceImpl(ViewportCanvas, BackgroundOverlay, ForegroundOverlay, serviceProvider);
         serviceProvider.RegisterService<INodeService>(nodeService);
         
-        KeyDown += (sender, args) =>
+        KeyDown += (_, args) =>
         {
             if (args.Key == Key.Delete)
             {

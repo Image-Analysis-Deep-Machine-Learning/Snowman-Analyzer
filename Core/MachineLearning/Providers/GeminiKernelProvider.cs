@@ -15,7 +15,7 @@ public class GeminiKernelProvider : KernelProvider
             .AddGoogleAIGeminiChatCompletion(
                 SettingsRegistry.SelectedLlmModel.Value,
                 SettingsRegistry.GeminiApiKey.Value,
-                httpClient: KernelProvider.HttpClient)
+                httpClient: HttpClient)
             .Build();
     }
 

@@ -35,23 +35,24 @@ public abstract class Entity : IDrawable
     protected const int Radius = 5;
 
     public event Events.EventHandler<Entity>? EntityChanged;
+    public event EventHandler<Entity, Point>? PositionChanges;
     
     private Point _pos;
-    protected internal bool _selected;
-    protected internal List<Entity> _children = [];
+    
+    protected internal bool SelectedInternal;
+    protected internal readonly List<Entity> ChildrenInternal = [];
     
     public int Id { get; set; }
-    public event EventHandler<Entity, Point>? PositionChanges;
     public Entity? Parent { get; }
     public bool IsHit { get; set; }
     public bool IsHighlighted { get; set; }
     public bool IsVisible { get; set; }
-
-    public IReadOnlyList<Entity> Children => _children.AsReadOnly();
+    
+    public IReadOnlyList<Entity> Children => ChildrenInternal.AsReadOnly();
 
     public virtual bool Selected
     {
-        get => Parent?.Selected ?? _selected;
+        get => Parent?.Selected ?? SelectedInternal;
         set
         {
             if (Parent is not null)
@@ -61,7 +62,7 @@ public abstract class Entity : IDrawable
 
             else
             {
-                _selected = value;
+                SelectedInternal = value;
             }
         }
     }

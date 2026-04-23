@@ -13,8 +13,9 @@ public partial class EventTimelineViewport : UserControlWrapper<EventTimelineVie
 
     protected override EventTimelineViewportDataContext GetDataContext(IServiceProvider serviceProvider)
     {
-        var newDataContext = new EventTimelineViewportDataContext(serviceProvider, TimelineViewer);
+        var newDataContext = new EventTimelineViewportDataContext(TimelineViewer);
         serviceProvider.RegisterService<ITimelineService>(new TimelineServiceImpl(newDataContext));
+        
         return newDataContext;
     }
 }

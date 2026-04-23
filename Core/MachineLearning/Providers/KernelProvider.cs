@@ -9,8 +9,6 @@ namespace Snowman.Core.MachineLearning.Providers;
 
 public abstract class KernelProvider
 {
-    protected static readonly HttpClient HttpClient = new();
-    
     private static readonly Dictionary<string, KernelProvider> ProviderMap = new()
     {
         { "Anthropic", new AnthropicKernelProvider() },
@@ -19,9 +17,7 @@ public abstract class KernelProvider
         { "OpenAI", new OpenAiKernelProvider() }
     };
     
-    public abstract Kernel BuildKernel();
-    public abstract PromptExecutionSettings PromptExecutionSettings { get; }
-    public abstract Task<IEnumerable<string>> GetAvailableModels();
+    protected static readonly HttpClient HttpClient = new();
     
     public static KernelProvider GetActiveProvider()
     {
@@ -32,4 +28,8 @@ public abstract class KernelProvider
     {
         return ProviderMap.TryGetValue(name, out var value) ? value : throw new InvalidOperationException($"Unknown kernel provider '{name}'");
     }
+    
+    public abstract PromptExecutionSettings PromptExecutionSettings { get; }
+    public abstract Task<IEnumerable<string>> GetAvailableModels();
+    public abstract Kernel BuildKernel();
 }

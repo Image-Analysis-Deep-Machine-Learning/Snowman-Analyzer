@@ -5,7 +5,6 @@ using Snowman.DataContexts;
 using Snowman.Events;
 using Snowman.Events.Suppliers;
 using Snowman.Events.Viewport;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
@@ -72,6 +71,7 @@ public partial class ViewportDisplay : UserControlWrapper<ViewportDisplayDataCon
     {
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IDatasetImagesEventSupplier>(x => x.SelectedFrameChanged += InvalidateVisual);
         serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += InvalidateVisual);
+        
         return new ViewportDisplayDataContext(serviceProvider);
     }
 }

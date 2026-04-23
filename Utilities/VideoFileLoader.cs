@@ -11,6 +11,7 @@ using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
 using Snowman.Data;
 using Image = Snowman.Data.Image;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Utilities;

@@ -115,6 +115,11 @@ public partial class FrameTimelineDataContext
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
         
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        
         private TimelineFrame GetFrameAt(int index)
         {
             if (index < 0 || index >= _frames.Length) return _invisibleFrame;
@@ -132,11 +137,6 @@ public partial class FrameTimelineDataContext
             }
             
             Refresh();
-        }
-        
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
         
         public class TimelineFrame(int index, IDatasetImagesService datasetImagesService)
@@ -159,6 +159,8 @@ public partial class FrameTimelineDataContext
             private readonly FrameCollection _collection;
             private int _current;
 
+            public TimelineFrame Current => _collection.GetFrameAt(_current);
+
             public FrameCollectionEnumerator(int indexMin, int indexMax, FrameCollection collection)
             {
                 _min = indexMin;
@@ -178,11 +180,9 @@ public partial class FrameTimelineDataContext
                 _current = _min - 1;
             }
 
-            public TimelineFrame Current => _collection.GetFrameAt(_current);
+            public void Dispose() { }
 
             object IEnumerator.Current => Current;
-
-            public void Dispose() { }
         }
     }
 }

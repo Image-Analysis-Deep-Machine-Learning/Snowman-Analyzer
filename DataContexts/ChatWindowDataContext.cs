@@ -4,8 +4,10 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Snowman.Core.Commands;
 using Snowman.Core.MachineLearning;
 using Snowman.Core.Services;
 using Snowman.Utilities;
@@ -19,21 +21,10 @@ public partial class ChatWindowDataContext : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<Chat> ChatHistory { get; } = [];
-    public string CurrentProviderAndModel => "provider: model"; // get from settings
     public ObservableCollection<ChatMessage> Messages { get; } = [];
     public string ShortChatDescription => CurrentChat.ShortChatDescription;
-
-    private Chat CurrentChat
-    {
-        get;
-        set
-        {
-            var oldChat = field;
-            field = value;
-            _chatService.SelectChat(value);
-            CurrentChatChanged(oldChat);
-        }
-    } = new();
+    public ICommand SelectChat { get; }
+    public ICommand DeleteChat { get; }
 
     public bool IsGeneratingResponse
     {
@@ -55,26 +46,33 @@ public partial class ChatWindowDataContext : INotifyPropertyChanged
         }
     }
 
+    private Chat CurrentChat
+    {
+        get;
+        set
+        {
+            var oldChat = field;
+            field = value;
+            _chatService.SelectChat(value);
+            CurrentChatChanged(oldChat);
+        }
+    } = new();
+
     public ChatWindowDataContext(IServiceProvider serviceProvider)
     {
         _chatService = serviceProvider.GetService<IChatService>();
         _chatService.SetChatHistory(ChatHistory);
         CurrentChat = ChatHistory.LastOrDefault() ?? CurrentChat;
-    }
-
-    public void SelectChat(Chat chat)
-    {
-        CurrentChat = chat;
-    }
-
-    public void DeleteChat(Chat chat)
-    {
-        if (chat == CurrentChat)
+        SelectChat = new RelayCommand<Chat>(chat => CurrentChat = chat);
+        DeleteChat = new RelayCommand<Chat>(chat =>
         {
-            CurrentChat = ChatHistory.LastOrDefault() ?? new Chat();
-        }
+            if (chat == CurrentChat)
+            {
+                CurrentChat = ChatHistory.LastOrDefault() ?? new Chat();
+            }
         
-        _chatService.DeleteChat(chat);
+            _chatService.DeleteChat(chat);
+        });
     }
 
     public void UserPromptKeyDown(KeyEventArgs e)
@@ -88,6 +86,7 @@ public partial class ChatWindowDataContext : INotifyPropertyChanged
     public void NewConversation()
     {
         if (IsGeneratingResponse) return;
+        
         CurrentChat = new Chat();
     }
 

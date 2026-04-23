@@ -8,7 +8,6 @@ using Snowman.Core.Settings;
 using Snowman.DataContexts;
 using Snowman.Utilities;
 using Ursa.Controls;
-using Dispatcher = Avalonia.Threading.Dispatcher;
 
 namespace Snowman.Windows;
 

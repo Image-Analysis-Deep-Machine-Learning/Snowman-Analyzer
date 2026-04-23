@@ -1,6 +1,6 @@
 using System.Linq;
-using Microsoft.Extensions.AI;
 using Snowman.Designer;
+
 // ReSharper disable once CheckNamespace
 // This file contains all dummy parameterless constructors for DataContexts
 // They initialize all readonly members and properties to "null!" or dummy objects so the designer still works
@@ -12,6 +12,8 @@ public partial class ChatWindowDataContext
     public ChatWindowDataContext()
     {
         _chatService = null!;
+        SelectChat = null!;
+        DeleteChat = null!;
     }
 }
 
@@ -56,6 +58,7 @@ public partial class LoadVideoWindowDataContext
     public LoadVideoWindowDataContext()
     {
         _storageProviderService = null!;
+        _messageBoxService = null!;
     }
 }
 
@@ -66,6 +69,7 @@ public partial class MainWindowDataContext
         _projectService = null!;
         _datasetImagesService = null!;
         _storageProviderService = null!;
+        _messageBoxService = null!;
     }
 }
 
@@ -75,6 +79,7 @@ public partial class MultiObjectTrackingWindowDataContext
     {
         _storageProviderService = null!;
         _progressBarService = null!;
+        _messageBoxService = null!;
         _projectService = null!;
         _loggerService = null!;
         SelectedDetector = Detectors.First().Name;
@@ -105,6 +110,7 @@ public partial class NodeViewportDataContext
     {
         _nodeService = new DummyNodeService();
         _serviceProvider = null!;
+        _messageBoxService = null!;
     }
 }
 
@@ -126,10 +132,3 @@ public partial class ViewportDisplayDataContext
     }
 }
 
-public partial class ViewportContainerDataContext
-{
-    public ViewportContainerDataContext()
-    {
-            
-    }
-}

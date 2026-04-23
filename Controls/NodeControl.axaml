@@ -21,8 +21,7 @@
                       BorderBrush="Transparent"
                       Classes="MainNodeExpander"
                       IsExpanded="True">
-                <StackPanel Name="MainGroup">
-                </StackPanel>
+                <StackPanel Name="MainGroup"/>
             </Expander>
         </StackPanel>
     </Border>

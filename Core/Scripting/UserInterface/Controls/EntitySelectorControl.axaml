@@ -5,8 +5,8 @@
                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                          mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                          x:Class="Snowman.Core.Scripting.UserInterface.Controls.EntitySelectorControl"
-                         xmlns:dataContext="clr-namespace:Snowman.Core.Scripting.DataSource.Variables"
-                         xmlns:ctrl="clr-namespace:Snowman.Controls"
+                         xmlns:dataContext="using:Snowman.Core.Scripting.DataSource.Variables"
+                         xmlns:ctrl="using:Snowman.Controls"
                          x:DataType="dataContext:EntitySelector">
     <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding FriendlyName}" Margin="10"/>

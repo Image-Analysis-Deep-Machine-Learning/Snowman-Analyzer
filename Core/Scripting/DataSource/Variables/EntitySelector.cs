@@ -5,6 +5,7 @@ using Snowman.Core.Entities;
 using Snowman.Core.Services;
 using Snowman.Events.Suppliers;
 using Snowman.Utilities;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Core.Scripting.DataSource.Variables;

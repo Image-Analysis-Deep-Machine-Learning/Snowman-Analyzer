@@ -13,6 +13,7 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
     private static int _topZIndex; // does not matter that it's static, there's no way someone's clicking over 2 billion times
     
     private readonly INodeService _nodeService;
+    
     private Point _dragStartPoint;
     private bool _isDragging;
     
@@ -25,7 +26,12 @@ public partial class NodeControl : UserControlWrapper<NodeControlDataContext>
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || _nodeService.IsNewConnectionActive() || (e.Source is Visual visual && IsInteractiveElement(visual))) return;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed ||
+            _nodeService.IsNewConnectionActive() ||
+            (e.Source is Visual visual && IsInteractiveElement(visual)))
+        {
+            return;
+        }
         
         ZIndex = ++_topZIndex; // move the clicked node to the front
         _nodeService.SelectNode(DataContext.Node);

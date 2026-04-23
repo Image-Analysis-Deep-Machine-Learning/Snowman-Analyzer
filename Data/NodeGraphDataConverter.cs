@@ -6,6 +6,7 @@ using System.Xml;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Scripting.DataSource.Variables;
 using Snowman.Core.Services;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Data;
@@ -39,6 +40,7 @@ public static class NodeGraphDataConverter
         {
             var vData = CreateVariableData(variable.Name);
             serializer((TVariable)variable, vData);
+            
             return vData.Item1;
         };
     }

@@ -93,6 +93,6 @@ public class NodeControlBuilderDirector
             } while (parent is not null);
         }
 
-        return  collectedGroups.ToList();
+        return collectedGroups.ToList();
     }
 }

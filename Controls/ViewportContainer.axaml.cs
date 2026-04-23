@@ -1,5 +1,5 @@
-﻿using Snowman.DataContexts;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
+﻿using Snowman.Core.Services;
+using Snowman.DataContexts;
 
 namespace Snowman.Controls;
 

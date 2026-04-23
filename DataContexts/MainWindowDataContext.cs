@@ -10,14 +10,15 @@ using Snowman.Core.Settings;
 using Snowman.Events.Suppliers;
 using Snowman.Utilities;
 using Ursa.Controls;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
 
 public partial class MainWindowDataContext : INotifyPropertyChanged
 {
-    private readonly IDatasetImagesService _datasetImagesService;
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IDatasetImagesService _datasetImagesService;
     private readonly IMessageBoxService _messageBoxService;
     private readonly IProjectService _projectService;
     
@@ -26,8 +27,7 @@ public partial class MainWindowDataContext : INotifyPropertyChanged
     public bool FrameTimelineActive => ActiveTimeline == TimelineMode.Frame;
     public bool EventTimelineActive => ActiveTimeline == TimelineMode.Event;
 
-    public string CurrentFrame =>
-        $"Frame {_datasetImagesService.CurrentFrameIndex() + 1}";
+    public string CurrentFrame => $"Frame {_datasetImagesService.CurrentFrameIndex() + 1}";
 
     private TimelineMode ActiveTimeline
     {

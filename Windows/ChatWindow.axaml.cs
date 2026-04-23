@@ -1,8 +1,7 @@
-﻿using System;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Snowman.Core.Services;
 using Snowman.DataContexts;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Windows;
 
@@ -14,7 +13,7 @@ public partial class ChatWindow : Window
         InitializeComponent();
         // so much for stupid XAML event bindings incapable of handling simple KeyDown events of an Enter key in a multiline TextBox
         InputBox.AddHandler(KeyDownEvent,
-            (sender, args) => ((ChatWindowDataContext)DataContext).UserPromptKeyDown(args),
+            (_, args) => ((ChatWindowDataContext)DataContext).UserPromptKeyDown(args),
             RoutingStrategies.Tunnel);
     }
     

@@ -7,7 +7,6 @@ namespace Snowman.Data;
 [XmlRoot(ElementName="ProjectData")]
 public class ProjectData
 {
-    // TODO: being able to save nodes as well
     [XmlElement("LoadedDatasetPath")]
     public string LoadedDatasetPath { get; set; } = string.Empty;
     

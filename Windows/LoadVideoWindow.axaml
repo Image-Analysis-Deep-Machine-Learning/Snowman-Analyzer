@@ -3,9 +3,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" Width="480"
-        xmlns:dataContext="using:Snowman.DataContexts"
-        xmlns:controls="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
         x:Class="Snowman.Windows.LoadVideoWindow"
+        xmlns:dataContext="using:Snowman.DataContexts"
+        xmlns:slider="https://github.com/DmitryNizhebovsky/Avalonia.RangeSlider"
         x:DataType="dataContext:LoadVideoWindowDataContext"
         Title="Load Video File"
         WindowStartupLocation="CenterOwner"
@@ -23,10 +23,13 @@
                 <Setter Property="Foreground" Value="{StaticResource SystemAccentColor}"/>
             </Style>
         </StackPanel.Styles>
-        <Button Content="Select Video File and Output Folder" Command="{Binding SelectVideoFile}" Margin="0, 0, 0, 30"/>
         
-        <TextBlock HorizontalAlignment="Left">Select time range</TextBlock>
-		<controls:RangeSlider
+        <Button Content="Select Video File and Output Folder"
+                Command="{Binding SelectVideoFile}"
+                Margin="0, 0, 0, 30"/>
+        
+        <TextBlock Text="Select time range" HorizontalAlignment="Left"/>
+		<slider:RangeSlider
             Minimum="0"
             Maximum="{Binding DurationSeconds}"
             LowerSelectedValue="{Binding StartSelectedTime}"
@@ -49,7 +52,10 @@
             </TextBlock>
         </Grid>
         
-        <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8" Margin="0, 30,0, 0">Select frame rate</TextBlock>
+        <TextBlock Text="Select frame rate"
+                   HorizontalAlignment="Left"
+                   Foreground="#A8A8A8"
+                   Margin="0, 30,0, 0"/>
         <Slider
             Minimum="1"
             Maximum="{Binding FrameRate}"
@@ -60,7 +66,10 @@
         </Slider>
         <TextBlock Text="{Binding SelectedFrameRateStr}" HorizontalAlignment="Center"/>
         
-        <TextBlock HorizontalAlignment="Left" Foreground="#A8A8A8" Margin="0, 30,0, 10">Select frame format</TextBlock>
+        <TextBlock Text="Select frame format"
+                   HorizontalAlignment="Left"
+                   Foreground="#A8A8A8"
+                   Margin="0, 30,0, 10"/>
         <ComboBox
             ItemsSource="{Binding FrameFormats}"
             SelectedItem="{Binding SelectedFrameFormat}"

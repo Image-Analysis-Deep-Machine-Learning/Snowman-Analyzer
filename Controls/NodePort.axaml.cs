@@ -16,6 +16,14 @@ public partial class NodePort : UserControlWrapper<NodePortDataContext>
         PointerReleased += OnPointerReleased;
     }
 
+    protected override NodePortDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        var nodeService = serviceProvider.GetService<INodeService>();
+        nodeService.RegisterNodePort(this);
+        
+        return new NodePortDataContext(serviceProvider);
+    }
+
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         DataContext.EndConnection(e);
@@ -26,12 +34,5 @@ public partial class NodePort : UserControlWrapper<NodePortDataContext>
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         
         DataContext.StartConnection(Port);
-    }
-
-    protected override NodePortDataContext GetDataContext(IServiceProvider serviceProvider)
-    {
-        var nodeService = serviceProvider.GetService<INodeService>();
-        nodeService.RegisterNodePort(this);
-        return new NodePortDataContext(serviceProvider);
     }
 }

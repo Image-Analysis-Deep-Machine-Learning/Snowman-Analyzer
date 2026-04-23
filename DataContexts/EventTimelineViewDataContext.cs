@@ -1,6 +1,7 @@
 ﻿using System;
 using Snowman.Core.Services;
 using Snowman.Data;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -12,7 +13,6 @@ public partial class EventTimelineViewDataContext
     private readonly IProjectService _projectService;
 
     public EventData? HoveredEvent { get; private set; }
-
     public double Zoom { get; private set; } = 1.0;
     public double Pan { get; set; } = 0.0;
     public int TotalFrames => _datasetImagesService.MaxFrameIndex() + 1;
@@ -34,7 +34,9 @@ public partial class EventTimelineViewDataContext
     public EventData? UpdateHover(EventData? hit)
     {
         if (hit != HoveredEvent)
+        {
             HoveredEvent = hit;
+        }
         
         return HoveredEvent;
     }
@@ -71,7 +73,9 @@ public partial class EventTimelineViewDataContext
         var minorInterval = RoundToInterval(framesPerMinorTick);
 
         if (minorInterval >= majorInterval)
+        {
             minorInterval = majorInterval / 2;
+        }
 
         if (minorInterval < 5) minorInterval = 1;
         if (majorInterval < 5) majorInterval = 5;
@@ -87,8 +91,8 @@ public partial class EventTimelineViewDataContext
         foreach (var step in steps)
         {
             var interval = step * magnitude;
-            if (interval >= raw)
-                return (int)interval;
+            
+            if (interval >= raw) return (int)interval;
         }
 
         return (int)(10 * magnitude);

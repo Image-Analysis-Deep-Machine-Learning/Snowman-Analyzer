@@ -97,7 +97,9 @@ public class BoundingBox
 
 public class ClassName
 {
-	[XmlElement(ElementName="project_id")] public string ProjectId { get; set; } = string.Empty;
+	[XmlElement(ElementName="project_id")]
+	public string ProjectId { get; set; } = string.Empty;
 
-	[XmlElement(ElementName="track_id")] public int TrackId { get; set; }
+	[XmlElement(ElementName="track_id")]
+	public int TrackId { get; set; }
 }

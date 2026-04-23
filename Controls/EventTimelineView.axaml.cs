@@ -7,20 +7,21 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Snowman.Data;
 using Snowman.DataContexts;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
 
 public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDataContext>
 {
+    private const double BaseHeight = 1;
+    private const double PinRadius = 0.5;
+    private const double MinorTickHeight = 20;
+    private const double MajorTickHeight = EventTimelineHeight - XAxisHeight - TopPadding;
+    
     public const int EventTimelineHeight = 80 + XAxisHeight;
     public const int XAxisHeight = 20;
     public const double TopPadding = PinRadius * 12;
-    
-    private const double PinRadius = 0.5;
-    private const double BaseHeight = 1;
-    private const double MinorTickHeight = 20;
-    private const double MajorTickHeight = EventTimelineHeight - XAxisHeight - TopPadding;
 
     private static readonly IBrush BackgroundBrush = new BrushConverter().ConvertFrom("#111114") as IBrush ?? Brushes.Black;
     private static readonly IBrush TickBrush = Brushes.Gray;
@@ -37,10 +38,12 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
         Focusable = true;
         TimelineOutput = timeline;
         TimelineOutput.PropertyChanged += TimelineOutputChanged;
+        
         foreach (var layer in TimelineOutput.Layers)
         {
             layer.PropertyChanged += LayerChanged;
         }
+        
         InitializeComponent();
         InvalidateVisual();
     }
@@ -69,18 +72,19 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
                 if (!ev.IsWithinMinMax) continue;
                 
                 var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
+                
                 if (x < -PinRadius || x > Bounds.Width + PinRadius) continue;
 
                 var y = TopPadding + (usableHeight - TopPadding) * (1 - ev.Y / maxY);
-
                 var brush = ev == DataContext.HoveredEvent ? Brushes.Red : layer.Brush;
-
+                var center = new Point(x + intervalWidth / 2, y);
+                
                 context.DrawEllipse(brush, new Pen(brush, 10), new Point(x + intervalWidth / 2, y), PinRadius, PinRadius);
 
-                var center = new Point(x + intervalWidth / 2, y);
-
                 if (prev is { } p)
+                {
                     context.DrawLine(new Pen(layer.Brush, 0.5), p, center);
+                }
 
                 prev = center;
             }
@@ -125,11 +129,13 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
         if (_isDragging)
         {
             var deltaX = pos.X - _lastPoint.X;
+            
             DataContext.Pan -= deltaX;
             _lastPoint = pos;
 
             ClampPan();
             InvalidateVisual();
+            
             return;
         }
 
@@ -144,6 +150,7 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
                 $"Entity IDs: {string.Join(", ", updated.EntityIds)}\n" +
                 $"Track IDs: {string.Join(", ", updated.TrackIds)}");
         }
+        
         else
         {
             ToolTip.SetTip(this, null);
@@ -173,19 +180,22 @@ public partial class EventTimelineView : UserControlWrapper<EventTimelineViewDat
         for (var layerIndex = TimelineOutput.Layers.Count - 1; layerIndex >= 0; layerIndex--)
         {
             var layer = TimelineOutput.Layers[layerIndex];
+            
             if (!layer.IsVisible) continue;
 
             foreach (var ev in layer.Events)
             {
                 var x = (double)ev.FrameIndex / totalFrames * Bounds.Width * DataContext.Zoom - DataContext.Pan;
                 var centerX = x + intervalWidth / 2;
-                if (centerX < -PinRadius || centerX > Bounds.Width + PinRadius)
-                    continue;
+                
+                if (centerX < -PinRadius || centerX > Bounds.Width + PinRadius) continue;
 
                 var y = TopPadding + (usableHeight - TopPadding) * (1 - ev.Y / maxY);
 
-                if (position.X >= centerX - PinRadius * 6 && position.X <= centerX + PinRadius * 6 &&
-                    position.Y >= y - PinRadius * 6 && position.Y <= y + PinRadius * 6)
+                if (position.X >= centerX - PinRadius * 6 &&
+                    position.X <= centerX + PinRadius * 6 &&
+                    position.Y >= y - PinRadius * 6 &&
+                    position.Y <= y + PinRadius * 6)
                 {
                     return ev;
                 }

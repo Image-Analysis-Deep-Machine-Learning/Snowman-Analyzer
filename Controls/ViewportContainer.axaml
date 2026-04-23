@@ -11,7 +11,9 @@
                          x:Name="Root">
     <Grid RowDefinitions="35,*" HorizontalAlignment="Stretch">
         <ctrl:ViewportToolbar Margin="0, 0, 0, 5" Grid.Row="0" Name="ViewportToolbar"/>
-        <Border Grid.Row="1" BorderBrush="{DynamicResource ButtonBackground}"
+        
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource ButtonBackground}"
                 BorderThickness="4"
                 CornerRadius="3">
             <Panel>

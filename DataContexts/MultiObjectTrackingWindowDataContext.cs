@@ -14,6 +14,7 @@ using Snowman.Core.Settings;
 using Snowman.Events;
 using Snowman.Utilities;
 using Ursa.Controls;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.DataContexts;
@@ -37,6 +38,8 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
     
     public event PropertyChangedEventHandler? PropertyChanged;
     public event SignalEventHandler? DialogCloseRequested;
+    
+    public IEnumerable<string> AvailableModels => Detectors.First(x => x.Name == SelectedDetector).Weights;
 
     public string? VideoFilePath
     {
@@ -89,8 +92,6 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
             OnPropertyChanged();
         }
     }
-    
-    public IEnumerable<string> AvailableModels => Detectors.First(x => x.Name == SelectedDetector).Weights;
 
     public MultiObjectTrackingWindowDataContext(IServiceProvider serviceProvider)
     {
@@ -99,9 +100,9 @@ public partial class MultiObjectTrackingWindowDataContext : INotifyPropertyChang
         _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _projectService = serviceProvider.GetService<IProjectService>();
         _loggerService = serviceProvider.GetService<ILoggerService>();
+        SelectedTracker = AvailableTrackers.First();
         SelectedDetector = Detectors.First().Name;
         SelectedModel = AvailableModels.First();
-        SelectedTracker = AvailableTrackers.First();
     }
 
     public void InitializeRequiredLibraries()

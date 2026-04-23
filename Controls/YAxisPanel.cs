@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Snowman.DataContexts;
+
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 
 namespace Snowman.Controls;
@@ -30,11 +31,15 @@ public class YAxisPanel : UserControlWrapper<YAxisPanelDataContext>
 
         // zero
         // TODO: test if this actually works when min y != 0
-        if (Math.Abs(0 - MinY) > 0.00001)
-        {
-            var zeroY = Bounds.Height - (0 - MinY) / (MaxY - MinY) * Bounds.Height;
-            DrawLabel(context, 0, zeroY - 6);
-        }
+        if (!(Math.Abs(0 - MinY) > 0.00001)) return;
+        
+        var zeroY = Bounds.Height - (0 - MinY) / (MaxY - MinY) * Bounds.Height;
+        DrawLabel(context, 0, zeroY - 6);
+    }
+
+    protected override YAxisPanelDataContext GetDataContext(IServiceProvider serviceProvider)
+    {
+        return new YAxisPanelDataContext();
     }
 
     private void DrawLabel(DrawingContext ctx, double value, double y)
@@ -49,10 +54,5 @@ public class YAxisPanel : UserControlWrapper<YAxisPanelDataContext>
 
         var x = Bounds.Width - text.Width;
         ctx.DrawText(text, new Point(x, y));
-    }
-
-    protected override YAxisPanelDataContext GetDataContext(IServiceProvider serviceProvider)
-    {
-        return new YAxisPanelDataContext();
     }
 }

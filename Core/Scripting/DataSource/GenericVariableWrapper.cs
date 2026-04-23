@@ -6,6 +6,8 @@ namespace Snowman.Core.Scripting.DataSource;
 
 public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+    
     public T? TypedValue
     {
         get => (T?)Value;
@@ -17,12 +19,7 @@ public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChang
         }
     }
 
-    protected GenericVariableWrapper(string name, Group group, string friendlyName) : base(name, typeof(T), group, friendlyName)
-    {
-        
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
+    protected GenericVariableWrapper(string name, Group group, string friendlyName) : base(name, typeof(T), group, friendlyName) { }
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
