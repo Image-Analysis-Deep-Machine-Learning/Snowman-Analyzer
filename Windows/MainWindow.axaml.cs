@@ -17,12 +17,12 @@ public partial class MainWindow : Window
     
     public MainWindow()
     {
-        InitializePythonExecutionEnvironment();
         // the most important lines of this application that handle the dependency injection magic
         var serviceProvider = new ServiceProviderImpl();
         serviceProvider.RegisterService<IStorageProviderService>(new StorageProviderServiceImpl(StorageProvider));
         _messageBoxService = new MessageBoxServiceImpl(this);
         serviceProvider.RegisterService(_messageBoxService);
+        InitializePythonExecutionEnvironment();
         serviceProvider.RegisterService<IChatService>(new ChatServiceImplementation(serviceProvider));
         DataContext = new MainWindowDataContext(serviceProvider);
         ServiceProviderAttachedProperty.SetProvider(this, serviceProvider);
