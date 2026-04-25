@@ -38,8 +38,10 @@ public partial class NodeViewportDataContext
         {
             try
             {
+                var loggerService = _serviceProvider.GetService<ILoggerService>();
+                loggerService.LogMessage("Starting the execution of the graph...");
                 _nodeService.ExecuteGraph();
-                
+                loggerService.LogMessage("The graph has finished execution successfully.\n");
             }
             
             catch (Exception e)

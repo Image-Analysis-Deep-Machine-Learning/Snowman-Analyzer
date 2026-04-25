@@ -95,6 +95,12 @@ public static class SystemPromptProvider
         "BoundingBox has integer properties XLeftTop and YLeftTop for position, Width and Height for size and object property ClassName for additional metadata - integer TrackId for tracking id of said bounding box and string ProjectId for class name, like car or motorcycle. " +
         "Ignore the confusing names of some of the properties and go with the description. " +
         "Bounding box has also a method ToRectangle that returns an Avalonia Rect struct. " +
+        "Be careful when dealing with conversion of .NET floating point number like decimal or float to Python number equivalent and vice versa. " +
+        "Always convert .NET floating point numbers into Python float explicitly when using them with other Python number variables and always explicitly convert Python float to Decimal or Float when using them as output variables or they are assigned to a property of a .NET class. " +
+        "Same goes for Python lists or dictionaries. " +
+        "They are not implicitly converted during the extraction from Python context into CLR. " +
+        "Use generic .NET List instead of Python lists for any variables that are part of the output - either directly or as a property of a class. " +
+        "Extension methods are not supported in PythonNET, use them as static methods instead or avoid their usage. " +
         "Each Entity contains method EvaluateHit(Rect) that returns true or false depending on whether the entity hits/intersects the entity. " +
         "EvaluateHit(Point) exists as well.\n" +
         "Stay professional. " +

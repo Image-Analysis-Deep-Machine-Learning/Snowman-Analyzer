@@ -6,6 +6,7 @@ using System.Xml;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
 using Snowman.Data;
+using Snowman.Events.Suppliers;
 using Snowman.Utilities;
 using Ursa.Controls;
 
@@ -57,6 +58,7 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
         _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _projectService = serviceProvider.GetService<IProjectService>();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => TypedValue = _projectService.GetDatasetData());
         IsCustomPathSelected = false;
         CustomDatasetPath = string.Empty;
     }

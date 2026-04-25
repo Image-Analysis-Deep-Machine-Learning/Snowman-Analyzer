@@ -158,9 +158,8 @@ public class DatasetImagesServiceImpl : IDatasetImagesService, IDrawableSource, 
                 _cachedFrames[index] = bitmap;
                 // GC.AddMemoryPressure was added because images loaded from PNG format (cause unknown) have not been
                 // cleared by GC as they should causing an apparent memory leak. Forcing GC to consider the size of the
-                // PNG bitmap during creation as well as forcing GC to collect garbage when clearing cache fixes this
-                // issue. Never believe a broken framework to not have memory leaks. Even if it's built on a programming
-                // language with managed memory.
+                // PNG bitmap during creation fixes this issue. Never believe a broken framework to not have memory
+                // leaks. Even if it's built on a programming language with managed memory.
                 GC.AddMemoryPressure((long)(bitmap.Size.Width * bitmap.Size.Height * 4));
                 return bitmap;
         }
