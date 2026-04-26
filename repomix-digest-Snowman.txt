@@ -69,19 +69,19 @@ public abstract class Entity : IDrawable
     ];
     protected const int Radius = 5;
     public event Events.EventHandler<Entity>? EntityChanged;
-    private Point _pos;
-    protected internal bool _selected;
-    protected internal List<Entity> _children = [];
-    public int Id { get; set; }
     public event EventHandler<Entity, Point>? PositionChanges;
+    private Point _pos;
+    protected internal bool SelectedInternal;
+    protected internal readonly List<Entity> ChildrenInternal = [];
+    public int Id { get; set; }
     public Entity? Parent { get; }
     public bool IsHit { get; set; }
     public bool IsHighlighted { get; set; }
     public bool IsVisible { get; set; }
-    public IReadOnlyList<Entity> Children => _children.AsReadOnly();
+    public IReadOnlyList<Entity> Children => ChildrenInternal.AsReadOnly();
     public virtual bool Selected
     {
-        get => Parent?.Selected ?? _selected;
+        get => Parent?.Selected ?? SelectedInternal;
         set
         {
             if (Parent is not null)
@@ -90,7 +90,7 @@ public abstract class Entity : IDrawable
             }
             else
             {
-                _selected = value;
+                SelectedInternal = value;
             }
         }
     }
@@ -194,7 +194,6 @@ namespace Snowman.Core.Entities;
 public class PolygonEntity : Entity
 {
     private bool _isClosed;
-    public bool CanBeClosed => Children.Count > 2;
     public PolygonEntity(Point point1, Point point2) : base(point1)
     {
         var firstSegment = new SegmentEntity(point1, point2, this);
@@ -202,23 +201,27 @@ public class PolygonEntity : Entity
         firstSegment.Children[1].IsVisible = false;
         controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
         firstSegment.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(firstSegment.Children[0].Position);
-        _children.Add(firstSegment);
+        ChildrenInternal.Add(firstSegment);
         PositionChanges += OnPositionChanges;
     }
     public void AddPoint(Point point)
     {
-        _children[^1].Children[1].IsVisible = true;
-        var nextSegment = new SegmentEntity(_children[^1].Children[1] as PointEntity ?? throw new InvalidOperationException(), point, this);
+        ChildrenInternal[^1].Children[1].IsVisible = true;
+        var nextSegment = new SegmentEntity(ChildrenInternal[^1].Children[1] as PointEntity ?? throw new InvalidOperationException(), point, this);
         nextSegment.Children[1].IsVisible = false;
-        _children.Add(nextSegment);
+        ChildrenInternal.Add(nextSegment);
         RaiseEntityChanged();
     }
     public void ClosePolygon()
     {
-        _children[^1]._children[1] = _children[0].Children[0];
-        _children[^1].PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(_children[^1].Children[1].Position);
+        ChildrenInternal[^1].ChildrenInternal[1] = ChildrenInternal[0].Children[0];
+        ChildrenInternal[^1].PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(ChildrenInternal[^1].Children[1].Position);
         _isClosed = true;
         RaiseEntityChanged();
+    }
+    public bool CanBeClosed()
+    {
+        return Children.Count > 2;
     }
     public override void Render(DrawingContext drawingContext)
     {
@@ -292,7 +295,7 @@ public class PolygonEntity : Entity
     }
     public Point[] GetRawPoints()
     {
-        return _children.SelectMany(child => child.Children).Select(x => x.Position).ToArray();
+        return ChildrenInternal.SelectMany(child => child.Children).Select(x => x.Position).ToArray();
     }
     private void OnPositionChanges(Entity sender, Point oldPosition)
     {
@@ -351,7 +354,7 @@ public class RectangleEntity : Entity
             base.Selected = value;
             foreach (var child in Children)
             {
-                child._selected = value;
+                child.SelectedInternal = value;
             }
         }
     }
@@ -363,7 +366,7 @@ public class RectangleEntity : Entity
         var maxY = Math.Max(position1.Y, position2.Y);
         Position = new Point(minX, minY);
         _rectangle = new Rect(Position, new Point(maxX, maxY));
-        _children.AddRange([
+        ChildrenInternal.AddRange([
             new PointEntity(Position, this),
             new PointEntity(Position.WithX(Position.X + _rectangle.Width), this),
             new PointEntity(Position.WithX(Position.X + _rectangle.Width).WithY(Position.Y + _rectangle.Height), this),
@@ -372,7 +375,7 @@ public class RectangleEntity : Entity
         for (var i = 0; i < 4; i++)
         {
             var index = i;
-            Children[i].PositionChanges += (sender, _) => UpdatePointsLocation(index);
+            Children[i].PositionChanges += (_, _) => UpdatePointsLocation(index);
         }
         PositionChanges += OnPositionChanges;
     }
@@ -438,22 +441,22 @@ public class SegmentEntity : Entity
     {
         var controlPoint = new PointEntity(point1, this);
         controlPoint.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(controlPoint.Position);
-        _children.Add(controlPoint);
-        _children.Add(new PointEntity(point2, this));
+        ChildrenInternal.Add(controlPoint);
+        ChildrenInternal.Add(new PointEntity(point2, this));
         PositionChanges += OnPositionChanges;
     }
     public SegmentEntity(PointEntity pointEntity, Point point, Entity? parent = null) : base(pointEntity.Position,
         parent)
     {
         pointEntity.PositionChanges += (_, _) => SetPositionWithoutRaisingEvent(pointEntity.Position);
-        _children.Add(pointEntity);
-        _children.Add(new PointEntity(point, this));
+        ChildrenInternal.Add(pointEntity);
+        ChildrenInternal.Add(new PointEntity(point, this));
         PositionChanges += OnPositionChanges;
     }
     public override void Render(DrawingContext drawingContext)
     {
         if (!IsVisible) return;
-        drawingContext.DrawLine(GetPen(), _children[0].Position, _children[1].Position);
+        drawingContext.DrawLine(GetPen(), ChildrenInternal[0].Position, ChildrenInternal[1].Position);
         foreach (var child in Children)
         {
             child.Render(drawingContext);
@@ -465,14 +468,14 @@ public class SegmentEntity : Entity
     }
     public override bool EvaluateHit(Point cursorPosition)
     {
-        var pointerDist = cursorPosition.DistanceTo(_children[0].Position) + cursorPosition.DistanceTo(_children[1].Position);
-        var pointDist = _children[0].Position.DistanceTo(_children[1].Position);
+        var pointerDist = cursorPosition.DistanceTo(ChildrenInternal[0].Position) + cursorPosition.DistanceTo(ChildrenInternal[1].Position);
+        var pointDist = ChildrenInternal[0].Position.DistanceTo(ChildrenInternal[1].Position);
         return IsVisible && 1 > pointerDist - pointDist;
     }
     public override bool EvaluateHit(Rect rect)
     {
-        var p1 = _children[0].Position;
-        var p2 = _children[1].Position;
+        var p1 = ChildrenInternal[0].Position;
+        var p2 = ChildrenInternal[1].Position;
         if (rect.Contains(p1) || rect.Contains(p2)) return true;
         var topLeft = rect.TopLeft;
         var topRight = new Point(rect.Right, rect.Top);
@@ -518,19 +521,21 @@ using Snowman.Core.Scripting.UserInterface.Controls;
 namespace Snowman.Core.Registries;
 public static class DataSourceControlRegistry
 {
+    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
     static DataSourceControlRegistry()
     {
         RegisterPortFactories();
         RegisterVariableFactories();
     }
-    private static readonly Dictionary<Type, Func<IDataSource, Control>> DataSourceFactoryRegistry = [];
     public static void RegisterDataSourceControlFactory<T>(Func<T, Control> factory) where T : IDataSource
     {
         DataSourceFactoryRegistry[typeof(T)] = dataSource => factory((T)dataSource);
     }
     public static Control CreateControl(IDataSource dataSource)
     {
-        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory) ? factory(dataSource) : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
+        return DataSourceFactoryRegistry.TryGetValue(dataSource.GetType(), out var factory)
+            ? factory(dataSource)
+            : throw new ArgumentException($"No factory registered for {dataSource.GetType().Name}");
     }
     private static void RegisterPortFactories()
     {
@@ -739,6 +744,7 @@ using System.Xml;
 using Avalonia.Platform.Storage;
 using Snowman.Core.Services;
 using Snowman.Data;
+using Snowman.Events.Suppliers;
 using Snowman.Utilities;
 using Ursa.Controls;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
@@ -746,6 +752,7 @@ namespace Snowman.Core.Scripting.DataSource.Variables;
 public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
 {
     private readonly IStorageProviderService _storageProviderService;
+    private readonly IMessageBoxService _messageBoxService;
     private readonly IProjectService _projectService;
     public bool IsCustomPathSelected
     {
@@ -777,7 +784,9 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
     private DatasetSelector(string name, Group group, string friendlyName, IServiceProvider serviceProvider) : base(name, group, friendlyName)
     {
         _storageProviderService = serviceProvider.GetService<IStorageProviderService>();
+        _messageBoxService = serviceProvider.GetService<IMessageBoxService>();
         _projectService = serviceProvider.GetService<IProjectService>();
+        serviceProvider.GetService<IEventManager>().RegisterActionOnSupplier<IProjectEventSupplier>(x => x.DatasetLoaded += () => TypedValue = _projectService.GetDatasetData());
         IsCustomPathSelected = false;
         CustomDatasetPath = string.Empty;
     }
@@ -796,15 +805,8 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         }
         catch (Exception e)
         {
-            await MessageBox.ShowAsync($"Unable to load selected file.\nMessage:\n{e.Message}",  "Error", MessageBoxIcon.Error);
+            _messageBoxService.ShowMessageBox("Error", $"Unable to load selected file.\nMessage:\n{e.Message}", MessageBoxIcon.Error);
         }
-    }
-    private void LoadSelectedDataset()
-    {
-        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
-        using var reader = new StreamReader(fileStream);
-        var fileContent = reader.ReadToEnd();
-        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
     }
     public override Variable Copy(IServiceProvider serviceProvider)
     {
@@ -822,6 +824,13 @@ public partial class DatasetSelector : GenericVariableWrapper<DatasetData>
         return "Allows the user to select a dataset. UI has two checkbox options: 'Current' and 'Custom Path'. " +
                "'Current' will use currently loaded dataset. 'Custom Path' will allow the user to select a valid dataset file. " +
                "This variable has no properties in the XML structure.";
+    }
+    private void LoadSelectedDataset()
+    {
+        var fileStream = new FileStream(CustomDatasetPath, FileMode.Open);
+        using var reader = new StreamReader(fileStream);
+        var fileContent = reader.ReadToEnd();
+        TypedValue = DatasetData.Deserialize(fileContent) ?? throw new Exception("Xml data could not be deserialized");
     }
 }
 
@@ -923,6 +932,7 @@ using System.Runtime.CompilerServices;
 namespace Snowman.Core.Scripting.DataSource;
 public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
     public T? TypedValue
     {
         get => (T?)Value;
@@ -932,10 +942,7 @@ public abstract class GenericVariableWrapper<T> : Variable, INotifyPropertyChang
             OnPropertyChanged();
         }
     }
-    protected GenericVariableWrapper(string name, Group group, string friendlyName) : base(name, typeof(T), group, friendlyName)
-    {
-    }
-    public event PropertyChangedEventHandler? PropertyChanged;
+    protected GenericVariableWrapper(string name, Group group, string friendlyName) : base(name, typeof(T), group, friendlyName) { }
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -1001,7 +1008,7 @@ public class Input(string name, Type type, Group group, string friendlyName) : P
                 {
                     list = Value as IList ?? throw new InvalidCastException($"Cannot cast {Value?.GetType()} to IList");
                 }
-                list!.Add(connectedOutput.Value);
+                list.Add(connectedOutput.Value);
             }
             else
             {
@@ -1032,8 +1039,7 @@ using System.Collections.Generic;
 using Snowman.Events;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Core.Scripting.DataSource;
-public class Output(string name, Type type, Group group, string friendlyName)
-    : Port(name, type, group, friendlyName)
+public class Output(string name, Type type, Group group, string friendlyName) : Port(name, type, group, friendlyName)
 {
     public event SignalEventHandler? ValueRequested;
     public event Events.EventHandler<bool>? ResetRequested;
@@ -1075,12 +1081,12 @@ public abstract class Port : IDataSource
         Group = group;
         FriendlyName = friendlyName;
     }
-    public abstract void AskForValue();
     public virtual void ResetPort(bool forced)
     {
         HasValue = false;
         Value = null;
     }
+    public abstract void AskForValue();
     public abstract IDataSource Copy(IServiceProvider serviceProvider);
 }
 
@@ -1094,6 +1100,8 @@ using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Core.Scripting.DataSource;
 public abstract class Variable : IDataSource
 {
+    public event SignalEventHandler? TypeChanged;
+    public event SignalEventHandler? ValueChanged;
     public string Name { get; set; }
     public Type Type
     {
@@ -1114,8 +1122,6 @@ public abstract class Variable : IDataSource
             ValueChanged?.Invoke();
         }
     }
-    public event SignalEventHandler? TypeChanged;
-    public event SignalEventHandler? ValueChanged;
     protected Variable(string name, Type type, Group group, string friendlyName)
     {
         Type = type;
@@ -1141,17 +1147,18 @@ using Snowman.Core.Services;
 namespace Snowman.Core.Scripting.Nodes.OutputNodes;
 public class LoggerOutputNode : OutputNode
 {
-    private readonly ILoggerService _loggerService = null!;
+    private readonly ILoggerService _loggerService;
     private readonly Input _messageInput;
-    private LoggerOutputNode(IServiceProvider serviceProvider) : this()
-    {
-        _loggerService = serviceProvider.GetService<ILoggerService>();
-    }
     public LoggerOutputNode()
     {
         _messageInput = CreateInput();
+        _loggerService = null!;
         Name = "Logger Output";
         UniqueIdentifier = nameof(LoggerOutputNode);
+    }
+    private LoggerOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _loggerService = serviceProvider.GetService<ILoggerService>();
     }
     public override Node Copy(IServiceProvider serviceProvider)
     {
@@ -1192,26 +1199,24 @@ using Snowman.Data;
 namespace Snowman.Core.Scripting.Nodes.OutputNodes;
 public class TimelineOutputNode : OutputNode
 {
-    private readonly ITimelineService _timelineService = null!;
+    private readonly ITimelineService _timelineService;
     private readonly Input _input;
-    private TimelineOutputNode(IServiceProvider serviceProvider) : this()
-    {
-        _timelineService = serviceProvider.GetService<ITimelineService>();
-    }
     public TimelineOutputNode()
     {
         _input = CreateInput();
+        _timelineService = null!;
         Name = "Timeline Layer Output Node";
+    }
+    private TimelineOutputNode(IServiceProvider serviceProvider) : this()
+    {
+        _timelineService = serviceProvider.GetService<ITimelineService>();
     }
     public override void ExecuteOutput()
     {
         base.ExecuteOutput();
         if (_input.Value is not IEnumerable<Layer> layer) return;
         var output = new TimelineOutput();
-        foreach (var layerItem in layer)
-        {
-            output.Layers.Add(layerItem);
-        }
+        output.Layers.AddRange(layer);
         output.InitFilters();
         _timelineService.AddOutput(output);
     }
@@ -1237,18 +1242,15 @@ public class TimelineOutputNode : OutputNode
 ================
 File: Core/Scripting/Nodes/Node.cs
 ================
-using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Snowman.Core.Scripting.DataSource;
 using Snowman.Core.Services;
 using Snowman.Data;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Core.Scripting.Nodes;
 public abstract class Node
 {
-    private bool _executed;
     public double X { get; set; }
     public double Y { get; set; }
     public string UniqueIdentifier { get; set; }
@@ -1318,8 +1320,6 @@ public abstract class Node
     {
         return Name;
     }
-    public abstract Node Copy(IServiceProvider serviceProvider);
-    protected abstract void FillNodeType(NodeData data);
     protected void CopyBasicInfo(Node copy, IServiceProvider serviceProvider)
     {
         copy.Name = Name;
@@ -1337,13 +1337,6 @@ public abstract class Node
         {
             copy.Variables.Add(variable.Copy(serviceProvider));
         }
-    }
-    protected virtual void Execute()
-    {
-        if (_executed) throw new InvalidOperationException($"Attempted to execute node '{this}' more than once, this indicates a cycle.");
-        _executed = true;
-        PrepareInputs();
-        _executed = false;
     }
     private void PrepareInputs()
     {
@@ -1378,6 +1371,12 @@ public abstract class Node
             }
         }
     }
+    protected virtual void Execute()
+    {
+        PrepareInputs();
+    }
+    public abstract Node Copy(IServiceProvider serviceProvider);
+    protected abstract void FillNodeType(NodeData data);
 }
 
 ================
@@ -1402,8 +1401,8 @@ public abstract class OutputNode : Node
 File: Core/Scripting/Nodes/ScriptNode.cs
 ================
 using Python.Runtime;
+using Snowman.Core.Services;
 using Snowman.Data;
-using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Core.Scripting.Nodes;
 public class ScriptNode : Node
 {
@@ -1527,7 +1526,7 @@ public class NodeControlBuilderDirector
     }
     public void Prepare()
     {
-        var allGroups = CollectGroups();
+        var allGroups = CollectGroups().OrderBy(x => x.Path).ToList();
         var stack = new Stack<Group>([Group.Default]);
         var endGroupCount = 0;
         while (stack.Count > 0)
@@ -1587,14 +1586,13 @@ public class NodeControlBuilderDirector
                 currentGroup = parent;
             } while (parent is not null);
         }
-        return  collectedGroups.ToList();
+        return collectedGroups.ToList();
     }
 }
 
 ================
 File: Core/Scripting/Group.cs
 ================
-using System;
 namespace Snowman.Core.Scripting;
 public class Group
 {
@@ -1615,7 +1613,7 @@ public class Group
     }
     public Group(string name, Group parent)
     {
-        Parent = parent ?? throw new ArgumentNullException(nameof(parent), "Parent group cannot be null. Use Group(string name) constructor instead.");
+        Parent = parent;
         Name = name;
     }
     private string ToPath()
@@ -1675,7 +1673,6 @@ using System.Collections.Generic;
 using Snowman.Core.Registries;
 using Snowman.Core.Scripting.Nodes;
 using Snowman.Core.Scripting.DataSource;
-using Snowman.Core.Scripting.DataSource.Variables;
 using IServiceProvider = Snowman.Core.Services.IServiceProvider;
 namespace Snowman.Core.Scripting;
 public class ScriptParser
@@ -1761,7 +1758,6 @@ public class ScriptParser
 ================
 File: Core/Settings/ISetting.cs
 ================
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Snowman.Events;
 namespace Snowman.Core.Settings;
@@ -1856,8 +1852,10 @@ public class BoundingBox
 }
 public class ClassName
 {
-	[XmlElement(ElementName="project_id")] public string ProjectId { get; set; } = string.Empty;
-	[XmlElement(ElementName="track_id")] public int TrackId { get; set; }
+	[XmlElement(ElementName="project_id")]
+	public string ProjectId { get; set; } = string.Empty;
+	[XmlElement(ElementName="track_id")]
+	public int TrackId { get; set; }
 }
 
 ================
@@ -2063,6 +2061,7 @@ namespace Snowman.Data;
 public class TimelineOutput : INotifyPropertyChanged
 {
     private static int _outputCounter;
+    public event PropertyChangedEventHandler? PropertyChanged;
     public string Name { get; set; } = "Output " + (_outputCounter++ + 1);
     public List<Layer> Layers { get; set; } = [];
     public double MaxY
@@ -2126,7 +2125,6 @@ public class TimelineOutput : INotifyPropertyChanged
             }
         }
     }
-    public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -2136,6 +2134,7 @@ public class Layer : INotifyPropertyChanged
 {
     private static readonly Random Random = new();
     private static int _layerCounter;
+    public event PropertyChangedEventHandler? PropertyChanged;
     public IBrush Brush { get; set; } = ColorGeneration.Palette[Random.Next(ColorGeneration.Palette.Length)];
     public string Name { get; set; } = "Layer " + (_layerCounter++ + 1);
     public List<EventData> Events { get; set; } = [];
@@ -2173,7 +2172,6 @@ public class Layer : INotifyPropertyChanged
             OnPropertyChanged();
         }
     } = true;
-    public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -2182,12 +2180,12 @@ public class Layer : INotifyPropertyChanged
 public class ScriptRun : INotifyPropertyChanged
 {
     private static int _scriptRunCounter;
+    public event PropertyChangedEventHandler? PropertyChanged;
     public string Name { get; set; } = "Script run " + (_scriptRunCounter++ + 1);
     public ObservableCollection<TimelineOutput> Outputs { get; } = [];
-    public event PropertyChangedEventHandler? PropertyChanged;
     public ScriptRun()
     {
-        Outputs.CollectionChanged += (sender, args) => OnPropertyChanged();
+        Outputs.CollectionChanged += (_, _) => OnPropertyChanged();
     }
     public void SetActive(EventTimelineViewportDataContext dataContext)
     {
@@ -2373,9 +2371,7 @@ public class InverseBoolConverter : IValueConverter
 File: Utilities/ExtensionMethods.cs
 ================
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Avalonia;
@@ -2442,9 +2438,6 @@ using System.Reflection;
 using Python.Runtime;
 using Snowman.Core.Entities;
 using Snowman.Core.Registries;
-using Snowman.Core.Scripting.DataSource.Variables;
-using Snowman.Core.Scripting.Nodes.OutputNodes;
-using Snowman.Designer;
 namespace Snowman.Utilities;
 public class Helpers
 {
@@ -2484,11 +2477,10 @@ public class Helpers
     public static string GetValidEntityTypes()
     {
         if (_validEntitiesCache is not null) return _validEntitiesCache;
-        var baseType = typeof(Entity);
-        var list = Assembly.GetAssembly(baseType)!
-            .GetTypes()
-            .Where(t => t.IsSubclassOf(baseType));
-        _validEntitiesCache = string.Join(", ", list.Select(t => t.Name).ToArray());
+        var subclasses = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(x => x.GetTypes())
+            .Where(x => x.IsSubclassOf(typeof(Entity)));
+        _validEntitiesCache = string.Join(", ", subclasses.Select(t => t.Name).ToArray());
         return _validEntitiesCache;
     }
     public static string GetVariablesPromptInfo()
@@ -2516,11 +2508,14 @@ public class Helpers
         }
         return _outputNodesPromptInfoCache;
     }
-    public static string GetAllUsedNodeUIDs()
+    public static string GetAllUsedNodeUIds()
     {
-        throw new NotImplementedException();
+        var scriptNodes = ScriptNodeRegistry.GetPrototypeCopies().Select(x => x.UniqueIdentifier);
+        var outputNodes = OutputNodeRegistry.GetPrototypeCopies().Select(x => x.UniqueIdentifier);
+        return string.Join(", ", scriptNodes.Concat(outputNodes));
     }
 }
+
 
 
 
