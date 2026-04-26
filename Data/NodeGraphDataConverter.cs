@@ -98,7 +98,7 @@ public static class NodeGraphDataConverter
     {
         var lastIndexOfDot = propertyExpression?.LastIndexOf('.') ?? throw new Exception($"Property expression from {property} cannot be null.");
         
-        if (lastIndexOfDot < 0) throw new Exception($"Property expression from {property} cannot must be in the following format: xxx.Property and {propertyExpression} does not satisfy this requirement.");
+        if (lastIndexOfDot < 0) throw new Exception($"Property expression from {property} must be in the following format: xxx.Property and {propertyExpression} does not satisfy this requirement.");
         
         var propertyName = propertyExpression[(lastIndexOfDot + 1)..];
         var element = vData.Document.CreateElement(propertyName);
@@ -111,11 +111,11 @@ public static class NodeGraphDataConverter
     {
         var lastIndexOfDot = propertyExpression?.LastIndexOf('.') ?? throw new Exception($"Property expression from {property} cannot be null.");
         
-        if (lastIndexOfDot < 0) throw new Exception($"Property expression from {property} cannot must be in the following format: xxx.Property and {propertyExpression} does not satisfy this requirement.");
+        if (lastIndexOfDot < 0) throw new Exception($"Property expression from {property} must be in the following format: xxx.Property and {propertyExpression} does not satisfy this requirement.");
         
         var propertyName = propertyExpression[(lastIndexOfDot + 1)..];
         var propertyValue = variableData.Properties[propertyName]?.InnerText;
         
-        variable.GetType().GetProperty(propertyName)?.SetValue(variable, converter(propertyValue));
+        typeof(TVariable).GetProperty(propertyName)?.SetValue(variable, converter(propertyValue));
     }
 }

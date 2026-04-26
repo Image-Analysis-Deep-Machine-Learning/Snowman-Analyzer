@@ -15,9 +15,10 @@ public class NodeControlBuilderDirector
         _node = node;
     }
 
+    // TODO: Fix nested groups not working as intended. I swear I tested it and it worked in the past...
     public void Prepare()
     {
-        var allGroups = CollectGroups();
+        var allGroups = CollectGroups().OrderBy(x => x.Path).ToList();
         
         var stack = new Stack<Group>([Group.Default]);
         var endGroupCount = 0;

@@ -17,10 +17,7 @@ public static class AnthropicKernelBuilderExtensions
         string? serviceId = null)
     {
         var anthropicClient = new AnthropicClient { ApiKey = apiKey, HttpClient = httpClient };
-        var chatClient = anthropicClient.AsIChatClient(modelId)
-            .AsBuilder()
-                .UseFunctionInvocation()
-                .Build();
+        var chatClient = anthropicClient.AsIChatClient(modelId).AsBuilder().Build();
         
         builder.Services.AddKeyedSingleton<IChatCompletionService>(serviceId, (serviceProvider, _) => chatClient.AsChatCompletionService(serviceProvider));
         

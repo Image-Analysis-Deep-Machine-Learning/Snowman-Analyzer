@@ -9,7 +9,7 @@
                          xmlns:ctrl="using:Snowman.Controls"
                          x:DataType="dataContext:NodeControlDataContext"
                          ClipToBounds="False">
-    <Border Background="#333333"
+    <Border Background="{DynamicResource SemiColorDisabledBorder}"
             CornerRadius="5"
             BoxShadow="5 5 25 0 Black"
             BorderBrush="Black"
