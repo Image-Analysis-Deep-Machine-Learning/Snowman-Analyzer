@@ -59,9 +59,12 @@ public class EventManagerImpl : IEventManager
         }
 
         // execute on existing suppliers
-        foreach (var supplier in _eventSuppliers[typeof(T)])
+        if (!_eventSuppliers.ContainsKey(typeof(T))) return;
         {
-            wrapper(supplier);
+            foreach (var supplier in _eventSuppliers[typeof(T)])
+            {
+                wrapper(supplier);
+            }
         }
     }
 }
